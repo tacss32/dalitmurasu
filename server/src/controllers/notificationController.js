@@ -1,5 +1,5 @@
 const Notification = require("../models/Notification");
-const ClientUser = require("../models/clientUser");
+const ClientUser = require("../models/ClientUser");
 
 // ✅ 1. Send Notification (with Popup + All Users option)
 exports.sendNotification = async (req, res) => {
@@ -11,13 +11,13 @@ exports.sendNotification = async (req, res) => {
     // If 'allUsers' is true, fetch all users
     if (allUsers) {
       const allClients = await ClientUser.find({});
-      userIds = allClients.map(user => user._id);
+      userIds = allClients.map((user) => user._id);
     } else {
       // Otherwise, fetch only selected users
       if (!targetUserNames || targetUserNames.length === 0) {
         return res.status(400).json({
           success: false,
-          message: "Provide targetUserNames or set allUsers = true."
+          message: "Provide targetUserNames or set allUsers = true.",
         });
       }
 
@@ -25,11 +25,11 @@ exports.sendNotification = async (req, res) => {
       if (!users.length) {
         return res.status(404).json({
           success: false,
-          message: "No users matched the provided names."
+          message: "No users matched the provided names.",
         });
       }
 
-      userIds = users.map(user => user._id);
+      userIds = users.map((user) => user._id);
     }
 
     // Create notification
@@ -37,14 +37,16 @@ exports.sendNotification = async (req, res) => {
       title,
       message,
       popup: popup || false, // <-- Store popup flag
-      userIds
+      userIds,
     });
 
     const saved = await notification.save();
     res.status(201).json({ success: true, data: saved });
   } catch (err) {
     console.error("Send Notification Error:", err);
-    res.status(500).json({ success: false, message: "Failed to send notification" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send notification" });
   }
 };
 
@@ -54,11 +56,16 @@ exports.getNotificationsByUserName = async (req, res) => {
     const { userName } = req.params;
 
     const user = await ClientUser.findOne({ name: userName });
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
-    const notifications = await Notification.find({ userIds: user._id }).sort({ createdAt: -1 });
+    const notifications = await Notification.find({ userIds: user._id }).sort({
+      createdAt: -1,
+    });
 
-    const enriched = notifications.map(notif => ({
+    const enriched = notifications.map((notif) => ({
       _id: notif._id,
       title: notif.title,
       message: notif.message,
@@ -70,7 +77,9 @@ exports.getNotificationsByUserName = async (req, res) => {
     res.status(200).json({ success: true, data: enriched });
   } catch (err) {
     console.error("Fetch Notifications Error:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch notifications" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch notifications" });
   }
 };
 
@@ -80,7 +89,10 @@ exports.markAsRead = async (req, res) => {
     const { notificationId, userName } = req.body;
 
     const user = await ClientUser.findOne({ name: userName });
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     const updated = await Notification.findByIdAndUpdate(
       notificationId,
@@ -107,12 +119,17 @@ exports.editNotificationByTitle = async (req, res) => {
       { new: true }
     );
 
-    if (!updated) return res.status(404).json({ success: false, message: "Notification not found" });
+    if (!updated)
+      return res
+        .status(404)
+        .json({ success: false, message: "Notification not found" });
 
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
     console.error("Edit Notification Error:", err);
-    res.status(500).json({ success: false, message: "Failed to update notification" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update notification" });
   }
 };
 
@@ -122,12 +139,17 @@ exports.deleteByTitle = async (req, res) => {
     const { title } = req.body;
 
     const deleted = await Notification.findOneAndDelete({ title });
-    if (!deleted) return res.status(404).json({ success: false, message: "Notification not found" });
+    if (!deleted)
+      return res
+        .status(404)
+        .json({ success: false, message: "Notification not found" });
 
     res.status(200).json({ success: true, message: "Notification deleted" });
   } catch (err) {
     console.error("Delete Notification Error:", err);
-    res.status(500).json({ success: false, message: "Failed to delete notification" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to delete notification" });
   }
 };
 
@@ -147,7 +169,9 @@ exports.searchUsersByPrefix = async (req, res) => {
   try {
     const { q } = req.query;
     if (!q || q.trim().length === 0) {
-      return res.status(400).json({ success: false, message: "Query prefix 'q' is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Query prefix 'q' is required" });
     }
 
     const regex = new RegExp("^" + q, "i");

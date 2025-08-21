@@ -1,13 +1,13 @@
 require("dotenv").config();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const ClientUser = require("../models/clientUser");
+const ClientUser = require("../models/ClientUser");
 
 // Determine base URL
 const isProduction = process.env.NODE_ENV === "production";
 
 const BACKEND_BASE_URL = (
-  process.env.BACKEND_BASE_URL || 
+  process.env.BACKEND_BASE_URL ||
   (isProduction ? "https://dalitmurasu.com" : "http://localhost:3030")
 ).replace(/\/$/, "");
 

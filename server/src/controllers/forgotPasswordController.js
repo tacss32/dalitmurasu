@@ -1,4 +1,4 @@
-const ClientUser = require("../models/clientUser");
+const ClientUser = require("../models/ClientUser");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
@@ -55,7 +55,8 @@ exports.sendResetCode = async (req, res) => {
 exports.verifyResetCode = async (req, res) => {
   const { email, code } = req.body;
 
-  if (!email || !code) return res.status(400).json({ message: "Email and code are required" });
+  if (!email || !code)
+    return res.status(400).json({ message: "Email and code are required" });
 
   try {
     const user = await ClientUser.findOne({ email });
@@ -84,14 +85,20 @@ exports.resetPassword = async (req, res) => {
   const { email, newPassword } = req.body;
 
   if (!email || !newPassword) {
-    return res.status(400).json({ message: "Email and new password are required" });
+    return res
+      .status(400)
+      .json({ message: "Email and new password are required" });
   }
 
   try {
     const user = await ClientUser.findOne({ email });
 
     if (!user || !user.passwordResetVerified) {
-      return res.status(400).json({ message: "OTP verification required before resetting password" });
+      return res
+        .status(400)
+        .json({
+          message: "OTP verification required before resetting password",
+        });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

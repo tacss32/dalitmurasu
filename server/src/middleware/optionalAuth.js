@@ -1,6 +1,6 @@
 // middleware/optionalAuth.js
 const jwt = require("jsonwebtoken");
-const ClientUser = require("../models/clientUser"); 
+const ClientUser = require("../models/ClientUser");
 
 /**
  * Attach req.user if a valid bearer token is present.

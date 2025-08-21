@@ -1,4 +1,4 @@
-const ClientUser = require("../models/clientUser");
+const ClientUser = require("../models/ClientUser");
 const bcrypt = require("bcryptjs");
 
 // GET user profile
@@ -8,7 +8,9 @@ exports.getClientProfile = async (req, res) => {
     const user = await ClientUser.findById(userId).select("-password");
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     res.status(200).json({ success: true, data: user });
@@ -44,7 +46,9 @@ exports.updateClientProfile = async (req, res) => {
     ).select("-password");
 
     if (!updatedUser) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     res.status(200).json({ success: true, data: updatedUser });
