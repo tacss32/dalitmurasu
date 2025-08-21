@@ -1,0 +1,41 @@
+@import url("https://fonts.googleapis.com/css2?family=Mukta+Malar:wght@200;300;400;500;600;700;800&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  --font-mukta-malar: "Mukta Malar", "sans-serif";
+
+  --color-primary: oklch(0 0 0);
+  --color-secondary: oklch(1 0 0);
+  --color-background-from: oklch(0.9805 0.0211 85.94);
+  --color-background-to: oklch(0.9441 0.0629 88.23);
+  --color-highlight-1: oklch(0.54 0.206 28.53);
+
+  --animation-slide-left: slide-left 25s linear infinite;
+}
+
+@keyframes slide-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-200%);
+  }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none; /* Standard syntax */
+}
