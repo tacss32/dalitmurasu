@@ -1,7 +1,7 @@
 require("dotenv").config();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const ClientUser = require("../models/clientUser");
+const ClientUser = require("../models/ClientUser");
 
 // Detect environment
 const isProduction = process.env.NODE_ENV === "production";
