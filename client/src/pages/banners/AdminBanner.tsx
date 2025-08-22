@@ -125,23 +125,22 @@ export default function AdminBanner() {
     if (desktopInput) desktopInput.value = "";
   };
 
- const canvasToFile = (
-  canvas: HTMLCanvasElement,
-  filename: string
-): Promise<File> => {
-  return new Promise((resolve) => {
-    // Change the quality to 1.0 (100%) for maximum clarity
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          resolve(new File([blob], filename, { type: "image/jpeg" }));
-        }
-      },
-      "image/jpeg",
-      1.0 
-    );
-  });
-};
+  const canvasToFile = (
+    canvas: HTMLCanvasElement,
+    filename: string
+  ): Promise<File> => {
+    return new Promise((resolve) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(new File([blob], filename, { type: "image/jpeg" }));
+          }
+        },
+        "image/jpeg",
+        0.9
+      );
+    });
+  };
 
   const getCroppedImg = useCallback(
     async (
@@ -359,32 +358,29 @@ export default function AdminBanner() {
 
     return (
       <div className="border border-gray-200 p-5 rounded-lg bg-gray-50">
-       <label
-  htmlFor={`${imageType}BannerInput`}
-  className="block text-lg font-semibold text-gray-700 mb-3"
->
-  Upload{" "}
-  <span className="text-blue-600">
-    {imageType.charAt(0).toUpperCase() + imageType.slice(1)}
-  </span>{" "}
-  Banner Image ({aspectRatio} ratio)
-</label>
-<p className="text-sm text-gray-500 mb-2">
-  *For best clarity, please upload a high-resolution image with a ratio of{" "}
-  <span className="font-bold">{aspectRatio}</span>.
-</p>
-<input
-  type="file"
-  id={`${imageType}BannerInput`}
-  accept="image/*"
-  onChange={(e) => handleImageFileChange(e, imageType)}
-  className="block w-full text-sm text-gray-500
-          file:mr-4 file:py-2 file:px-4
-          file:rounded-full file:border-0
-          file:text-sm file:font-semibold
-          file:bg-blue-50 file:text-blue-700
-          hover:file:bg-blue-100 cursor-pointer"
-/>
+        <label
+          htmlFor={`${imageType}BannerInput`}
+          className="block text-lg font-semibold text-gray-700 mb-3"
+        >
+          Upload{" "}
+          <span className="text-blue-600">
+            {imageType.charAt(0).toUpperCase() + imageType.slice(1)}
+          </span>{" "}
+          Banner Image ({aspectRatio} ratio)
+        </label>
+
+        <input
+          type="file"
+          id={`${imageType}BannerInput`}
+          accept="image/*"
+          onChange={(e) => handleImageFileChange(e, imageType)}
+          className="block w-full text-sm text-gray-500
+                     file:mr-4 file:py-2 file:px-4
+                     file:rounded-full file:border-0
+                     file:text-sm file:font-semibold
+                     file:bg-blue-50 file:text-blue-700
+                     hover:file:bg-blue-100 cursor-pointer"
+        />
 
         {imageState.src && !imageState.croppedFile && (
           <div className="mt-4 space-y-4">

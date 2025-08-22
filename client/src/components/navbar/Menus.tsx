@@ -41,6 +41,14 @@ interface Category {
   setHeader: boolean;
 }
 
+interface CustomCategory {
+  _id: string;
+  name: { en: string; ta: string };
+  isAvailable: boolean;
+  isInBanner: boolean;
+  setHeader: boolean;
+}
+
 const API = import.meta.env.VITE_API; // Your backend API URL
 
 export default function Menus() {
@@ -50,6 +58,23 @@ export default function Menus() {
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+
+const customCategories: CustomCategory[] = [
+  { 
+    _id: "archive", 
+    name: { en: "Archive", ta: "தலித் முரசு களஞ்சியம் " }, 
+    isAvailable: true, 
+    isInBanner: false, 
+    setHeader: false 
+  },
+  { 
+    _id: "shop", 
+    name: { en: "shop", ta: "அங்காடி" }, 
+    isAvailable: true, 
+    isInBanner: false, 
+    setHeader: false 
+  },
+];
 
   // States for notification dropdown functionality
   const [isNotificationsDropdownOpen, setIsNotificationsDropdownOpen] =
@@ -384,22 +409,27 @@ export default function Menus() {
   }, [currentUserName, fetchAndProcessUserNotifications]);
 
   // NEW: Fetch all available categories for the search dropdown on component mount
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setLoadingCategories(true);
-      try {
-        const response = await axios.get<Category[]>(`${API}api/categories`);
-        // Filter to only show categories that are marked as available
-        setCategories(response.data.filter((cat) => cat.isAvailable));
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        setCategories([]);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-    fetchCategories();
-  }, [API]);
+// NEW: Fetch all available categories for the search dropdown on component mount
+useEffect(() => {
+  const fetchCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const response = await axios.get<Category[]>(`${API}api/categories`);
+      // Filter to only show categories that are marked as available
+      const fetchedCategories = response.data.filter((cat) => cat.isAvailable);
+
+      // Combine fetched categories with custom categories
+      const allCategories = [...fetchedCategories, ...customCategories];
+      setCategories(allCategories);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+      setCategories(customCategories); // Fallback to custom categories on error
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+  fetchCategories();
+}, [API]);
 
   const handleNotificationIconClick = () => {
     if (!currentUserName) {
@@ -457,21 +487,21 @@ export default function Menus() {
             />
             {/* NEW: Replaced text input with a select dropdown for categories */}
             <select
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-              style={{ backgroundColor: "#FEEBB8" }}
-              value={searchCategory}
-              onChange={(e) => setSearchCategory(e.target.value)}
-              disabled={loadingCategories}
-            >
-              <option value="">
-                {loadingCategories ? "Loading categories..." : "All Categories"}
-              </option>
-              {categories.map((category) => (
-                <option key={category._id} value={category.name.en}>
-                  {category.name.ta}
-                </option>
-              ))}
-            </select>
+  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+  style={{ backgroundColor: "#FEEBB8" }}
+  value={searchCategory}
+  onChange={(e) => setSearchCategory(e.target.value)}
+  disabled={loadingCategories}
+>
+  <option value="">
+    {loadingCategories ? "Loading categories..." : "All Categories"}
+  </option>
+  {categories.map((category) => (
+    <option key={category._id} value={category.name.en}>
+      {category.name.ta}
+    </option>
+  ))}
+</select>
             {/* End new category dropdown */}
 
             <div className="flex gap-2">

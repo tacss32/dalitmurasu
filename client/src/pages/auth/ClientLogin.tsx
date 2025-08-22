@@ -10,6 +10,8 @@ export default function ClientLogin() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // const logoHeightClass =  "h-20" : "h-36";
+
   // Ensure no trailing slash in base URL
   const API_BASE = (import.meta.env.VITE_API || "").replace(/\/$/, "");
 
@@ -111,9 +113,18 @@ export default function ClientLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center ">
-      <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
+    <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+  <div className={` bg-transparent`}>
+    <Link to="/">
+      <img
+        src={"/logo1.png"}
+        alt="logo"
+        className={"h-20"}
+      />
+    </Link>
+  </div>
+       <div className=" p-6 rounded-xl shadow-xl w-full max-w-md">
+       <h2 className="text-2xl font-bold text-center mb-6">Login</h2> 
 
         {/* NEW: Back to Home Button/Link */}
         <div className="flex justify-start mb-4">
@@ -160,7 +171,7 @@ export default function ClientLogin() {
         <button
           onClick={handleGoogleLogin}
           type="button"
-          className="flex items-center justify-center gap-2 w-full bg-white border border-gray-300 py-2 rounded hover:shadow-md transition"
+          className="flex items-center justify-center gap-2 w-full  border border-gray-300 py-2 rounded hover:shadow-md transition"
         >
           <FcGoogle size={24} />
           <span className="text-gray-700 font-medium">Sign in with Google</span>

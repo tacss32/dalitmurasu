@@ -81,7 +81,7 @@ export default function PremiumArticlePage() {
 
   return (
     <div className="min-h-screen text-white">
-      <Header text="முதன்மை கட்டுரைகள்" />
+      <Header text="முதன்மை கட்டுரைகள்" urlPath='premiumarticles'/>
       <div className="container mx-auto p-6">
         <h1 className="text-4xl font-bold text-yellow-400 mb-8 text-center"></h1>
         {premiumArticles.length === 0 ? (

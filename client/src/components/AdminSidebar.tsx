@@ -12,6 +12,31 @@ interface Category {
   isInBanner: boolean;
   setHeader: boolean;
 }
+interface CustomCategory {
+  _id: string;
+  name: { en: string; ta: string };
+  isAvailable: boolean;
+  isInBanner: boolean;
+  setHeader: boolean;
+}
+
+// NEW: Hardcoded categories to be added to the dropdown
+const customCategories: CustomCategory[] = [
+  { 
+    _id: "archive", 
+    name: { en: "Archive", ta: "தலித் முரசு களஞ்சியம் " }, 
+    isAvailable: true, 
+    isInBanner: false, 
+    setHeader: false 
+  },
+  { 
+    _id: "shop", 
+    name: { en: "shop", ta: "அங்காடி" }, 
+    isAvailable: true, 
+    isInBanner: false, 
+    setHeader: false 
+  },
+];
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
@@ -240,10 +265,15 @@ export default function AdminSidebar() {
     setLoadingCategories(true);
     try {
       const response = await axios.get<Category[]>(`${API_BASE_URL}api/categories`);
-      setCategories(response.data.filter(cat => cat.isAvailable));
+      const fetchedCategories = response.data.filter(cat => cat.isAvailable);
+      
+      // Combine fetched categories with hardcoded ones
+      const allCategories = [...fetchedCategories, ...customCategories];
+      setCategories(allCategories);
+
     } catch (error) {
       console.error("Failed to fetch categories:", error);
-      setCategories([]);
+      setCategories(customCategories); // Fallback to just custom categories on error
     } finally {
       setLoadingCategories(false);
     }
@@ -268,7 +298,6 @@ export default function AdminSidebar() {
       clearInterval(notificationInterval);
     };
   }, [navigate, API_BASE_URL, fetchNewOrders, fetchCategories]);
-
   // NEW: Effect for mouse events
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

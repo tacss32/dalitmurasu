@@ -271,7 +271,7 @@ export default function Editorial() {
   if (loading) {
     return (
       <div className="flex flex-col gap-5">
-        <Header text="தலையங்கம்" />
+        <Header text="தலையங்கம்" urlPath="Editorial" />
         <div className="flex justify-center items-center min-h-screen text-highlight-1"> {/* Changed text-white to text-highlight-1 for consistency */}
         {/* Simple loading circle */}
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
@@ -283,7 +283,7 @@ export default function Editorial() {
   if (error) {
     return (
       <div className="flex flex-col gap-5">
-        <Header text="தலையங்கம்" />
+        <Header text="தலையங்கம்" urlPath="Editorial" />
         <p className="p-4 text-red-600">{error}</p>
       </div>
     );
@@ -291,7 +291,7 @@ export default function Editorial() {
 
   return (
     <div className="flex flex-col gap-5">
-      <Header text="தலையங்கம்" />
+      <Header text="தலையங்கம்" urlPath="Editorial" />
 
       {/* Top Section - Recent Month */}
       {latestEditorial ? (
