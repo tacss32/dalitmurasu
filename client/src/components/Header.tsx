@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 interface Category {
   _id: string;
@@ -21,38 +20,11 @@ export default function Header({
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
 
-  const normalize = (str: string) => str.toLowerCase().replace(/[\s\-/]+/g, "");
+  const normalize = (str: string) =>
+    str.toLowerCase().replace(/[\s\-\/]+/g, "");
 
   const { categorySlug } = useParams<{ categorySlug?: string }>();
-
-  const handleSignOut = () => {
-    localStorage.removeItem("clientToken");
-    localStorage.removeItem("userId");
-    toast.success("You have been signed out successfully!");
-    setIsDropdownOpen(false);
-    navigate("/login");
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const isLoggedIn = !!localStorage.getItem("clientToken");
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -117,46 +89,9 @@ export default function Header({
         className="w-full h-auto rounded-lg object-cover"
       />
 
-      {/* Overlay Container */}
-      <div className="absolute inset-0 flex flex-col justify-center items-center text-white">
-        {/* Profile Dropdown */}
-        <div className="absolute top-4 right-4 z-50">
-          {isLoggedIn && (
-            <div className="relative" ref={dropdownRef}>
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-50">
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                  >
-                    My Profile
-                  </Link>
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                  >
-                    Edit Profile
-                  </Link>
-                  <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-                  <button
-                    onClick={handleSignOut}
-                    className="block w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Header Text */}
-        <h1 className="text-4xl font-bold drop-shadow-md">
-          <span>{headerText}</span>
-        </h1>
-      </div>
+      <h1 className="text-lg md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
+        <span>{headerText}</span>
+      </h1>
     </div>
   );
 }
