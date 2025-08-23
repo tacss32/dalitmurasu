@@ -2,7 +2,7 @@ name: Deploy Dalitmurasu
 
 on:
   push:
-    branches: [ "main" ] # or master if that’s your branch
+    branches: [ "main" ] # change if your branch is master
 
 jobs:
   deploy:
@@ -17,22 +17,35 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies & build
+      # --- FRONTEND ---
+      - name: Install dependencies & build frontend
         run: |
-          npm ci
+          cd client
+          npm install
           npm run build
 
-      - name: Deploy to server via rsync
+      - name: Deploy frontend via rsync
         uses: burnett01/rsync-deployments@5.2
         with:
           switches: -avzr --delete
-          path: dist/
+          path: client/dist/
           remote_path: /var/www/html/dalitmurasu/client/dist
           remote_host: dalitmurasu.com
           remote_user: deploy
           remote_key: ${{ secrets.DEPLOY_KEY }}
 
-      - name: Restart backend via SSH
+      # --- BACKEND ---
+      - name: Deploy backend via rsync
+        uses: burnett01/rsync-deployments@5.2
+        with:
+          switches: -avzr --delete
+          path: server/
+          remote_path: /var/www/html/dalitmurasu/server
+          remote_host: dalitmurasu.com
+          remote_user: deploy
+          remote_key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Install backend dependencies & restart
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: dalitmurasu.com
@@ -40,6 +53,7 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd /var/www/html/dalitmurasu/server
-            git pull origin main
-            npm ci
+            npm install --production
             pm2 restart server_api
+
+
