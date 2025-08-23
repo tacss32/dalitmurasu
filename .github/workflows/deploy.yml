@@ -23,6 +23,8 @@ jobs:
           cd client
           npm install
           npm run build
+        env:
+          VITE_API: ${{ secrets.VITE_API }}
 
       - name: Deploy frontend via rsync
         uses: burnett01/rsync-deployments@5.2
