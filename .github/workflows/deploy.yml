@@ -1,0 +1,45 @@
+name: Deploy Dalitmurasu
+
+on:
+  push:
+    branches: [ "main" ] # or master if that’s your branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to server via rsync
+        uses: burnett01/rsync-deployments@5.2
+        with:
+          switches: -avzr --delete
+          path: dist/
+          remote_path: /var/www/html/dalitmurasu/client/dist
+          remote_host: dalitmurasu.com
+          remote_user: deploy
+          remote_key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Restart backend via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: dalitmurasu.com
+          username: deploy
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd /var/www/html/dalitmurasu/server
+            git pull origin main
+            npm ci
+            pm2 restart server_api
