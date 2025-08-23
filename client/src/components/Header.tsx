@@ -13,7 +13,7 @@ interface Category {
 
 
 // Accept 'text' as a prop
-export default function Header({ text }: { text?: string }) {
+export default function Header({ text,urlPath }: { text?: string ,urlPath?: string}) {
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -76,8 +76,9 @@ export default function Header({ text }: { text?: string }) {
   useEffect(() => {
     const fetchBanner = async () => {
       try {
+        const  banner = urlPath?urlPath: categorySlug
         const res = await fetch(
-          `${import.meta.env.VITE_API}api/post_header?category=${categorySlug}`
+          `${import.meta.env.VITE_API}api/post_header?category=${banner}`
         );
         const data = await res.json();
         if (res.ok && data && data.banner) {

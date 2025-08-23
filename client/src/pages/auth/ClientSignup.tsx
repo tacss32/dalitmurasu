@@ -87,6 +87,7 @@ export default function ClientSignup() {
   const handleGoogleSignup = () => {
     window.location.href = `${API_BASE}/api/auth/google`;
   };
+
  
   if (verifying) {
     return (
@@ -96,10 +97,30 @@ export default function ClientSignup() {
     );
   }
  
+  const handleBackToHome = () => {
+  navigate("/home");
+  };
   return (
-    <div className="min-h-screen flex items-center justify-center ">
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+     <div className={` bg-transparent`}>
+       <Link to="/">
+         <img
+           src={"/logo1.png"}
+           alt="logo"
+           className={"h-20"}
+         />
+       </Link>
+     </div>
+      <div className=" p-6 rounded shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-center"> Signup</h2>
+         <div className="flex justify-start mb-4">
+          <button
+            onClick={handleBackToHome}
+            className="text-blue-600 hover:underline flex items-center gap-1"
+          >
+            &larr; Back to Home
+          </button>
+        </div>
  
         <form onSubmit={handleSignup} className="space-y-4">
           <input
@@ -168,7 +189,7 @@ export default function ClientSignup() {
         <button
           onClick={handleGoogleSignup}
           type="button"
-          className="flex items-center justify-center gap-2 w-full bg-white border border-gray-300 py-2 rounded hover:shadow-md transition"
+          className="flex items-center justify-center gap-2 w-full  border border-gray-300 py-2 rounded hover:shadow-md transition"
         >
           <FcGoogle size={24} />
           <span className="text-gray-700 font-medium">Sign up with Google</span>

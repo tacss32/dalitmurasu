@@ -20,9 +20,14 @@ function drawCroppedImage(
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
 
-  canvas.width = crop.width;
-  canvas.height = crop.height;
+  // --- START OF FIX ---
 
+  // 1. Set the canvas size to the REAL pixel size of the crop from the original image.
+  canvas.width = Math.floor(crop.width * scaleX);
+  canvas.height = Math.floor(crop.height * scaleY);
+
+  // 2. Draw the high-resolution source image slice onto the now correctly-sized canvas.
+  // The destination width/height (last two arguments) should match the canvas size.
   ctx.drawImage(
     image,
     crop.x * scaleX,
@@ -31,11 +36,12 @@ function drawCroppedImage(
     crop.height * scaleY,
     0,
     0,
-    crop.width,
-    crop.height
+    canvas.width, // Use the new, correct width
+    canvas.height // Use the new, correct height
   );
+  
+  // --- END OF FIX ---
 }
-
 export default function AddHeaderImage() {
   const SERVER_URL = import.meta.env.VITE_API;
 
@@ -226,6 +232,9 @@ export default function AddHeaderImage() {
               onChange={handleImageSelect}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             />
+             <p className="mt-2 text-sm text-gray-500">
+              Tip: Upload an image with a 5:2 ratio for the best results.
+            </p>
           </div>
 
           {imageUrl && (

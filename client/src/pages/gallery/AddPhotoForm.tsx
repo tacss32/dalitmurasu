@@ -27,39 +27,46 @@ const fileToDataURL = (file: File): Promise<string> => {
 
 // Helper function to get a cropped image blob
 const getCroppedImageBlob = (
-  image: HTMLImageElement,
-  crop: PixelCrop
+  image: HTMLImageElement,
+  crop: PixelCrop
 ): Promise<Blob | null> => {
-  return new Promise((resolve) => {
-    const canvas = document.createElement("canvas");
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas");
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
 
-    canvas.width = crop.width;
-    canvas.height = crop.height;
-    const ctx = canvas.getContext("2d");
+    // --- START OF FIX ---
 
-    if (!ctx) {
-      resolve(null);
-      return;
-    }
+    // 1. Set canvas dimensions to the full-resolution crop size.
+    canvas.width = Math.floor(crop.width * scaleX);
+    canvas.height = Math.floor(crop.height * scaleY);
 
-    ctx.drawImage(
-      image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
-      0,
-      0,
-      crop.width,
-      crop.height
-    );
+    const ctx = canvas.getContext("2d");
 
-    canvas.toBlob((blob) => {
-      resolve(blob);
-    }, "image/jpeg", 0.95);
-  });
+    if (!ctx) {
+      resolve(null);
+      return;
+    }
+
+    // 2. Draw the high-resolution slice onto the correctly-sized canvas.
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      canvas.width,  // Use the new, larger canvas width for the destination
+      canvas.height  // Use the new, larger canvas height for the destination
+    );
+
+    // --- END OF FIX ---
+
+    canvas.toBlob((blob) => {
+      resolve(blob);
+    }, "image/jpeg", 0.95);
+  });
 };
 
 const AddPhotoForm: React.FC = () => {
