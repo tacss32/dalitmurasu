@@ -12,10 +12,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Node
+      - name: Setup Node (v22)
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 22
 
       # --- FRONTEND ---
       - name: Install dependencies & build frontend
@@ -53,7 +53,7 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd /var/www/html/dalitmurasu/server
-            npm install --production
+            npm ci --omit=dev
             pm2 restart server_api
 
 
