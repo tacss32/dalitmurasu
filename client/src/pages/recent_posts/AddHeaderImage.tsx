@@ -39,7 +39,7 @@ function drawCroppedImage(
     canvas.width, // Use the new, correct width
     canvas.height // Use the new, correct height
   );
-  
+
   // --- END OF FIX ---
 }
 export default function AddHeaderImage() {
@@ -88,7 +88,7 @@ export default function AddHeaderImage() {
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
-      const aspect = 5 / 2;
+      const aspect = 4 / 1;
       const initialPercentCrop = centerCrop(
         makeAspectCrop({ unit: "%", width: 90 }, aspect, width, height),
         width,
@@ -232,16 +232,15 @@ export default function AddHeaderImage() {
               onChange={handleImageSelect}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             />
-             <p className="mt-2 text-sm text-gray-500">
-              Tip: Upload an image with a 5:2 ratio for the best results.
-            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Tip: Upload an image with a 4:1 ratio for the best results.
+            </p>
           </div>
 
           {imageUrl && (
             <div className="space-y-4">
               <div className="text-sm bg-blue-50 text-gray-600 p-3 rounded-md">
-                <strong>Tip:</strong> Adjust crop area. Aspect ratio is fixed at
-                5:2.
+                <strong>Tip:</strong> Adjust crop area.
               </div>
 
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
@@ -249,7 +248,7 @@ export default function AddHeaderImage() {
                   crop={crop}
                   onChange={(_, percentCrop) => setCrop(percentCrop)}
                   onComplete={(pixelCrop) => setCompletedCrop(pixelCrop)}
-                  aspect={5 / 2}
+                  aspect={4 / 1}
                   minWidth={100}
                   minHeight={40}
                   keepSelection
