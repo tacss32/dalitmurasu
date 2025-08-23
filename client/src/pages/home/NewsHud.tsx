@@ -4,7 +4,7 @@ import Card from "../../components/Card";
 import MainBanner from "../../components/MainBanner";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import aboutImage from "../../images/about.png";
+import aboutImage from "/about.png";
 
 // Interface for a News Post, updated to include a 'source' field
 type PostType = {
