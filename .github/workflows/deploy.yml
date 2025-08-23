@@ -27,7 +27,7 @@ jobs:
       - name: Deploy frontend via rsync
         uses: burnett01/rsync-deployments@5.2
         with:
-          switches: -avzr --delete
+          switches: -avzr --delete --exclude='.env'
           path: client/dist/
           remote_path: /var/www/html/dalitmurasu/client/dist
           remote_host: dalitmurasu.com
@@ -38,7 +38,7 @@ jobs:
       - name: Deploy backend via rsync
         uses: burnett01/rsync-deployments@5.2
         with:
-          switches: -avzr --delete
+          switches: -avzr --delete --exclude='.env' --exclude='uploads/'
           path: server/
           remote_path: /var/www/html/dalitmurasu/server
           remote_host: dalitmurasu.com
