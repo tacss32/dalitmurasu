@@ -367,6 +367,7 @@ function RichTextEditor({
         {toolbarButtons.map((button, index) => (
           <button
             key={index}
+            type="button" // FIX: Prevents form submission
             onMouseDown={(e) => {
               // Use onMouseDown to prevent editor blur
               e.preventDefault();
@@ -385,6 +386,7 @@ function RichTextEditor({
         {/* Color Picker */}
         <div className="relative" ref={colorPickerRef}>
           <button
+            type="button" // FIX: Prevents form submission
             onMouseDown={handleColorPickerToggle}
             className="p-2 hover:bg-gray-200 rounded-md transition-colors duration-200 text-gray-700 hover:text-gray-900 flex items-center gap-1"
             title="Text Color"
@@ -402,6 +404,7 @@ function RichTextEditor({
                 {colorPalette.map((color, index) => (
                   <button
                     key={index}
+                    type="button" // Also set type here for safety
                     className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
                     style={{ backgroundColor: color }}
                     onClick={() => handleColorChange(color)}
@@ -426,6 +429,7 @@ function RichTextEditor({
         <div className="w-px h-6 bg-gray-300 mx-2" />
 
         <button
+          type="button" // FIX: Prevents form submission
           onMouseDown={handleImageButtonClick} // Use the new handler
           className="p-2 hover:bg-gray-200 rounded-md transition-colors duration-200 text-gray-700 hover:text-gray-900 flex items-center gap-2"
           title="Insert Image"
@@ -436,77 +440,77 @@ function RichTextEditor({
       </div>
 
       {/* Editor */}
-         <div className="relative">
-      <div
-        ref={editorRef}
-        contentEditable
-        onInput={handleEditorInput}
-        onClick={handleEditorClick}
-        onFocus={handleEditorFocus}
-        className={`min-h-96 p-3 border-2 overflow-auto border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none bg-white text-left prose prose-sm max-w-none ${
-          !content ? "is-empty" : ""
-        }`}
-        style={{
-          minHeight: "100px",
-          height: "300px", // Set a fixed height
-           overflowY: "auto",
-          direction: "ltr",
-        }}
-        suppressContentEditableWarning={true}
-      />
-      <style>
-        {`
-          .is-empty:before {
-            content: 'Start typing your content here...';
-            position: absolute;
-            color: #a1a1aa; /* Zinc 400 */
-            pointer-events: none;
-            left: 1rem;
-            top: 1rem;
-          }
-          div[contenteditable] ul {
-            list-style-type: disc !important;
-            margin-left: 1.5rem !important;
-            padding-left: 0.5rem !important;
-          }
-          div[contenteditable] ol {
-            list-style-type: decimal !important;
-            margin-left: 1.5rem !important;
-            padding-left: 0.5rem !important;
-          }
-          div[contenteditable] li {
-            margin-bottom: 0.25rem !important;
-            display: list-item !important;
-          }
-          div[contenteditable] blockquote {
-            border-left: 4px solid #e5e7eb;
-            padding-left: 1rem;
-            margin: 1rem 0;
-            font-style: italic;
-            color: #6b7280;
-          }
-          div[contenteditable] img {
-            user-select: none;
-          }
-          div[contenteditable] img.float-left {
-            float: left;
-            margin: 0 1rem 1rem 0;
-          }
-          div[contenteditable] img.float-right {
-            float: right;
-            margin: 0 0 1rem 1rem;
-          }
-          div[contenteditable] img.block {
-            display: block;
-            margin: 1rem auto;
-          }
-          /* Add this new CSS rule for links */
-          div[contenteditable] a {
-            color: #3b82f6; /* Tailwind's blue-500 */
-            text-decoration: underline;
-          }
-        `}
-      </style>
+      <div className="relative">
+        <div
+          ref={editorRef}
+          contentEditable
+          onInput={handleEditorInput}
+          onClick={handleEditorClick}
+          onFocus={handleEditorFocus}
+          className={`min-h-96 p-3 border-2 overflow-auto border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none bg-white text-left prose prose-sm max-w-none ${
+            !content ? "is-empty" : ""
+          }`}
+          style={{
+            minHeight: "100px",
+            height: "300px", // Set a fixed height
+            overflowY: "auto",
+            direction: "ltr",
+          }}
+          suppressContentEditableWarning={true}
+        />
+        <style>
+          {`
+            .is-empty:before {
+              content: 'Start typing your content here...';
+              position: absolute;
+              color: #a1a1aa; /* Zinc 400 */
+              pointer-events: none;
+              left: 1rem;
+              top: 1rem;
+            }
+            div[contenteditable] ul {
+              list-style-type: disc !important;
+              margin-left: 1.5rem !important;
+              padding-left: 0.5rem !important;
+            }
+            div[contenteditable] ol {
+              list-style-type: decimal !important;
+              margin-left: 1.5rem !important;
+              padding-left: 0.5rem !important;
+            }
+            div[contenteditable] li {
+              margin-bottom: 0.25rem !important;
+              display: list-item !important;
+            }
+            div[contenteditable] blockquote {
+              border-left: 4px solid #e5e7eb;
+              padding-left: 1rem;
+              margin: 1rem 0;
+              font-style: italic;
+              color: #6b7280;
+            }
+            div[contenteditable] img {
+              user-select: none;
+            }
+            div[contenteditable] img.float-left {
+              float: left;
+              margin: 0 1rem 1rem 0;
+            }
+            div[contenteditable] img.float-right {
+              float: right;
+              margin: 0 0 1rem 1rem;
+            }
+            div[contenteditable] img.block {
+              display: block;
+              margin: 1rem auto;
+            }
+            /* Add this new CSS rule for links */
+            div[contenteditable] a {
+              color: #3b82f6; /* Tailwind's blue-500 */
+              text-decoration: underline;
+            }
+          `}
+        </style>
         {/* Image Controls */}
         {selectedImage && (
           <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg border p-3 z-10">
@@ -547,6 +551,7 @@ function RichTextEditor({
                 />
               </div>
               <button
+                type="button" // Also set type here for safety
                 onClick={() => handleImageDelete(selectedImage)}
                 className="w-full px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
               >
