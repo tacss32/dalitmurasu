@@ -78,27 +78,26 @@ connectDB()
     // ------------------------------------------------------------------------
     // Static Assets (for PDFs and other uploads)
     // ------------------------------------------------------------------------
-// app.use("/uploads", (req, res, next) => {
-//   res.header("Access-Control-Allow-Origin", "*"); // Or use whitelist logic
-//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//   next();
-// });
+    // app.use("/uploads", (req, res, next) => {
+    //   res.header("Access-Control-Allow-Origin", "*"); // Or use whitelist logic
+    //   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    //   next();
+    // });
 
-// app.use("/uploads", express.static(path.join(__dirname, "src/uploads")));
-const mime = require("mime-types");
+    const mime = require("mime-types");
 
-app.use("/uploads", (req, res, next) => {
-  const contentType = mime.lookup(req.path);
-  if (contentType) {
-    res.setHeader("Content-Type", contentType);
-  }
+    app.use("/uploads", (req, res, next) => {
+      const contentType = mime.lookup(req.path);
+      if (contentType) {
+        res.setHeader("Content-Type", contentType);
+      }
 
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  next();
-});
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      next();
+    });
 
-// ✅ Fix path: serve from src/uploads/
-app.use("/uploads", express.static(path.join(__dirname, "src", "uploads")));
+    // ✅ Fix path: serve from src/uploads/
+    app.use("/uploads", express.static(path.join(__dirname, "src", "uploads")));
 
     // ------------------------------------------------------------------------
     // API Routes
