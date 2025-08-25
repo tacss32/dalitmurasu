@@ -6,8 +6,8 @@ exports.getChronologicalView = async (req, res) => {
       {
         $addFields: {
           categoryName: "$category", // Category is stored as string, no lookup needed
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
+          year: { $year: "$date" },
+          month: { $month: "$date" },
         },
       },
       {
@@ -15,7 +15,7 @@ exports.getChronologicalView = async (req, res) => {
           categoryName: { $in: ["Editorial", "தலையங்கம்"] }, // ✅ Filter for required categories
         },
       },
-      { $sort: { createdAt: -1 } },
+      { $sort: { date: -1 } },
       {
         $group: {
           _id: {
@@ -30,7 +30,7 @@ exports.getChronologicalView = async (req, res) => {
               subtitle: "$subtitle",
               content: "$content",
               images: "$images",
-              createdAt: "$createdAt",
+              date: "$date",
               author: "$author",
               category: "$category",
             },
