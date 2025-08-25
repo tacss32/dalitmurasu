@@ -5,14 +5,14 @@ exports.getChronologicalView = async (req, res) => {
     const result = await UniversalPost.aggregate([
       {
         $addFields: {
-          categoryName: "$category", // Category is stored as string, no lookup needed
+          categoryName: "$category",
           year: { $year: "$date" },
           month: { $month: "$date" },
         },
       },
       {
         $match: {
-          categoryName: { $in: ["Editorial", "தலையங்கம்"] }, // ✅ Filter for required categories
+          categoryName: { $in: ["Editorial", "தலையங்கம்"] },
         },
       },
       { $sort: { date: -1 } },
@@ -30,7 +30,13 @@ exports.getChronologicalView = async (req, res) => {
               subtitle: "$subtitle",
               content: "$content",
               images: "$images",
-              date: "$date",
+              // ✅ force ISO string
+              date: {
+                $dateToString: {
+                  format: "%Y-%m-%dT%H:%M:%S.%LZ",
+                  date: "$date",
+                },
+              },
               author: "$author",
               category: "$category",
             },
