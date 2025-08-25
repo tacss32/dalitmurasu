@@ -141,7 +141,7 @@ export default function AdminSidebar() {
       icon: <MdArticle className="text-xl" />,
       mainLink: "/admin/books",
       subLinks: [
-        { label: "Add New", href: "/admin/books/create", icon: <MdAdd /> },
+        // { label: "Add New", href: "/admin/books/create", icon: <MdAdd /> },
       ],
     },
     {

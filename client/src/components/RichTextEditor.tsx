@@ -351,7 +351,7 @@ function RichTextEditor({
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-3 bg-white text-black rounded-xl border">
+    <div className="w-full mx-auto p-3 bg-white text-black rounded-xl border">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-lg border mb-4">
         <select
@@ -447,12 +447,12 @@ function RichTextEditor({
           onInput={handleEditorInput}
           onClick={handleEditorClick}
           onFocus={handleEditorFocus}
-          className={`min-h-96 p-3 border-2 overflow-auto border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none bg-white text-left prose prose-sm max-w-none ${
+          className={`min-h-96 p-3 border-2 overflow-auto border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none bg-white text-left prose prose-sm w-full ${
             !content ? "is-empty" : ""
           }`}
           style={{
             minHeight: "100px",
-            height: "300px", // Set a fixed height
+            height: "450px", // Set a fixed height
             overflowY: "auto",
             direction: "ltr",
           }}
