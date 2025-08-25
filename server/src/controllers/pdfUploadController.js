@@ -3,15 +3,15 @@ const UserViewHistory = require("../models/UserViewHistory");
 const jwt = require("jsonwebtoken");
 const ClientUser = require("../models/ClientUser");
 
+
 // Create PDF
 async function createPdfUpload(req, res) {
   try {
     const { title, subtitle, category, date, freeViewLimit, visibility } = req.body;
-    const BASE_URL = process.env.BASE_URL
     const imageFile = req.files?.image?.[0];
 
-    const pdfUrl = req.files?.pdf?.[0] ? `/uploads/pdfs/${req.files.pdf[0].filename}` : null;
-    const imageUrl = imageFile ? `${BASE_URL}/uploads/images/${imageFile.filename}` : ""
+    const pdfUrl = req.files?.pdf?.[0] ? `uploads/pdfs/${req.files.pdf[0].filename}` : null;
+    const imageUrl = imageFile ? `uploads/images/${imageFile.filename}` : ""
 
     const newPdf = new PdfUpload({
       title,

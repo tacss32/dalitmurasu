@@ -13,7 +13,7 @@ import {
   MdImage,
   MdLogout,
   MdPhotoCamera,
-  // MdPictureAsPdf,
+  MdPictureAsPdf,
   MdMailOutline,
 } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
@@ -166,14 +166,14 @@ export default function AdminSidebar() {
         // { label: "Add New", href: "/admin/books/create", icon: <MdAdd /> },
       ],
     },
-    // {
-    //   title: "PDF Uploads",
-    //   icon: <MdPictureAsPdf className="text-xl" />,
-    //   mainLink: "/admin/pdf-uploads",
-    //   subLinks: [
-    //     { label: "Add New", href: "/admin/pdf-uploads/create", icon: <MdAdd /> },
-    //   ],
-    // },
+    {
+      title: "PDF Uploads",
+      icon: <MdPictureAsPdf className="text-xl" />,
+      mainLink: "/admin/pdf-uploads",
+      subLinks: [
+        { label: "Add New", href: "/admin/pdf-uploads/create", icon: <MdAdd /> },
+      ],
+    },
     {
       title: "Notifications",
       icon: <MdNotifications className="text-xl" />,
