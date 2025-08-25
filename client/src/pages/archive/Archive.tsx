@@ -251,7 +251,7 @@ export default function Archive() {
     if (error) {
         return (
             <div className="flex flex-col gap-5">
-                <Header text="தலித் முரசு களஞ்சியம் " />
+                <Header text="தலித் முரசு களஞ்சியம் " urlPath="Archive" />
                 <p className="p-4 text-red-600 text-center">{error}</p>
             </div>
         );
@@ -261,7 +261,7 @@ export default function Archive() {
     if (pdfs.length === 0) {
         return (
             <div className="flex flex-col gap-5">
-                <Header text="தலித் முரசு களஞ்சியம் (PDFs)" />
+                <Header text="தலித் முரசு களஞ்சியம் (PDFs)" urlPath="Archive" />
                 <p className="p-4 text-center text-gray-600">No Archive PDFs found.</p>
             </div>
         );
@@ -269,7 +269,7 @@ export default function Archive() {
 
     return (
         <div className="flex flex-col gap-5">
-            <Header text="தலித் முரசு களஞ்சியம் " />
+            <Header text="தலித் முரசு களஞ்சியம் " urlPath="Archive" />
 
             <div className="flex px-4 mt-2 gap-4">
                 {/* Left Sidebar - Year & Month Navigation */}

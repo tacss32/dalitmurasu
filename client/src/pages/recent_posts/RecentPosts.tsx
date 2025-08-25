@@ -60,7 +60,7 @@ export default function RecentPosts() {
 
   return (
     <>
-      <Header text="அண்மைப் பதிவுகள்" />
+      <Header text="அண்மைப் பதிவுகள்" urlPath="recent posts" />
 
       <div className="flex flex-col gap-5 p-6 md:px-8 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-6">

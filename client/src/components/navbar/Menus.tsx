@@ -555,7 +555,11 @@ useEffect(() => {
         </button>
       </li>
 
-      {/* Cart */}
+      
+
+      {isAuthenticated ? (
+        <>
+        {/* Cart */}
       <li className="relative group">
         <Link
           to="/cart"
@@ -573,9 +577,6 @@ useEffect(() => {
           </span>
         </Link>
       </li>
-
-      {isAuthenticated ? (
-        <>
           {/* Profile Icon with Dropdown */}
           <li className="relative" ref={profileDropdownRef}>
             <button

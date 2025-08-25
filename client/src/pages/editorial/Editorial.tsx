@@ -11,7 +11,7 @@ export type PostType = {
   subtitle?: string;
   content?: string;
   images?: string[]; // changed from [string] tuple for flexibility
-  createdAt: string; // ISO
+  date: string; // ISO
   author: string;
   category: string; // expecting 'Editorial', etc.
 };
@@ -24,7 +24,7 @@ export interface PdfEntry {
   category: { en: string; ta: string };
   imageUrl?: string;
   pdfUrl: string;
-  createdAt: string; // ISO
+  
 }
 
 // Unified Editorial item (article or pdf)
@@ -75,7 +75,7 @@ const makeEditorialItemFromPost = (p: PostType): EditorialItem => ({
   title: p.title,
   subtitle: p.subtitle,
   image: p.images?.[0],
-  dateISO: p.createdAt,
+  dateISO: p.date,
   isPdf: false,
   author: p.author,
   article: p,
@@ -86,7 +86,7 @@ const makeEditorialItemFromPdf = (pdf: PdfEntry): EditorialItem => ({
   title: pdf.title,
   subtitle: pdf.subtitle,
   image: pdf.imageUrl,
-  dateISO: pdf.date || pdf.createdAt,
+  dateISO: pdf.date || pdf.date,
   isPdf: true,
   pdfUrl: pdf.pdfUrl,
   pdf,
@@ -188,7 +188,7 @@ export default function Editorial() {
         const editorialCat = m.categories.find((c) => isEditorialCat(c.category));
         if (!editorialCat) return;
         editorialCat.posts.forEach((p) => {
-          const date = new Date(p.createdAt);
+          const date = new Date(p.date);
           const y = date.getFullYear();
           const mm = date.getMonth() + 1;
           map[y] = map[y] || {};
@@ -201,7 +201,7 @@ export default function Editorial() {
     // from pdfs
     pdfs.forEach((pdf) => {
       if (!isEditorialCat(pdf.category?.en)) return;
-      const date = new Date(pdf.date || pdf.createdAt);
+      const date = new Date(pdf.date || pdf.date);
       const y = date.getFullYear();
       const mm = date.getMonth() + 1;
       map[y] = map[y] || {};
@@ -314,7 +314,7 @@ export default function Editorial() {
                     subtitle={item.article!.subtitle}
                     author={item.article!.author}
                     category={item.article!.category}
-                    date={item.article!.createdAt}
+                    date={item.article!.date}
                     image={item.article!.images?.[0]}
                   />
                 </div>
