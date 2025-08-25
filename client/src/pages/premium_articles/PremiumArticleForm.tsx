@@ -384,7 +384,7 @@ export default function PremiumArticleForm() {
   };
 
   return (
-    <div className="container mx-auto p-6 bg-gray-800 text-white rounded-lg shadow-lg relative">
+    <div className="container p-6 bg-gray-800 text-white rounded-lg shadow-lg relative w-4/5 mx-auto">
       <h2 className="text-3xl font-bold mb-6 text-yellow-400">
         {isEditing ? "Edit Premium Article" : "Create New Premium Article"}
       </h2>
@@ -400,7 +400,7 @@ export default function PremiumArticleForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 ">
         <div>
           <label htmlFor="title" className="block text-lg font-medium mb-2">
             Title:
@@ -627,7 +627,7 @@ export default function PremiumArticleForm() {
           )}
         </div>
 
-        <div className="flex items-center space-x-4">
+        {/* <div className="flex items-center space-x-4">
           <label htmlFor="isHome" className="flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -650,7 +650,7 @@ export default function PremiumArticleForm() {
             />
             <span className="ml-2 text-lg">Display as Recent Post</span>
           </label>
-        </div>
+        </div> */}
 
         <div>
           <label

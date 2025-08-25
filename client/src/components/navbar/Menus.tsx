@@ -633,7 +633,7 @@ useEffect(() => {
           </li>
 
           {/* Bookmarks */}
-          {authenticatedNavItems.map(({ href, label, icon }, index) => (
+          {/* {authenticatedNavItems.map(({ href, label, icon }, index) => (
             <li
               key={index}
               className="relative hover:text-highlight-1 transition-colors duration-150 ease-in-out group"
@@ -658,7 +658,7 @@ useEffect(() => {
                 </span>
               </Link>
             </li>
-          ))}
+          ))} */}
 
           {/* Notifications */}
           <li className="relative" ref={dropdownRef}>

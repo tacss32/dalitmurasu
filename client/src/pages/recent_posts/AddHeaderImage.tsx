@@ -187,7 +187,7 @@ export default function AddHeaderImage() {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center py-10 px-4">
       <div className="w-full max-w-5xl bg-white border shadow-xl rounded-2xl p-8 space-y-8">
         <h2 className="text-3xl font-bold text-center text-indigo-700">
-          Upload Banner
+          Upload Header
         </h2>
 
         {message && (
@@ -216,7 +216,7 @@ export default function AddHeaderImage() {
               <option value="">-- Select Category --</option>
               {categories.map((cat) => (
                 <option key={cat._id} value={cat.name.en}>
-                  {cat.name.en}
+                  {cat.name.ta}
                 </option>
               ))}
             </select>
@@ -224,7 +224,7 @@ export default function AddHeaderImage() {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Upload Banner Image
+              Upload Header Image
             </label>
             <input
               type="file"
@@ -308,7 +308,7 @@ export default function AddHeaderImage() {
                   Uploading...
                 </span>
               ) : (
-                "Upload Cropped Banner"
+                "Upload Cropped Header"
               )}
             </button>
           </div>
