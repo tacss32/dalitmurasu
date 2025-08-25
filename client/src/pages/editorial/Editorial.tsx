@@ -10,7 +10,7 @@ export type PostType = {
   title: string;
   subtitle?: string;
   content?: string;
-  images?: string[]; // changed from [string] tuple for flexibility
+  images?: string[];
   date: string; // ISO
   author: string;
   category: string; // expecting 'Editorial', etc.
@@ -24,7 +24,6 @@ export interface PdfEntry {
   category: { en: string; ta: string };
   imageUrl?: string;
   pdfUrl: string;
-  
 }
 
 // Unified Editorial item (article or pdf)
@@ -67,7 +66,9 @@ interface ChronologicalResp {
 const isEditorialCat = (cat: string) => {
   // match common variants
   const norm = (cat || "").trim().toLowerCase();
-  return norm === "editorial" || norm === "தலையங்கம்" || norm === "thalaiyangam";
+  return (
+    norm === "editorial" || norm === "தலையங்கம்" || norm === "thalaiyangam"
+  );
 };
 
 const makeEditorialItemFromPost = (p: PostType): EditorialItem => ({
@@ -106,7 +107,9 @@ interface PdfCardProps {
 const PdfCard: React.FC<PdfCardProps> = ({ item, className }) => {
   return (
     <a
-      href={`https://docs.google.com/viewer?url=${encodeURIComponent(item.pdfUrl || "")}\u0026embedded=true`}
+      href={`https://docs.google.com/viewer?url=${encodeURIComponent(
+        item.pdfUrl || ""
+      )}\u0026embedded=true`}
       target="_blank"
       rel="noopener noreferrer"
       className={
@@ -115,7 +118,11 @@ const PdfCard: React.FC<PdfCardProps> = ({ item, className }) => {
       }
     >
       {item.image && (
-        <img src={item.image} alt={item.title} className="w-full h-40 object-cover" />
+        <img
+          src={item.image}
+          alt={item.title}
+          className="w-full h-40 object-cover"
+        />
       )}
       <div className="p-3">
         <h3 className="text-sm font-semibold line-clamp-2">{item.title}</h3>
@@ -144,7 +151,9 @@ export default function Editorial() {
       setError(null);
       try {
         const [chronRes, pdfRes] = await Promise.all([
-          fetch(`${SERVER_URL}api/chronological`).then((r) => r.json() as Promise<ChronologicalResp>),
+          fetch(`${SERVER_URL}api/chronological`).then(
+            (r) => r.json() as Promise<ChronologicalResp>
+          ),
           axios.get(`${SERVER_URL}api/pdf-uploads`),
         ]);
 
@@ -185,7 +194,9 @@ export default function Editorial() {
     // from chronological (articles)
     chronological.forEach((yearData) => {
       yearData.data.months.forEach((m) => {
-        const editorialCat = m.categories.find((c) => isEditorialCat(c.category));
+        const editorialCat = m.categories.find((c) =>
+          isEditorialCat(c.category)
+        );
         if (!editorialCat) return;
         editorialCat.posts.forEach((p) => {
           const date = new Date(p.date);
@@ -214,7 +225,10 @@ export default function Editorial() {
       const y = Number(yStr);
       Object.keys(map[y]).forEach((mStr) => {
         const m = Number(mStr);
-        map[y][m].sort((a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime());
+        map[y][m].sort(
+          (a, b) =>
+            new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime()
+        );
       });
     });
 
@@ -242,7 +256,9 @@ export default function Editorial() {
 
   const recentItems = latestEditorial?.items?.slice(0, 4) || [];
   const recentCount = latestEditorial?.items?.length || 0;
-  const recentMonthName = latestEditorial ? getMonthName(latestEditorial.month, "en-US") : "";
+  const recentMonthName = latestEditorial
+    ? getMonthName(latestEditorial.month, "en-US")
+    : "";
 
   // Build year summary list with counts per month (Editorial only)
   const yearSummaries = useMemo(() => {
@@ -255,12 +271,16 @@ export default function Editorial() {
         .sort((a, b) => b - a);
       return {
         year: y,
-        months: months.map((m) => ({ month: m, count: editorialMap[y][m].length })),
+        months: months.map((m) => ({
+          month: m,
+          count: editorialMap[y][m].length,
+        })),
       };
     });
   }, [editorialMap]);
 
-  const selectedYearSummary = yearSummaries.find((y) => y.year === selectedYear) || null;
+  const selectedYearSummary =
+    yearSummaries.find((y) => y.year === selectedYear) || null;
 
   const handleYearSelect = (y: number) => setSelectedYear(y);
 
@@ -272,10 +292,12 @@ export default function Editorial() {
     return (
       <div className="flex flex-col gap-5">
         <Header text="தலையங்கம்" urlPath="Editorial" />
-        <div className="flex justify-center items-center min-h-screen text-highlight-1"> {/* Changed text-white to text-highlight-1 for consistency */}
-        {/* Simple loading circle */}
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
-      </div>
+        <div className="flex justify-center items-center min-h-screen text-highlight-1">
+          {" "}
+          {/* Changed text-white to text-highlight-1 for consistency */}
+          {/* Simple loading circle */}
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
+        </div>
       </div>
     );
   }
@@ -300,10 +322,12 @@ export default function Editorial() {
             <h2 className="text-xl font-bold">
               {recentMonthName} {latestEditorial.year}
             </h2>
-            <span className="text-sm text-gray-600">Recently Uploaded ({recentCount})</span>
+            <span className="text-sm text-gray-600">
+              Recently Uploaded ({recentCount})
+            </span>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-3">
-            {recentItems.map((item) => (
+            {recentItems.map((item) =>
               item.isPdf ? (
                 <PdfCard key={item._id} item={item} />
               ) : (
@@ -319,10 +343,12 @@ export default function Editorial() {
                   />
                 </div>
               )
-            ))}
+            )}
           </div>
           <button
-            onClick={() => handleMonthNav(latestEditorial.year, latestEditorial.month)}
+            onClick={() =>
+              handleMonthNav(latestEditorial.year, latestEditorial.month)
+            }
             className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             More...
@@ -357,10 +383,15 @@ export default function Editorial() {
             selectedYearSummary.months.map((m) => (
               <div key={m.month} className="mb-4">
                 <button
-                  onClick={() => handleMonthNav(selectedYearSummary.year, m.month)}
+                  onClick={() =>
+                    handleMonthNav(selectedYearSummary.year, m.month)
+                  }
                   className="w-full text-left border-b pb-1 hover:text-blue-600"
                 >
-                  {getMonthName(m.month)} <span className="ml-1 text-sm text-gray-500">({m.count})</span>
+                  {getMonthName(m.month)}{" "}
+                  <span className="ml-1 text-sm text-gray-500">
+                    ({m.count})
+                  </span>
                 </button>
               </div>
             ))
