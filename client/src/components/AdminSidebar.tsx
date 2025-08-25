@@ -1,6 +1,21 @@
 import axios from "axios";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { MdStar, MdNotifications, MdVisibility, MdAttachMoney, MdSearch, MdAdd, MdAllInbox, MdArticle, MdCategory, MdImage, MdLogout, MdPhotoCamera, MdPictureAsPdf, MdMailOutline } from "react-icons/md";
+import {
+  MdStar,
+  MdNotifications,
+  MdVisibility,
+  MdAttachMoney,
+  MdSearch,
+  MdAdd,
+  MdAllInbox,
+  MdArticle,
+  MdCategory,
+  MdImage,
+  MdLogout,
+  MdPhotoCamera,
+  // MdPictureAsPdf,
+  MdMailOutline,
+} from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -22,19 +37,19 @@ interface CustomCategory {
 
 // NEW: Hardcoded categories to be added to the dropdown
 const customCategories: CustomCategory[] = [
-  { 
-    _id: "archive", 
-    name: { en: "Archive", ta: "தலித் முரசு களஞ்சியம் " }, 
-    isAvailable: true, 
-    isInBanner: false, 
-    setHeader: false 
+  {
+    _id: "archive",
+    name: { en: "Archive", ta: "தலித் முரசு களஞ்சியம் " },
+    isAvailable: true,
+    isInBanner: false,
+    setHeader: false,
   },
-  { 
-    _id: "shop", 
-    name: { en: "shop", ta: "அங்காடி" }, 
-    isAvailable: true, 
-    isInBanner: false, 
-    setHeader: false 
+  {
+    _id: "shop",
+    name: { en: "shop", ta: "அங்காடி" },
+    isAvailable: true,
+    isInBanner: false,
+    setHeader: false,
   },
 ];
 
@@ -100,7 +115,11 @@ export default function AdminSidebar() {
           href: "/admin/premium-articles",
           icon: <MdAllInbox />,
         },
-        { label: "Premium Users", href: "/admin/subscription-plans/Premium-users", icon: <MdAllInbox /> },
+        {
+          label: "Premium Users",
+          href: "/admin/subscription-plans/Premium-users",
+          icon: <MdAllInbox />,
+        },
       ],
     },
     {
@@ -109,7 +128,7 @@ export default function AdminSidebar() {
       mainLink: "/admin/addphotos/upload",
       subLinks: [],
     },
-    
+
     {
       title: "Newsletter Image",
       icon: <MdMailOutline className="text-xl" />,
@@ -131,10 +150,13 @@ export default function AdminSidebar() {
       mainLink: "/admin/GetAll-posts",
       subLinks: [
         { label: "All Posts", href: "/admin/GetAll-posts", icon: <MdStar /> },
-        { label: "Pinned Posts", href: "/admin/pinned-posts", icon: <MdStar /> },
+        {
+          label: "Pinned Posts",
+          href: "/admin/pinned-posts",
+          icon: <MdStar />,
+        },
       ],
     },
-
 
     {
       title: "Books",
@@ -144,21 +166,29 @@ export default function AdminSidebar() {
         // { label: "Add New", href: "/admin/books/create", icon: <MdAdd /> },
       ],
     },
-    {
-      title: "PDF Uploads",
-      icon: <MdPictureAsPdf className="text-xl" />,
-      mainLink: "/admin/pdf-uploads",
-      subLinks: [
-        { label: "Add New", href: "/admin/pdf-uploads/create", icon: <MdAdd /> },
-      ],
-    },
+    // {
+    //   title: "PDF Uploads",
+    //   icon: <MdPictureAsPdf className="text-xl" />,
+    //   mainLink: "/admin/pdf-uploads",
+    //   subLinks: [
+    //     { label: "Add New", href: "/admin/pdf-uploads/create", icon: <MdAdd /> },
+    //   ],
+    // },
     {
       title: "Notifications",
       icon: <MdNotifications className="text-xl" />,
       mainLink: "/admin/notifications/view",
       subLinks: [
-        { label: "Send Notification", href: "/admin/notifications/send", icon: <MdAdd /> },
-        { label: "View All", href: "/admin/notifications/view", icon: <MdVisibility /> },
+        {
+          label: "Send Notification",
+          href: "/admin/notifications/send",
+          icon: <MdAdd />,
+        },
+        {
+          label: "View All",
+          href: "/admin/notifications/view",
+          icon: <MdVisibility />,
+        },
       ],
     },
     {
@@ -166,7 +196,11 @@ export default function AdminSidebar() {
       icon: <MdAllInbox className="text-xl" />,
       mainLink: "/admin/orders-dashboard",
       subLinks: [
-        { label: "View All Orders", href: "/admin/orders", icon: <MdAllInbox /> },
+        {
+          label: "View All Orders",
+          href: "/admin/orders",
+          icon: <MdAllInbox />,
+        },
       ],
     },
     {
@@ -174,10 +208,26 @@ export default function AdminSidebar() {
       icon: <MdAttachMoney className="text-xl" />,
       mainLink: "/admin/subscription-dashboard",
       subLinks: [
-        { label: "Add New Plan", href: "/admin/subscription-plans/create", icon: <MdAdd /> },
-        { label: "View All Plans", href: "/admin/subscription-plans", icon: <MdAllInbox /> },
-        { label: "Subscribed Users", href: "/admin/subscription-plans/subscribed-users", icon: <MdAllInbox /> },
-        { label: "Manually Add", href: "/admin/subscription-plans/manual-add", icon: <MdAdd /> },
+        {
+          label: "Add New Plan",
+          href: "/admin/subscription-plans/create",
+          icon: <MdAdd />,
+        },
+        {
+          label: "View All Plans",
+          href: "/admin/subscription-plans",
+          icon: <MdAllInbox />,
+        },
+        {
+          label: "Subscribed Users",
+          href: "/admin/subscription-plans/subscribed-users",
+          icon: <MdAllInbox />,
+        },
+        {
+          label: "Manually Add",
+          href: "/admin/subscription-plans/manual-add",
+          icon: <MdAdd />,
+        },
       ],
     },
   ];
@@ -247,11 +297,14 @@ export default function AdminSidebar() {
           const orderCreatedAt = new Date(order.createdAt).getTime();
           const lastCheckTime = lastCheck ? new Date(lastCheck).getTime() : 0;
 
-          return order.status === 'pending' && orderCreatedAt > lastCheckTime;
+          return order.status === "pending" && orderCreatedAt > lastCheckTime;
         });
         setNewOrdersCount(newPendingOrders.length);
       } else {
-        console.warn("Failed to fetch new orders or unexpected data format:", res.data);
+        console.warn(
+          "Failed to fetch new orders or unexpected data format:",
+          res.data
+        );
         setNewOrdersCount(0);
       }
     } catch (error) {
@@ -264,13 +317,14 @@ export default function AdminSidebar() {
   const fetchCategories = useCallback(async () => {
     setLoadingCategories(true);
     try {
-      const response = await axios.get<Category[]>(`${API_BASE_URL}api/categories`);
-      const fetchedCategories = response.data.filter(cat => cat.isAvailable);
-      
+      const response = await axios.get<Category[]>(
+        `${API_BASE_URL}api/categories`
+      );
+      const fetchedCategories = response.data.filter((cat) => cat.isAvailable);
+
       // Combine fetched categories with hardcoded ones
       const allCategories = [...fetchedCategories, ...customCategories];
       setCategories(allCategories);
-
     } catch (error) {
       console.error("Failed to fetch categories:", error);
       setCategories(customCategories); // Fallback to just custom categories on error
@@ -278,7 +332,6 @@ export default function AdminSidebar() {
       setLoadingCategories(false);
     }
   }, [API_BASE_URL]);
-
 
   useEffect(() => {
     performTokenVerification();
@@ -311,17 +364,17 @@ export default function AdminSidebar() {
       setIsSidebarOpen(false);
     };
 
-    const sidebarElement = document.querySelector('aside');
+    const sidebarElement = document.querySelector("aside");
     if (sidebarElement) {
-      sidebarElement.addEventListener('mouseleave', handleMouseLeave);
+      sidebarElement.addEventListener("mouseleave", handleMouseLeave);
     }
 
-    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener("mousemove", handleMouseMove);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener("mousemove", handleMouseMove);
       if (sidebarElement) {
-        sidebarElement.removeEventListener('mouseleave', handleMouseLeave);
+        sidebarElement.removeEventListener("mouseleave", handleMouseLeave);
       }
     };
   }, []);
@@ -384,7 +437,10 @@ export default function AdminSidebar() {
     window.addEventListener("keydown", handleKeyDown);
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchIconsContainerRef.current && !searchIconsContainerRef.current.contains(event.target as Node)) {
+      if (
+        searchIconsContainerRef.current &&
+        !searchIconsContainerRef.current.contains(event.target as Node)
+      ) {
         setIsSearchOpen(false);
       }
     };
@@ -399,51 +455,66 @@ export default function AdminSidebar() {
   // --- End Search Functionality ---
 
   return (
-    <aside className={`bg-gray-900 text-white p-6 flex flex-col h-screen fixed inset-y-0 left-0 z-10 transition-all duration-300 ${isSidebarOpen ? 'w-80 overflow-y-auto' : 'w-16 overflow-hidden'}`}>
+    <aside
+      className={`bg-gray-900 text-white p-6 flex flex-col h-screen fixed inset-y-0 left-0 z-10 transition-all duration-300 ${
+        isSidebarOpen ? "w-80 overflow-y-auto" : "w-16 overflow-hidden"
+      }`}
+    >
       <div className="flex items-center justify-between gap-2 mb-4 border-b border-gray-700 pb-4 ">
-        <Link to={"/admin/dashboard"} className={`flex items-center gap-2 ${isSidebarOpen ? 'block' : 'hidden'}`}>
+        <Link
+          to={"/admin/dashboard"}
+          className={`flex items-center gap-2 ${
+            isSidebarOpen ? "block" : "hidden"
+          }`}
+        >
           <h2 className="text-2xl font-extrabold text-yellow-400">
             Admin Panel
           </h2>
         </Link>
-        <div className="relative flex items-center gap-2" ref={searchIconsContainerRef}>
-    <button
-        onClick={handleSearchToggle}
-        aria-label="Open search"
-        className="relative text-yellow-400 hover:text-yellow-300 transition-colors duration-200 group"
-    >
-        <MdSearch className="text-2xl" />
-        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-            Search (Ctrl+K)
-        </span>
-    </button>
-
-    <Link
-        to="/admin/new-orders"
-        className="relative text-yellow-400 hover:text-yellow-300 transition-colors duration-200 group ml-2"
-        aria-label="New Orders Notifications"
-        onClick={() => {
-            setNewOrdersCount(0);
-            localStorage.setItem("lastNotificationCheck", new Date().toISOString());
-        }}
-    >
-        <MdNotifications className="text-2xl" />
-        {newOrdersCount > 0 && (
-            <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-0.5 py-0.5 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
-                {newOrdersCount}
+        <div
+          className="relative flex items-center gap-2"
+          ref={searchIconsContainerRef}
+        >
+          <button
+            onClick={handleSearchToggle}
+            aria-label="Open search"
+            className="relative text-yellow-400 hover:text-yellow-300 transition-colors duration-200 group"
+          >
+            <MdSearch className="text-2xl" />
+            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              Search (Ctrl+K)
             </span>
-        )}
-        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-            New Orders
-        </span>
-    </Link>
+          </button>
 
-    <button
-        onClick={handleLogout}
-        className="text-lg text-red-400 hover:text-red-300 transition-colors duration-200"
-    >
-        <MdLogout className="text-2xl" />
-    </button>
+          <Link
+            to="/admin/new-orders"
+            className="relative text-yellow-400 hover:text-yellow-300 transition-colors duration-200 group ml-2"
+            aria-label="New Orders Notifications"
+            onClick={() => {
+              setNewOrdersCount(0);
+              localStorage.setItem(
+                "lastNotificationCheck",
+                new Date().toISOString()
+              );
+            }}
+          >
+            <MdNotifications className="text-2xl" />
+            {newOrdersCount > 0 && (
+              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-0.5 py-0.5 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                {newOrdersCount}
+              </span>
+            )}
+            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              New Orders
+            </span>
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className="text-lg text-red-400 hover:text-red-300 transition-colors duration-200"
+          >
+            <MdLogout className="text-2xl" />
+          </button>
 
           {isSearchOpen && (
             <form
@@ -466,7 +537,9 @@ export default function AdminSidebar() {
                 disabled={loadingCategories}
               >
                 <option value="">
-                  {loadingCategories ? "Loading categories..." : "All Categories"}
+                  {loadingCategories
+                    ? "Loading categories..."
+                    : "All Categories"}
                 </option>
                 {categories.map((category) => (
                   <option key={category._id} value={category.name.en}>
@@ -510,7 +583,9 @@ export default function AdminSidebar() {
               className="flex items-center gap-3 text-lg font-semibold hover:text-yellow-300 transition-colors duration-200 py-2 group"
             >
               {section.icon}
-              <span className={`${isSidebarOpen ? 'block' : 'hidden'}`}>{section.title}</span>
+              <span className={`${isSidebarOpen ? "block" : "hidden"}`}>
+                {section.title}
+              </span>
             </Link>
             {isSidebarOpen && section.subLinks.length > 0 && (
               <div className="ml-8 mt-2 flex flex-col space-y-1">

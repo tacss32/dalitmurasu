@@ -143,6 +143,12 @@ export default function Editorial() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const safeParseDate = (d?: string): Date | null => {
+    if (!d) return null;
+    const t = Date.parse(d);
+    return isNaN(t) ? null : new Date(t);
+  };
+
   // Fetch data once
   useEffect(() => {
     let mounted = true;
@@ -212,9 +218,10 @@ export default function Editorial() {
     // from pdfs
     pdfs.forEach((pdf) => {
       if (!isEditorialCat(pdf.category?.en)) return;
-      const date = new Date(pdf.date || pdf.date);
-      const y = date.getFullYear();
-      const mm = date.getMonth() + 1;
+      const dateObj = safeParseDate(pdf.date);
+      if (!dateObj) return; // skip bad
+      const y = dateObj.getFullYear();
+      const mm = dateObj.getMonth() + 1;
       map[y] = map[y] || {};
       map[y][mm] = map[y][mm] || [];
       map[y][mm].push(makeEditorialItemFromPdf(pdf));
