@@ -3,7 +3,7 @@ const path = require("path");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const { cloudinary } = require("../config/cloudinary");
 const os = require("os");
-
+const fs = require("fs");
 
 // -----------------------------------
 // Cloudinary config (from .env)
@@ -53,46 +53,35 @@ const galleryUpload = multer({ storage: makeCloudinaryStorage("gallery", 1200, 8
 const uploadMultiple = multer({ storage: makeCloudinaryStorage("banners") });
 
 const combinedPdfUpload = multer({
-
   storage: multer.diskStorage({
-
     destination: (req, file, cb) => {
-
-      if (file.fieldname === "pdf") {
-
-        cb(null, path.join(__dirname, "../uploads/pdfs"));
-
-      } else if (file.fieldname === "image") {
-
-        cb(null, path.join(__dirname, "../uploads/images"));
-
-      } else {
-
-        cb(null, os.tmpdir()); // fallback for any unexpected field
-
-      }
-
-    },
-
-    filename: (req, file, cb) => {
-
-      const uniqueName = Date.now() + "_" + file.originalname;
-
-      cb(null, uniqueName);
-
-    },
-
-  }),
-
-}).fields([
-
-  { name: "pdf", maxCount: 1 },
-
-  { name: "image", maxCount: 1 },
-
-]);
-
+      let uploadPath;
  
+      if (file.fieldname === "pdf") {
+        uploadPath = path.join(__dirname, "../uploads/pdfs");
+      } else if (file.fieldname === "image") {
+        uploadPath = path.join(__dirname, "../uploads/images");
+      } else {
+        uploadPath = os.tmpdir(); // fallback
+      }
+ 
+      // ✅ Ensure directory exists
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+ 
+      cb(null, uploadPath);
+    },
+ 
+    filename: (req, file, cb) => {
+      const uniqueName = Date.now() + "_" + file.originalname;
+      cb(null, uniqueName);
+    },
+  }),
+}).fields([
+  { name: "pdf", maxCount: 1 },
+  { name: "image", maxCount: 1 },
+]); 
 
 
 

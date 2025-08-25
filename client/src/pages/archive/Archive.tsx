@@ -41,6 +41,7 @@ interface PdfCardProps {
     className?: string;
     onClick: (item: ArchiveItem) => void;
 }
+const SERVER_URL = import.meta.env.VITE_API;
 const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
     const d = new Date(item.dateISO);
     const dateStr = d.toLocaleDateString("en-US", {
@@ -57,7 +58,7 @@ const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
             }
         >
             <img
-                src={item.imageUrl}
+                src={SERVER_URL + item.imageUrl}
                 alt={item.title}
                 className="w-full h-auto object-contain mb-5 rounded-lg border border-gray-100"
                 onError={(e) => {
@@ -99,7 +100,7 @@ export default function Archive() {
     // New state for the subscription popup
     const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(false);
 
-    const SERVER_URL = import.meta.env.VITE_API;
+    // const SERVER_URL = import.meta.env.VITE_API;
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
