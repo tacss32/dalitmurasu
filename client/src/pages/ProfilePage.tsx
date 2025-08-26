@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { FaEdit } from "react-icons/fa";
 
-// Define interface for user data
+// Define interface for user 
 interface UserDetails {
   name: string;
   email: string;
