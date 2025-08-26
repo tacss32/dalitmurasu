@@ -11,9 +11,13 @@ async function createPdfUpload(req, res) {
     const imageFile = req.files?.image?.[0];
 
     const pdfUrl = req.files?.pdf?.[0]
-      ? `uploads/pdfs/${req.files.pdf[0].filename}`
+      ? // ? `uploads/pdfs/${req.files.pdf[0].filename}`
+        `uploads/pdfs/bot`
       : "";
-    const imageUrl = imageFile ? `uploads/images/${imageFile.filename}` : "";
+    const imageUrl = imageFile
+      ? // `uploads/images/${imageFile.filename}`
+        `uploads/images/bot`
+      : "";
 
     const newPdf = new PdfUpload({
       title,
@@ -147,10 +151,10 @@ async function updatePdf(req, res) {
       freeViewLimit,
       visibility,
     };
-    if (req.files?.pdf?.[0])
-      updateData.pdfUrl = `uploads/pdfs/${req.files.pdf[0].filename}`;
-    if (req.files?.image?.[0])
-      updateData.imageUrl = `uploads/images/${req.files.image[0].path}`;
+    if (req.files?.pdf?.[0]) updateData.pdfUrl = `uploads/pdfs/bot`;
+    // updateData.pdfUrl = `uploads/pdfs/${req.files.pdf[0].filename}`;
+    if (req.files?.image?.[0]) updateData.imageUrl = `uploads/images/bot`;
+    // updateData.imageUrl = `uploads/images/${req.files.image[0].path}`;
 
     const updatedPdf = await PdfUpload.findByIdAndUpdate(
       req.params.id,
