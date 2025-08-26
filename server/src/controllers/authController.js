@@ -9,23 +9,23 @@ const { URLSearchParams } = require("url");
 /* -----------------------------------------------------------------------------
  * Config helpers (frontend redirect targets)
  * --------------------------------------------------------------------------- */
-// const FRONTEND_BASE_FALLBACK_PROD = "https://dalit-murasu-4jxa.vercel.app";
-const FRONTEND_BASE_FALLBACK_PROD = "https://dalitmurasu.com";
-const FRONTEND_BASE_FALLBACK_DEV = "http://localhost:5173";
+
+// const FRONTEND_BASE_FALLBACK_PROD = "https://dalitmurasu.com";
+// const FRONTEND_BASE_FALLBACK_DEV = "http://localhost:5173";
 
 // You can override these in .env:
 // FRONTEND_BASE_URL=https://your-frontend-domain.com
 // FRONTEND_LOGIN_PATH=/login   (default: /login-client)
-function getFrontendBaseUrl() {
-  const fromEnv = process.env.FRONTEND_BASE_URL;
-  if (fromEnv && typeof fromEnv === "string" && fromEnv.trim() !== "") {
-    return fromEnv.replace(/\/$/, "");
-  }
-  return (process.env.NODE_ENV === "production"
-    ? FRONTEND_BASE_FALLBACK_PROD
-    : FRONTEND_BASE_FALLBACK_DEV
-  ).replace(/\/$/, "");
-}
+// function getFrontendBaseUrl() {
+//   const fromEnv = process.env.FRONTEND_BASE_URL;
+//   if (fromEnv && typeof fromEnv === "string" && fromEnv.trim() !== "") {
+//     return fromEnv.replace(/\/$/, "");
+//   }
+//   return (process.env.NODE_ENV === "production"
+//     ? FRONTEND_BASE_FALLBACK_PROD
+//     : FRONTEND_BASE_FALLBACK_DEV
+//   ).replace(/\/$/, "");
+// }
 
 function getFrontendLoginPath() {
   const fromEnv = process.env.FRONTEND_LOGIN_PATH;
@@ -145,7 +145,7 @@ exports.googleCallback = (req, res, next) => {
 
 // Build redirect back to frontend login page with query params
 function buildFrontendRedirectUrl({ token, uid, error }) {
-  const base = getFrontendBaseUrl();
+  const base = "https://dalitmurasu.com"
   const loginPath = getFrontendLoginPath(); // e.g. /login-client or /login
 
   const params = new URLSearchParams();
