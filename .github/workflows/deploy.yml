@@ -2,7 +2,7 @@ name: Deploy Dalitmurasu
 
 on:
   push:
-    branches: [ "main" ] # change if your branch is master
+    branches: ["main"] # adjust if needed
 
 jobs:
   deploy:
@@ -16,12 +16,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 22
+          cache: "npm" # <-- enables npm cache based on lockfile
 
       # --- FRONTEND ---
       - name: Install dependencies & build frontend
         run: |
           cd client
-          npm install
+          npm ci --prefer-offline --no-audit
           npm run build
         env:
           VITE_API: ${{ secrets.VITE_API }}
@@ -55,7 +56,5 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd /var/www/html/dalitmurasu/server
-            npm ci --omit=dev
+            npm ci --omit=dev --prefer-offline --no-audit
             pm2 restart server_api
-
-

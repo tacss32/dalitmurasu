@@ -9,15 +9,11 @@ async function createPdfUpload(req, res) {
     const { title, subtitle, category, date, freeViewLimit, visibility } =
       req.body;
     const imageFile = req.files?.image?.[0];
+    const pdfFile = req.files?.pdf?.[0];
 
-    const pdfUrl = req.files?.pdf?.[0]
-      ? // ? `uploads/pdfs/${req.files.pdf[0].filename}`
-        `uploads/pdfs/bot`
-      : "";
-    const imageUrl = imageFile
-      ? // `uploads/images/${imageFile.filename}`
-        `uploads/images/bot`
-      : "";
+    // ✅ Always save relative URLs (not absolute paths or localhost)
+    const pdfUrl = pdfFile ? `uploads/pdfs/${pdfFile.filename}` : "";
+    const imageUrl = imageFile ? `uploads/images/${imageFile.filename}` : "";
 
     const newPdf = new PdfUpload({
       title,
@@ -33,9 +29,12 @@ async function createPdfUpload(req, res) {
     const savedPdf = await newPdf.save();
     res.status(201).json(savedPdf);
   } catch (err) {
+    console.error("PDF Upload Error:", err);
     res.status(500).json({ error: err.message });
   }
 }
+
+module.exports = { createPdfUpload };
 
 // Get all PDFs
 async function getAllPdfs(req, res) {
@@ -139,31 +138,43 @@ async function getPdfByIdWithAccess(req, res) {
 }
 
 // Update PDF
+// controllers/pdfUploadController.js
+
 async function updatePdf(req, res) {
   try {
     const { title, subtitle, category, date, freeViewLimit, visibility } =
       req.body;
+
     const updateData = {
       title,
       subtitle,
       category: { en: category?.en || "", ta: category?.ta || "" },
-      date,
-      freeViewLimit,
-      visibility,
+      date: date || Date.now(),
+      freeViewLimit: freeViewLimit || 0,
+      visibility: visibility || "subscribers",
     };
-    if (req.files?.pdf?.[0]) updateData.pdfUrl = `uploads/pdfs/bot`;
-    // updateData.pdfUrl = `uploads/pdfs/${req.files.pdf[0].filename}`;
-    if (req.files?.image?.[0]) updateData.imageUrl = `uploads/images/bot`;
-    // updateData.imageUrl = `uploads/images/${req.files.image[0].path}`;
+
+    // ✅ Only save relative URLs
+    if (req.files?.pdf?.[0]) {
+      updateData.pdfUrl = `uploads/pdfs/${req.files.pdf[0].filename}`;
+    }
+    if (req.files?.image?.[0]) {
+      updateData.imageUrl = `uploads/images/${req.files.image[0].filename}`;
+    }
 
     const updatedPdf = await PdfUpload.findByIdAndUpdate(
       req.params.id,
       updateData,
       { new: true }
     );
-    if (!updatedPdf) return res.status(404).json({ message: "PDF not found" });
+
+    if (!updatedPdf) {
+      return res.status(404).json({ message: "PDF not found" });
+    }
+
     res.json(updatedPdf);
   } catch (err) {
+    console.error("PDF Update Error:", err);
     res.status(500).json({ error: err.message });
   }
 }
