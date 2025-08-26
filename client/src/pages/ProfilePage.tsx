@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { FaEdit } from "react-icons/fa";
 
-// Define interface for user data
+// Define interface for user 
 interface UserDetails {
   name: string;
   email: string;
@@ -28,7 +28,8 @@ export default function ProfilePage() {
     dob: "",
     gender: "",
   });
-    useEffect(() => {
+
+  useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     if (!storedUserId) {
       toast.error("User not logged in.");
@@ -136,7 +137,7 @@ export default function ProfilePage() {
     );
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white dark:bg-gray-800 shadow-lg rounded-xl">
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-background-to dark:bg-gray-800 shadow-lg rounded-xl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h2>
         {!isEditing && (
@@ -217,14 +218,14 @@ export default function ProfilePage() {
         </form>
       ) : (
         <div className="space-y-4">
-          <DisplayField label="Name" value={userDetails.name} />
-          <DisplayField label="Email" value={userDetails.email} />
-          <DisplayField label="Phone" value={userDetails.phone || "N/A"} />
-          <DisplayField label="Date of Birth" value={formatDate(userDetails.dob || null)} />
-          <DisplayField label="Gender" value={userDetails.gender || "N/A"} />
-          <DisplayField label="Subscription Status" value={userDetails.isSubscribed ? "Active" : "Inactive"} />
+          <InputField label="Name" name="name" value={userDetails.name} onChange={handleInputChange} readOnly />
+          <InputField label="Email" name="email" type="email" value={userDetails.email} onChange={handleInputChange} readOnly />
+          <InputField label="Phone" name="phone" value={userDetails.phone || "N/A"} onChange={handleInputChange} readOnly />
+          <InputField label="Date of Birth" name="dob" type="date" value={userDetails.dob ? userDetails.dob.slice(0, 10) : ""} onChange={handleInputChange} readOnly />
+          <InputField label="Gender" name="gender" value={userDetails.gender || "N/A"} onChange={handleInputChange} readOnly />
+          <InputField label="Subscription Status" name="isSubscribed" value={userDetails.isSubscribed ? "Active" : "Inactive"} onChange={handleInputChange} readOnly />
           {userDetails.isSubscribed && (
-            <DisplayField label="Subscription Expires" value={formatDate(userDetails.subscriptionExpiresAt)} />
+            <InputField label="Subscription Expires" name="subscriptionExpiresAt" value={formatDate(userDetails.subscriptionExpiresAt)} onChange={handleInputChange} readOnly />
           )}
         </div>
       )}
@@ -241,6 +242,7 @@ const InputField = ({
   onChange,
   placeholder,
   required = false,
+  readOnly = false,
 }: {
   label: string;
   name: string;
@@ -249,6 +251,7 @@ const InputField = ({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   required?: boolean;
+  readOnly?: boolean;
 }) => (
   <div>
     <label htmlFor={name} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -262,14 +265,9 @@ const InputField = ({
       onChange={onChange}
       placeholder={placeholder}
       required={required}
+      readOnly={readOnly}
       className="w-full mt-1 px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
     />
   </div>
 );
 
-const DisplayField = ({ label, value }: { label: string; value: string }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}:</label>
-    <p className="text-base text-gray-900 dark:text-white">{value}</p>
-  </div>
-);
