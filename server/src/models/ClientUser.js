@@ -7,13 +7,13 @@ const clientUserSchema = new mongoose.Schema({
   gender: {
     type: String,
     enum: ["male", "female"],
-    required: true,
+    
   },
   password: String,
   googleId: { type: String, unique: true, sparse: true },
   provider: { type: String, default: "local" },
 
-  dob: { type: Date, required: true },
+  dob: { type: Date },
   age: { type: Number },
 
 passwordResetCode: { type: String },
