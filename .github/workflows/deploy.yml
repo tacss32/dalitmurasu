@@ -2,7 +2,7 @@ name: Deploy Dalitmurasu
 
 on:
   push:
-    branches: ["main"] # adjust if needed
+    branches: ["main"] # adjust if you deploy from another branch
 
 jobs:
   deploy:
@@ -12,11 +12,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Node (v22)
+      - name: Setup Node (v22) with caching
         uses: actions/setup-node@v3
         with:
           node-version: 22
-          cache: "npm" # <-- enables npm cache based on lockfile
+          cache: "npm"
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
 
       # --- FRONTEND ---
       - name: Install dependencies & build frontend
