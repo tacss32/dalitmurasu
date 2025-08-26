@@ -12,10 +12,10 @@ async function createPdfUpload(req, res) {
     // const pdfFile = req.files?.pdf?.[0];
 
     // ✅ Always save relative URLs (not absolute paths or localhost)
-    const pdfUrl = `uploads/pdfs/bot.pdf`;
-    const imageUrl = `uploads/images/bot`;
-    // const pdfUrl = pdfFile ? `uploads/pdfs/${pdfFile.filename}` : "";
-    // const imageUrl = imageFile ? `uploads/images/${imageFile.filename}` : "";
+    // const pdfUrl = `uploads/pdfs/bot.pdf`;
+    // const imageUrl = `uploads/images/bot`;
+    const pdfUrl = pdfFile ? `uploads/pdfs/${pdfFile.filename}` : "";
+    const imageUrl = imageFile ? `uploads/images/${imageFile.filename}` : "";
 
     const newPdf = new PdfUpload({
       title,
@@ -157,15 +157,15 @@ async function updatePdf(req, res) {
     };
 
     // ✅ Only save relative URLs
-    // if (req.files?.pdf?.[0]) {
-    //   updateData.pdfUrl = `uploads/pdfs/${req.files.pdf[0].filename}`;
-    // }
-    // if (req.files?.image?.[0]) {
-    //   updateData.imageUrl = `uploads/images/${req.files.image[0].filename}`;
-    // }
+    if (req.files?.pdf?.[0]) {
+      updateData.pdfUrl = `uploads/pdfs/${req.files.pdf[0].filename}`;
+    }
+    if (req.files?.image?.[0]) {
+      updateData.imageUrl = `uploads/images/${req.files.image[0].filename}`;
+    }
 
-    const pdfUrl = `uploads/pdfs/bot.pdf`;
-    const imageUrl = `uploads/images/bot`;
+    // const pdfUrl = `uploads/pdfs/bot.pdf`;
+    // const imageUrl = `uploads/images/bot`;
 
     const updatedPdf = await PdfUpload.findByIdAndUpdate(
       req.params.id,
