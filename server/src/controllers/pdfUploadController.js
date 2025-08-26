@@ -8,8 +8,8 @@ async function createPdfUpload(req, res) {
   try {
     const { title, subtitle, category, date, freeViewLimit, visibility } =
       req.body;
-    // const imageFile = req.files?.image?.[0];
-    // const pdfFile = req.files?.pdf?.[0];
+    const imageFile = req.files?.image?.[0];
+    const pdfFile = req.files?.pdf?.[0];
 
     // ✅ Always save relative URLs (not absolute paths or localhost)
     // const pdfUrl = `uploads/pdfs/bot.pdf`;
