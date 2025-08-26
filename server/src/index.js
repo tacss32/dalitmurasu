@@ -6,6 +6,7 @@ const passport = require("passport");
 const path = require("path");
 
 const connectDB = require("./config/db");
+require("./middleware/passportSetup");
 
 // Import routes
 const searchRoutes = require("./routes/search");
@@ -18,7 +19,6 @@ const pdfUploadRoutes = require("./routes/pdfUploadRoutes");
 dotenv.config();
 
 // Passport Strategy
-require("./middleware/passportSetup");
 
 // ----------------------------------------------------------------------------
 // Start Server AFTER DB Connect
@@ -97,7 +97,7 @@ connectDB()
     });
 
     // ✅ Fix path: serve from src/uploads/
-    app.use("/uploads", express.static(path.join(__dirname,  "uploads")));
+    app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
     // ------------------------------------------------------------------------
     // API Routes

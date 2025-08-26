@@ -1,13 +1,13 @@
 const express = require("express");
 const multer = require("multer");
-const { storage } = require("../utils/cloudinary");
+const { storage } = require("../config/cloudinary_util");
 const {
   createBook,
   getBooks,
   updateBook,
   deleteBook,
   getHomeBooks,
-} = require("../controllers/bookController"); 
+} = require("../controllers/bookController");
 
 const upload = multer({ storage });
 const router = express.Router();
