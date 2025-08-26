@@ -1,6 +1,6 @@
 const SubscriptionPlan = require("../models/SubscriptionPlan");
 const ClientUser = require("../models/ClientUser");
-const razorpay = require("../config/razorpay");
+const razorpay = require("../config/razorpay_util");
 const crypto = require("crypto");
 
 // -----------------------------
@@ -194,12 +194,10 @@ exports.manualSubscribeUser = async (req, res) => {
 
     // Validate input
     if (!username || !title) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Username and Plan Title are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Username and Plan Title are required",
+      });
     }
 
     // Fetch plan by title

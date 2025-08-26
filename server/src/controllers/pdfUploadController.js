@@ -3,15 +3,17 @@ const UserViewHistory = require("../models/UserViewHistory");
 const jwt = require("jsonwebtoken");
 const ClientUser = require("../models/ClientUser");
 
-
 // Create PDF
 async function createPdfUpload(req, res) {
   try {
-    const { title, subtitle, category, date, freeViewLimit, visibility } = req.body;
+    const { title, subtitle, category, date, freeViewLimit, visibility } =
+      req.body;
     const imageFile = req.files?.image?.[0];
 
-    const pdfUrl = req.files?.pdf?.[0] ? `uploads/pdfs/${req.files.pdf[0].filename}` : null;
-    const imageUrl = imageFile ? `uploads/images/${imageFile.filename}` : ""
+    const pdfUrl = req.files?.pdf?.[0]
+      ? `uploads/pdfs/${req.files.pdf[0].filename}`
+      : null;
+    const imageUrl = imageFile ? `uploads/images/${imageFile.filename}` : "";
 
     const newPdf = new PdfUpload({
       title,
@@ -64,7 +66,7 @@ async function getPdfByIdWithAccess(req, res) {
         const token = authHeader.split(" ")[1];
         try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          userId = decoded.id || decoded._id;
+          userId = decoded.id;
         } catch {
           userId = null;
         }
@@ -135,7 +137,8 @@ async function getPdfByIdWithAccess(req, res) {
 // Update PDF
 async function updatePdf(req, res) {
   try {
-    const { title, subtitle, category, date, freeViewLimit, visibility } = req.body;
+    const { title, subtitle, category, date, freeViewLimit, visibility } =
+      req.body;
     const updateData = {
       title,
       subtitle,
@@ -144,10 +147,15 @@ async function updatePdf(req, res) {
       freeViewLimit,
       visibility,
     };
-    if (req.files?.pdf?.[0]) updateData.pdfUrl = `/uploads/pdfs/${req.files.pdf[0].filename}`;
+    if (req.files?.pdf?.[0])
+      updateData.pdfUrl = `/uploads/pdfs/${req.files.pdf[0].filename}`;
     if (req.files?.image?.[0]) updateData.imageUrl = req.files.image[0].path;
 
-    const updatedPdf = await PdfUpload.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const updatedPdf = await PdfUpload.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
     if (!updatedPdf) return res.status(404).json({ message: "PDF not found" });
     res.json(updatedPdf);
   } catch (err) {

@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const Order = require("../models/Order");
 const Book = require("../models/Book");
-const razorpay = require("../config/razorpay");
+const razorpay = require("../config/razorpay_util");
 
 // ---------------------------
 // Razorpay: Create Payment Order
@@ -10,7 +10,9 @@ exports.createRazorpayOrder = async (req, res) => {
     const { totalAmount } = req.body;
 
     if (!totalAmount) {
-      return res.status(400).json({ success: false, message: "Total amount is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Total amount is required" });
     }
 
     const amountInPaise = totalAmount * 100;
@@ -31,59 +33,71 @@ exports.createRazorpayOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Razorpay Order Error:", error);
-    res.status(500).json({ success: false, message: "Razorpay order creation failed" });
+    res
+      .status(500)
+      .json({ success: false, message: "Razorpay order creation failed" });
   }
 };
-
 
 // ---------------------------
 // Create Order in DB
 exports.createOrder = async (req, res) => {
   try {
     const {
-  name,
-  phone,
-  addressLine1,
-  addressLine2,
-  city,
-  state,
-  pincode,
-  country,
-  items,
-  totalAmount,
-  paymentMode,
-  razorpayOrderId,
-  paymentId,
-  signature
-} = req.body;
+      name,
+      phone,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      pincode,
+      country,
+      items,
+      totalAmount,
+      paymentMode,
+      razorpayOrderId,
+      paymentId,
+      signature,
+    } = req.body;
 
-if (!items || !Array.isArray(items) || items.length === 0) {
-  return res.status(400).json({ success: false, message: "Items are required" });
-}
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Items are required" });
+    }
 
-// Calculate totalDeliveryFee from books
-let totalDeliveryFee = 0;
-for (const item of items) {
-  const book = await Book.findById(item.productId);
-  if (!book) {
-    return res.status(400).json({ success: false, message: `Book not found: ${item.productId}` });
-  }
-  totalDeliveryFee += (book.deliveryFee || 0) * (item.quantity || 1);
-}
+    // Calculate totalDeliveryFee from books
+    let totalDeliveryFee = 0;
+    for (const item of items) {
+      const book = await Book.findById(item.productId);
+      if (!book) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: `Book not found: ${item.productId}`,
+          });
+      }
+      totalDeliveryFee += (book.deliveryFee || 0) * (item.quantity || 1);
+    }
 
-
-// Create formatted address
-const fullAddress = `${addressLine1 || ""}${addressLine2 ? ", " + addressLine2 : ""}
+    // Create formatted address
+    const fullAddress = `${addressLine1 || ""}${
+      addressLine2 ? ", " + addressLine2 : ""
+    }
 ${city}
 ${state}
 ${pincode}
 ${country}`.trim();
 
-// Generate custom order ID
-const orderId = "DM_" + Date.now(); // or use UUID/random string
+    // Generate custom order ID
+    const orderId = "DM_" + Date.now(); // or use UUID/random string
 
     const authHeader = req.headers.authorization || req.headers.Authorization;
-    const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+    const token =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : null;
     let userId = null;
 
     if (token) {
@@ -91,33 +105,39 @@ const orderId = "DM_" + Date.now(); // or use UUID/random string
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         userId = decoded.userId;
       } catch (err) {
-        return res.status(401).json({ success: false, message: "Invalid token user" });
+        return res
+          .status(401)
+          .json({ success: false, message: "Invalid token user" });
       }
     }
 
     const mode = paymentMode?.toLowerCase();
-    if (!['cod', 'online'].includes(mode)) {
-      return res.status(400).json({ success: false, message: "Invalid payment mode (use 'cod' or 'online')" });
+    if (!["cod", "online"].includes(mode)) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Invalid payment mode (use 'cod' or 'online')",
+        });
     }
 
     const paymentStatus = mode === "cod" ? "pending" : "paid";
 
-const order = new Order({
-  orderId,
-  userId,
-  name,
-  phone,
-  address: fullAddress,
-  items,
-  totalAmount,
-  deliveryFee: totalDeliveryFee,
-  paymentMode: mode,
-  razorpayOrderId: razorpayOrderId || null,
-  paymentId: paymentId || null,
-  signature: signature || null,
-  paymentStatus,
-});
-
+    const order = new Order({
+      orderId,
+      userId,
+      name,
+      phone,
+      address: fullAddress,
+      items,
+      totalAmount,
+      deliveryFee: totalDeliveryFee,
+      paymentMode: mode,
+      razorpayOrderId: razorpayOrderId || null,
+      paymentId: paymentId || null,
+      signature: signature || null,
+      paymentStatus,
+    });
 
     const saved = await order.save();
     res.status(201).json({ success: true, data: saved });
@@ -147,14 +167,18 @@ exports.getOrderById = async (req, res) => {
 
   // Check for valid Mongo ObjectId
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ success: false, message: "Invalid order ID format" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid order ID format" });
   }
 
   try {
     const order = await Order.findById(id);
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
 
     res.status(200).json({ success: true, data: order });
@@ -174,10 +198,14 @@ exports.updateOrderStatus = async (req, res) => {
     if (status) updateFields.status = status;
     if (deliveryFee !== undefined) updateFields.deliveryFee = deliveryFee;
 
-    const order = await Order.findByIdAndUpdate(req.params.id, updateFields, { new: true });
+    const order = await Order.findByIdAndUpdate(req.params.id, updateFields, {
+      new: true,
+    });
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
 
     res.status(200).json({ success: true, data: order });
@@ -191,20 +219,25 @@ exports.updateOrderStatus = async (req, res) => {
 // Get All Payments with Payment Mode
 exports.getAllPayments = async (req, res) => {
   try {
-    const payments = await Order.find({}, {
-      paymentMode: 1,
-      paymentStatus: 1,
-      razorpayOrderId: 1,
-      paymentId: 1,
-      signature: 1,
-      totalAmount: 1,
-      createdAt: 1
-    }).sort({ createdAt: -1 });
+    const payments = await Order.find(
+      {},
+      {
+        paymentMode: 1,
+        paymentStatus: 1,
+        razorpayOrderId: 1,
+        paymentId: 1,
+        signature: 1,
+        totalAmount: 1,
+        createdAt: 1,
+      }
+    ).sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, data: payments });
   } catch (err) {
     console.error("Fetch Payments Error:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch payments" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch payments" });
   }
 };
 
@@ -219,17 +252,21 @@ exports.getPaymentDetails = async (req, res) => {
       signature: 1,
       paymentStatus: 1,
       totalAmount: 1,
-      createdAt: 1
+      createdAt: 1,
     });
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Payment not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Payment not found" });
     }
 
     res.status(200).json({ success: true, data: order });
   } catch (err) {
     console.error("Fetch Payment Error:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch payment" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch payment" });
   }
 };
 
@@ -244,16 +281,22 @@ exports.updatePaymentDetails = async (req, res) => {
     if (signature) updateFields.signature = signature;
     if (paymentStatus) updateFields.paymentStatus = paymentStatus;
 
-    const order = await Order.findByIdAndUpdate(req.params.id, updateFields, { new: true });
+    const order = await Order.findByIdAndUpdate(req.params.id, updateFields, {
+      new: true,
+    });
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
 
     res.status(200).json({ success: true, data: order });
   } catch (err) {
     console.error("Update Payment Error:", err);
-    res.status(500).json({ success: false, message: "Failed to update payment" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update payment" });
   }
 };
 
@@ -262,13 +305,9 @@ exports.getNewOrdersForAdmin = async (req, res) => {
   try {
     const { since } = req.query;
 
-    const query = since
-      ? { createdAt: { $gt: new Date(since) } }
-      : {};
+    const query = since ? { createdAt: { $gt: new Date(since) } } : {};
 
-    const newOrders = await Order.find(query)
-      .sort({ createdAt: -1 })
-      .limit(10);
+    const newOrders = await Order.find(query).sort({ createdAt: -1 }).limit(10);
 
     res.status(200).json({
       success: true,
@@ -293,7 +332,7 @@ exports.getDashboardStats = async (req, res) => {
       pendingCount,
       deliveredCount,
       cancelledCount,
-      paidCount
+      paidCount,
     ] = await Promise.all([
       Order.countDocuments({ paymentMode: "cod" }),
       Order.countDocuments({ paymentMode: "online" }),
@@ -312,10 +351,12 @@ exports.getDashboardStats = async (req, res) => {
         deliveredOrders: deliveredCount,
         cancelledOrders: cancelledCount,
         totalPaidOrders: paidCount,
-      }
+      },
     });
   } catch (err) {
     console.error("Dashboard Error:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch dashboard stats" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch dashboard stats" });
   }
 };

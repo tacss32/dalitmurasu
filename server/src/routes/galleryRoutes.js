@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { galleryUpload } = require("../middleware/upload");
+const { galleryUpload } = require("../middleware/cloudinaryMulter");
 
 const {
   uploadPhoto,
