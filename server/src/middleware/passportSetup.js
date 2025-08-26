@@ -7,10 +7,7 @@ const ClientUser = require("../models/ClientUser");
 const isProduction = process.env.NODE_ENV === "production";
 
 // Recommended: Use .env var BACKEND_BASE_URL
-const BACKEND_BASE_URL = (
-  process.env.BACKEND_BASE_URL ||
-  (isProduction ? "https://dalitmurasu.com" : "http://localhost:3030")
-).replace(/\/$/, ""); // remove trailing slash
+const BACKEND_BASE_URL = "https://dalitmurasu.com" // remove trailing slash
 
 const callbackURL = `${BACKEND_BASE_URL}/api/auth/google/callback`;
 console.log("[Google OAuth] Using callbackURL:", callbackURL);
