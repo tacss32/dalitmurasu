@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header";
-import Card from "../../components/Card";
+// import Card from "../../components/Card";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -100,37 +100,37 @@ const getMonthName = (monthNumber: number, locale: string = "en-US") => {
 };
 
 // Minimal inline PDF Card (square-ish) for top row; you can replace w/ your own component
-interface PdfCardProps {
-  item: EditorialItem;
-  className?: string;
-}
-const PdfCard: React.FC<PdfCardProps> = ({ item, className }) => {
-  return (
-    <a
-      href={`https://docs.google.com/viewer?url=${encodeURIComponent(
-        item.pdfUrl || ""
-      )}\u0026embedded=true`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={
-        "block rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-200 ease-in-out bg-white relative w-48 " +
-        (className || "")
-      }
-    >
-      {item.image && (
-        <img
-          src={item.image}
-          alt={item.title}
-          className="w-full h-40 object-cover"
-        />
-      )}
-      <div className="p-3">
-        <h3 className="text-sm font-semibold line-clamp-2">{item.title}</h3>
-        <p className="text-xs text-gray-500 mt-1">PDF</p>
-      </div>
-    </a>
-  );
-};
+// interface PdfCardProps {
+//   item: EditorialItem;
+//   className?: string;
+// }
+// const PdfCard: React.FC<PdfCardProps> = ({ item, className }) => {
+//   return (
+//     <a
+//       href={`https://docs.google.com/viewer?url=${encodeURIComponent(
+//         item.pdfUrl || ""
+//       )}\u0026embedded=true`}
+//       target="_blank"
+//       rel="noopener noreferrer"
+//       className={
+//         "block rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-200 ease-in-out bg-white relative w-48 " +
+//         (className || "")
+//       }
+//     >
+//       {item.image && (
+//         <img
+//           src={item.image}
+//           alt={item.title}
+//           className="w-full h-40 object-cover"
+//         />
+//       )}
+//       <div className="p-3">
+//         <h3 className="text-sm font-semibold line-clamp-2">{item.title}</h3>
+//         <p className="text-xs text-gray-500 mt-1">PDF</p>
+//       </div>
+//     </a>
+//   );
+// };
 
 // ---------------- Component ----------------
 export default function Editorial() {
@@ -243,29 +243,29 @@ export default function Editorial() {
   }, [chronological, pdfs]);
 
   // Determine latest year/month that actually has editorial items
-  const latestEditorial = useMemo(() => {
-    const years = Object.keys(editorialMap)
-      .map(Number)
-      .sort((a, b) => b - a);
-    for (const y of years) {
-      const months = Object.keys(editorialMap[y])
-        .map(Number)
-        .sort((a, b) => b - a);
-      for (const m of months) {
-        const items = editorialMap[y][m];
-        if (items && items.length) {
-          return { year: y, month: m, items };
-        }
-      }
-    }
-    return null;
-  }, [editorialMap]);
+  // const latestEditorial = useMemo(() => {
+  //   const years = Object.keys(editorialMap)
+  //     .map(Number)
+  //     .sort((a, b) => b - a);
+  //   for (const y of years) {
+  //     const months = Object.keys(editorialMap[y])
+  //       .map(Number)
+  //       .sort((a, b) => b - a);
+  //     for (const m of months) {
+  //       const items = editorialMap[y][m];
+  //       if (items && items.length) {
+  //         return { year: y, month: m, items };
+  //       }
+  //     }
+  //   }
+  //   return null;
+  // }, [editorialMap]);
 
-  const recentItems = latestEditorial?.items?.slice(0, 4) || [];
-  const recentCount = latestEditorial?.items?.length || 0;
-  const recentMonthName = latestEditorial
-    ? getMonthName(latestEditorial.month, "en-US")
-    : "";
+  // const recentItems = latestEditorial?.items?.slice(0, 4) || [];
+  // const recentCount = latestEditorial?.items?.length || 0;
+  // const recentMonthName = latestEditorial
+  //   ? getMonthName(latestEditorial.month, "en-US")
+  //   : "";
 
   // Build year summary list with counts per month (Editorial only)
   const yearSummaries = useMemo(() => {
@@ -323,7 +323,7 @@ export default function Editorial() {
       <Header text="தலையங்கம்" urlPath="Editorial" />
 
       {/* Top Section - Recent Month */}
-      {latestEditorial ? (
+      {/* {latestEditorial ? (
         <section className="px-4 mt-2">
           <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
             <h2 className="text-xl font-bold">
@@ -363,17 +363,17 @@ export default function Editorial() {
         </section>
       ) : (
         <p className="px-4">No Editorial posts found.</p>
-      )}
+      )} */}
 
       {/* Bottom Section - Year list + Month list */}
-      <section className="flex px-4 mt-8 gap-4">
+      <section className="flex px-4 mt-8 gap-4 text-2 xl">
         {/* Year List */}
-        <aside className="w-24 border-r pr-3 shrink-0">
+        <aside className="w-24 border-r pr-3 shrink-0 ">
           {yearSummaries.map((y) => (
             <p
               key={y.year}
               onClick={() => handleYearSelect(y.year)}
-              className={`cursor-pointer mb-2 font-medium transition-colors duration-150 ${
+              className={`cursor-pointer mb-2 font-medium transition-colors duration-150 text-2xl ${
                 selectedYear === y.year
                   ? "text-blue-600 underline"
                   : "text-gray-800 hover:text-blue-500"

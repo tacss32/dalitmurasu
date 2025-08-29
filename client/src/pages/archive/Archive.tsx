@@ -2,11 +2,15 @@ import React, { useEffect, useState, useMemo } from "react";
 import Header from "../../components/Header";
 import axios from "axios";
 import { MdClose } from 'react-icons/md';
-import { Link } from "react-router-dom"; // Import Link for the Subscribe button
+import { Link } from "react-router-dom"; 
 
 // Import necessary modules from @react-pdf-viewer
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
+
+// Import the Zoom plugin and its styles
+import { zoomPlugin } from '@react-pdf-viewer/zoom'; 
+import '@react-pdf-viewer/zoom/lib/styles/index.css';
 
 // Import styles for the viewer and default layout
 import '@react-pdf-viewer/core/lib/styles/index.css';
@@ -79,11 +83,11 @@ const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
 
 // ---------------- Helpers ----------------
 const getMonthName = (monthNumber: number, locale: string = "en-US") => {
-    const date = new Date();
+    const date = new Date();
     
-    date.setDate(1); 
-    date.setMonth(monthNumber - 1);
-    return date.toLocaleString(locale, { month: "long" });
+    date.setDate(1); 
+    date.setMonth(monthNumber - 1);
+    return date.toLocaleString(locale, { month: "long" });
 };
 
 // ---------------- Component ----------------
@@ -102,7 +106,7 @@ export default function Archive() {
     // New state for the subscription popup
     const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(false);
 
-    // const SERVER_URL = import.meta.env.VITE_API;
+   
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -250,8 +254,41 @@ const archiveMap = useMemo(() => {
         setSelectedMonth(m);
     };
 
+    // Instantiate the zoom plugin
+    const zoomPluginInstance = zoomPlugin();
+
+    // customize various aspects of the viewer's layout, including the toolbar.
     const defaultLayoutPluginInstance = defaultLayoutPlugin({
-        renderToolbar: (_Toolbar) => <></>,
+       
+        renderToolbar: (Toolbar) => (
+            <>
+                <Toolbar>
+                    {/* The Toolbar component receives a render function as its child,
+                    which provides access to various slots and components. */}
+                    {(props) => {
+                        // Destructure the `ZoomIn` and `ZoomOut` components from the props.
+                        const { ZoomIn, ZoomOut } = props;
+                        return (
+                            <div className="flex justify-center items-center p-4 border-b border-gray-200 rounded-t-lg">
+                               
+                                <div className="flex gap-2 items-center">
+                                    {/* Render the ZoomOut and ZoomIn components */}
+                                    <ZoomOut />
+                                    <ZoomIn />
+                                    <button
+                                        onClick={handleClosePdfViewer}
+                                         className="p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600 absolute right-4"
+                                        aria-label="Close PDF viewer"
+                                    >
+                                        <MdClose className="text-2xl" />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    }}
+                </Toolbar>
+            </>
+        ),
     });
 
     if (loading) {
@@ -292,7 +329,7 @@ const archiveMap = useMemo(() => {
                     <div className="w-24">
                         <h3 className="font-bold mb-2">Years</h3>
                         {yearSummaries.length > 0 ? (
-                            <ul className="mb-4">
+                            <ul className="mb-4 text-2xl">
                                 {yearSummaries.map((y) => (
                                     <li
                                         key={y.year}
@@ -390,24 +427,12 @@ const archiveMap = useMemo(() => {
             {activePdf && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
                     <div className="relative w-full max-w-5xl h-screen bg-white rounded-none shadow-xl overflow-hidden flex flex-col">
-                        <div className="flex justify-between items-center p-4 border-b border-gray-200 rounded-t-lg">
-                            <h2 className="text-xl font-semibold text-gray-800 truncate">
-                                {activePdf.title || "PDF Viewer"}
-                            </h2>
-                            <button
-                                onClick={handleClosePdfViewer}
-                                className="p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
-                                aria-label="Close PDF viewer"
-                            >
-                                <MdClose className="text-2xl" />
-                            </button>
-                        </div>
                         <div className="flex-grow w-full overflow-auto">
                             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
                                 {activePdf.pdfUrl ? (
                                     <Viewer
                                         fileUrl={SERVER_URL + activePdf.pdfUrl}
-                                        plugins={[defaultLayoutPluginInstance]}
+                                        plugins={[defaultLayoutPluginInstance, zoomPluginInstance]}
                                     />
                                 ) : (
                                     <div className="text-center p-6 text-red-600">
