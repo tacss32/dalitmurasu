@@ -456,7 +456,7 @@ const AddPhotoForm: React.FC = () => {
                 crop={crop}
                 onChange={(_, percentCrop) => setCrop(percentCrop)}
                 onComplete={(c) => setCompletedCrop(c)}
-                aspect={1}
+//                 aspect={1}
                 minWidth={50}
               >
                 <img

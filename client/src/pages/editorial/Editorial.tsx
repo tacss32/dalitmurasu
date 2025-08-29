@@ -323,7 +323,7 @@ export default function Editorial() {
       <Header text="தலையங்கம்" urlPath="Editorial" />
 
       {/* Top Section - Recent Month */}
-      {latestEditorial ? (
+      {/* {latestEditorial ? (
         <section className="px-4 mt-2">
           <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
             <h2 className="text-xl font-bold">
@@ -363,17 +363,17 @@ export default function Editorial() {
         </section>
       ) : (
         <p className="px-4">No Editorial posts found.</p>
-      )}
+      )} */}
 
       {/* Bottom Section - Year list + Month list */}
-      <section className="flex px-4 mt-8 gap-4">
+      <section className="flex px-4 mt-8 gap-4 text-2 xl">
         {/* Year List */}
-        <aside className="w-24 border-r pr-3 shrink-0">
+        <aside className="w-24 border-r pr-3 shrink-0 ">
           {yearSummaries.map((y) => (
             <p
               key={y.year}
               onClick={() => handleYearSelect(y.year)}
-              className={`cursor-pointer mb-2 font-medium transition-colors duration-150 ${
+              className={`cursor-pointer mb-2 font-medium transition-colors duration-150 text-2xl ${
                 selectedYear === y.year
                   ? "text-blue-600 underline"
                   : "text-gray-800 hover:text-blue-500"
