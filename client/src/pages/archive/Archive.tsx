@@ -106,7 +106,7 @@ export default function Archive() {
     // New state for the subscription popup
     const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(false);
 
-    // const SERVER_URL = import.meta.env.VITE_API;
+   
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
