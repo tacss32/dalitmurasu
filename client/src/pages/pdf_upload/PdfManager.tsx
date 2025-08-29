@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MdEdit, MdDelete, MdPictureAsPdf } from 'react-icons/md';
+import { MdEdit, MdDelete, MdPictureAsPdf, MdClose } from 'react-icons/md';
 
 // Import for Image Cropping
 import ReactCrop, {
@@ -228,6 +228,18 @@ const PdfUploadForm: React.FC<{
         }
       }
     }
+  };
+    // ⬅️ NEW FUNCTION TO HANDLE PDF REMOVAL
+  const handleRemovePdf = () => {
+    // Revoke the blob URL to free up memory
+    if (pdfPreviewUrl && pdfPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(pdfPreviewUrl);
+    }
+    // Reset all PDF-related state variables
+    setPdfFile(null);
+    setExistingPdfUrl(null);
+    setPdfPreviewUrl(null);
+    setCurrentPdfFileName(null);
   };
 
   const startCropping = () => {
@@ -575,7 +587,7 @@ const PdfUploadForm: React.FC<{
             name="pdf"
             accept="application/pdf"
             onChange={handleFileChange}
-            required={!isEditMode && !existingPdfUrl}
+            required={!isEditMode && !existingPdfUrl && !pdfFile} 
             className="mt-1 block w-full text-sm text-gray-500
               file:mr-4 file:py-1 file:px-1
               file:rounded-full file:border-0
@@ -583,10 +595,21 @@ const PdfUploadForm: React.FC<{
               file:bg-yellow-50 file:text-yellow-700
               hover:file:bg-yellow-100"
           />
+          {/* ⬅️ MODIFIED PDF PREVIEW WITH REMOVE BUTTON */}
           {currentPdfFileName && (
-            <div className="mt-2 text-sm text-gray-500 flex items-center">
-              <MdPictureAsPdf className="text-red-500 mr-2 text-lg" />
-              <span>Current PDF: {currentPdfFileName}</span>
+            <div className="mt-2 text-sm text-gray-500 flex items-center justify-between p-2 bg-gray-50 rounded-md border border-gray-200">
+              <div className="flex items-center">
+                <MdPictureAsPdf className="text-red-500 mr-2 text-lg" />
+                <span>Current PDF: {currentPdfFileName}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleRemovePdf} // ⬅️ The new remove function
+                className="text-red-500 hover:text-red-700 transition"
+                title="Remove PDF"
+              >
+                <MdClose size={20} />
+              </button>
             </div>
           )}
           {isEditMode && !pdfFile && existingPdfUrl && (
@@ -621,7 +644,7 @@ const PdfUploadForm: React.FC<{
               crop={crop}
               onChange={(_, percentCrop) => setCrop(percentCrop)}
               onComplete={onCropComplete}
-              aspect={1 / 1}
+              // aspect={1 / 1}
               minWidth={100}
               minHeight={100}
               className="max-w-full h-auto"
