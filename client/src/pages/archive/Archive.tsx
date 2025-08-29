@@ -79,9 +79,11 @@ const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
 
 // ---------------- Helpers ----------------
 const getMonthName = (monthNumber: number, locale: string = "en-US") => {
-    const date = new Date();
-    date.setMonth(monthNumber - 1);
-    return date.toLocaleString(locale, { month: "long" });
+    const date = new Date();
+    
+    date.setDate(1); 
+    date.setMonth(monthNumber - 1);
+    return date.toLocaleString(locale, { month: "long" });
 };
 
 // ---------------- Component ----------------
@@ -140,34 +142,45 @@ export default function Archive() {
         }
     };
 
-    // Build map: year -> month -> Archive items (pdfs)
-    const archiveMap = useMemo(() => {
-        const map: Record<number, Record<number, ArchiveItem[]>> = {};
-        pdfs.forEach((pdf) => {
-            const date = new Date(pdf.date || pdf.createdAt);
-            const y = date.getFullYear();
-            const mm = date.getMonth() + 1;
-            map[y] = map[y] || {};
-            map[y][mm] = map[y][mm] || [];
-            map[y][mm].push({
-                _id: pdf._id,
-                title: pdf.title,
-                subtitle: pdf.subtitle,
-                imageUrl: pdf.imageUrl,
-                dateISO: pdf.date || pdf.createdAt,
-                pdfUrl: pdf.pdfUrl,
-                pdf: pdf,
-            });
+// Build map: year -> month -> Archive items (pdfs)
+const archiveMap = useMemo(() => {
+    const map: Record<number, Record<number, ArchiveItem[]>> = {};
+    pdfs.forEach((pdf) => {
+        // --- PROBLEM AREA ---
+        // OLD CODE: This converts the date to the user's local timezone.
+        // const date = new Date(pdf.date || pdf.createdAt);
+        // const y = date.getFullYear();
+        // const mm = date.getMonth() + 1;
+
+        // --- CORRECTED CODE ---
+        // Create a date object from the ISO string.
+        const date = new Date(pdf.date || pdf.createdAt); 
+        // Use UTC methods to avoid timezone conversion issues.
+        const y = date.getUTCFullYear();       // Use getUTCFullYear()
+        const mm = date.getUTCMonth() + 1;     // Use getUTCMonth() (which is 0-11) and add 1
+        
+        map[y] = map[y] || {};
+        map[y][mm] = map[y][mm] || [];
+        map[y][mm].push({
+            _id: pdf._id,
+            title: pdf.title,
+            subtitle: pdf.subtitle,
+            imageUrl: pdf.imageUrl,
+            dateISO: pdf.date || pdf.createdAt,
+            pdfUrl: pdf.pdfUrl,
+            pdf: pdf,
         });
-        Object.keys(map).forEach((yStr) => {
-            const y = Number(yStr);
-            Object.keys(map[y]).forEach((mStr) => {
-                const m = Number(mStr);
-                map[y][m].sort((a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime());
-            });
+    });
+    // ... rest of the hook remains the same
+    Object.keys(map).forEach((yStr) => {
+        const y = Number(yStr);
+        Object.keys(map[y]).forEach((mStr) => {
+            const m = Number(mStr);
+            map[y][m].sort((a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime());
         });
-        return map;
-    }, [pdfs]);
+    });
+    return map;
+}, [pdfs]);
 
     // Build year summary list with counts per month (for sidebar)
     const yearSummaries = useMemo(() => {
