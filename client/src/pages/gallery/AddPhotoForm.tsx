@@ -16,7 +16,7 @@ interface GalleryImage {
   imageUrl: string;
 }
 
-// Helper function to convert a File object to a data URL
+// Helper function to convert a File object to a data 
 const fileToDataURL = (file: File): Promise<string> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
