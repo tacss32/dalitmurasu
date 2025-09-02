@@ -64,7 +64,7 @@ interface IPremiumPostApiResponse {
 
 // --- Hardcoded Premium Categories ---
 const PREMIUM_CATEGORIES: ICategoryOption[] = [
-  { value: "Premium Article", label: "Premium Article" },
+  { value: "Premium Articles", label: "Premium Articles" },
   // Add more premium categories if needed
 ];
 
@@ -109,6 +109,10 @@ export default function PremiumArticleForm() {
       freeViewLimit: 0, // Default free view limit
     },
   });
+  const categoryInTamil: { [key: string]: string } = {
+  'Premium Article': 'முதன்மை கட்டுரைகள்',
+  
+};
 
   // --- Admin Token Verification Function ---
   const verifyAdminToken = async (): Promise<boolean> => {
@@ -627,7 +631,7 @@ export default function PremiumArticleForm() {
           )}
         </div>
 
-        {/* <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4">
           <label htmlFor="isHome" className="flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -638,7 +642,7 @@ export default function PremiumArticleForm() {
             <span className="ml-2 text-lg">Display on Home Page</span>
           </label>
 
-          <label
+          {/* <label
             htmlFor="isRecent"
             className="flex items-center cursor-pointer"
           >
@@ -649,8 +653,8 @@ export default function PremiumArticleForm() {
               className="form-checkbox h-5 w-5 text-yellow-500 rounded border-gray-600 focus:ring-yellow-500"
             />
             <span className="ml-2 text-lg">Display as Recent Post</span>
-          </label>
-        </div> */}
+          </label> */}
+        </div>
 
         <div>
           <label
