@@ -40,6 +40,10 @@ type Category = {
     en: string;
   };
 };
+const categoryInTamil: { [key: string]: string } = {
+  'Premium Article': 'முதன்மை கட்டுரைகள்',
+  
+};
 
 export default function NewsHud() {
   const [pinnedPosts, setPinnedPosts] = useState<PostType[]>([]);
@@ -50,6 +54,7 @@ export default function NewsHud() {
 
   const [showDescriptionPopup, setShowDescriptionPopup] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookType | null>(null);
+  const [, setHomePosts] = useState<PostType[]>([]);
 
   const [addingToCartStates, setAddingToCartStates] = useState<
     Map<string, boolean>
@@ -73,44 +78,45 @@ export default function NewsHud() {
     }
   }, []);
 
-  const fetchHomeData = async () => {
-    setLoadingPosts(true);
-    try {
-      const [pinnedRes, universalRes] = await Promise.all([
-        axios.get<PostType[]>(`${API_BASE_URL}api/combined-posts/pinned`),
-        axios.get<PostType[]>(`${API_BASE_URL}api/universal-posts/home`),
-      ]);
+const fetchHomeData = async () => {
+  setLoadingPosts(true);
+  try {
+    const [pinnedRes, universalRes, homePostsRes] = await Promise.all([
+      axios.get<PostType[]>(`${API_BASE_URL}api/combined-posts/pinned`),
+      axios.get<PostType[]>(`${API_BASE_URL}api/universal-posts/home`),
+      // NEW: Fetch home premium posts
+      axios.get<PostType[]>(`${API_BASE_URL}api/premium-posts/home`),
+    ]);
 
-      // Restrict pinned posts to a maximum of 3 as requested.
-      const limitedPinnedPosts = pinnedRes.data.slice(0, 3);
-      setPinnedPosts(limitedPinnedPosts);
+    const limitedPinnedPosts = pinnedRes.data.slice(0, 3);
+    setPinnedPosts(limitedPinnedPosts);
 
-      // Filter out any universal posts that are also in the pinned list.
-      const pinnedIds = new Set(limitedPinnedPosts.map((post) => post._id));
-      const filteredUniversalPosts = universalRes.data.filter(
-        (post) => !pinnedIds.has(post._id)
-      );
+    const pinnedIds = new Set(limitedPinnedPosts.map((post) => post._id));
+    const filteredUniversalPosts = universalRes.data.filter(
+      (post) => !pinnedIds.has(post._id)
+    );
 
-      setUniversalPosts(filteredUniversalPosts);
-    } catch (err) {
-      console.error("Failed to fetch posts:", err);
-    } finally {
-      setLoadingPosts(false);
-    }
+    setUniversalPosts(filteredUniversalPosts);
+    // NEW: Set the home posts state
+    setHomePosts(homePostsRes.data);
+  } catch (err) {
+    console.error("Failed to fetch posts:", err);
+  } finally {
+    setLoadingPosts(false);
+  }
 
-    setLoadingBooks(true);
-    try {
-      const booksRes = await axios.get<BookType[]>(
-        `${API_BASE_URL}api/books/home`
-      );
-      setHomeBooks(booksRes.data);
-    } catch (err) {
-      console.error("Failed to fetch featured books:", err);
-    } finally {
-      setLoadingBooks(false);
-    }
-  };
-
+  setLoadingBooks(true);
+  try {
+    const booksRes = await axios.get<BookType[]>(
+      `${API_BASE_URL}api/books/home`
+    );
+    setHomeBooks(booksRes.data);
+  } catch (err) {
+    console.error("Failed to fetch featured books:", err);
+  } finally {
+    setLoadingBooks(false);
+  }
+};
   const fetchCategories = async () => {
     try {
       const categoriesRes = await axios.get<Category[]>(`${API_BASE_URL}api/categories?available=true`);
@@ -213,7 +219,7 @@ export default function NewsHud() {
                   date={post.date || post.createdAt}
                   author={post.author}
                   id={post._id}
-                  category={getTamilCategoryName(post.category)}
+                  category={categoryInTamil[post.category] || post.category}
                   source={
                     post.source === "UniversalPost"
                       ? "universal"
@@ -221,8 +227,10 @@ export default function NewsHud() {
                       ? "premium-articles"
                       : "posts"
                   }
+
                 />
               ))}
+
             </div>
           </>
         )}
@@ -322,6 +330,34 @@ export default function NewsHud() {
             ))}
           </div>
         )}
+{/* <h2 className="text-3xl font-bold mt-10 mb-4 text-gray-800 text-center">
+  
+</h2>
+{loadingPosts ? (
+  <div className="flex justify-center items-center min-h-screen text-highlight-1">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
+  </div>
+) : homePosts.length > 0 ? (
+  <div className="grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
+    {homePosts.map((post) => (
+      <Card
+        key={post._id}
+        title={post.title}
+        subtitle={post.subtitle}
+        image={post?.images?.[0]}
+        date={post.date || post.createdAt}
+        author={post.author}
+        id={post._id}
+        category={getTamilCategoryName(post.category)}
+        source="premium-articles" // Use the correct source
+      />
+    ))}
+  </div>
+) : (
+  <p className="text-center text-lg text-gray-600">
+    No featured articles available at the moment.
+  </p>
+)} */}
 
         {/* Section 4: Remaining Universal Posts */}
         <h2 className="text-3xl font-bold mb-4 text-gray-800 text-center"></h2>
@@ -347,6 +383,19 @@ export default function NewsHud() {
                 category={getTamilCategoryName(post.category)}
               />
             ))}
+{/* {homePosts.map((post) => (
+      <Card
+        key={post._id}
+        title={post.title}
+        subtitle={post.subtitle}
+        image={post?.images?.[0]}
+        date={post.date || post.createdAt}
+        author={post.author}
+        id={post._id}
+        category={categoryInTamil[post.category] || post.category}
+        source="premium-articles" // Use the correct source
+      />
+    ))} */}
           </div>
         )}
       </div>
