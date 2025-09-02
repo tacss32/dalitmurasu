@@ -38,10 +38,6 @@ const truncateTo150Words = (text: string | undefined): string => {
     }
     return text;
 };
-const categoryInTamil: { [key: string]: string } = {
-  'Premium Article': 'முதன்மைக் கட்டுரைகள் ',
-  
-};
 
 export default function PremiumArticleDetail() {
     const { id } = useParams<{ id: string }>();
@@ -223,7 +219,7 @@ export default function PremiumArticleDetail() {
                         </span>
                         <span className="text-2xl text-yellow-600">•</span>
                         <span className="bg-highlight-1 text-white px-3 py-1 rounded-full">
-                            {categoryInTamil[article.category] || article.category}
+                            {article.category}
                         </span>
                     </div>
                     <h1 className="text-4xl font-bold text-gray-900 leading-tight">
