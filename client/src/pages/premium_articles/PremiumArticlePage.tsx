@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API;
 
 // --- Category Mapping for Tamil Display ---
 const categoryInTamil: { [key: string]: string } = {
-  'Premium Article': 'முதன்மைக் கட்டுரைகள்',
+  'Premium Articles': 'முதன்மைக் கட்டுரைகள்',
   
 };
 

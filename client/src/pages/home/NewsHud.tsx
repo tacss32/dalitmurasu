@@ -33,17 +33,17 @@ interface BookType {
 }
 
 // Interface for a Category, from AddUniversalPost.tsx
-type Category = {
-  _id: string;
-  name: {
-    ta: string;
-    en: string;
-  };
-};
-const categoryInTamil: { [key: string]: string } = {
-  'Premium Article': 'முதன்மை கட்டுரைகள்',
+// type Category = {
+//   _id: string;
+//   name: {
+//     ta: string;
+//     en: string;
+//   };
+// };
+// const categoryInTamil: { [key: string]: string } = {
+//   'Premium Articles': 'முதன்மை கட்டுரைகள்',
   
-};
+// };
 
 export default function NewsHud() {
   const [pinnedPosts, setPinnedPosts] = useState<PostType[]>([]);
@@ -54,7 +54,7 @@ export default function NewsHud() {
 
   const [showDescriptionPopup, setShowDescriptionPopup] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookType | null>(null);
-  const [, setHomePosts] = useState<PostType[]>([]);
+  // const [setHomePosts] = useState<PostType[]>([]);
 
   const [addingToCartStates, setAddingToCartStates] = useState<
     Map<string, boolean>
@@ -65,7 +65,7 @@ export default function NewsHud() {
 
   const API_BASE_URL = import.meta.env.VITE_API;
 
-  const [categories, setCategories] = useState<Category[]>([]);
+//   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
@@ -81,7 +81,7 @@ export default function NewsHud() {
 const fetchHomeData = async () => {
   setLoadingPosts(true);
   try {
-    const [pinnedRes, universalRes, homePostsRes] = await Promise.all([
+    const [pinnedRes, universalRes] = await Promise.all([
       axios.get<PostType[]>(`${API_BASE_URL}api/combined-posts/pinned`),
       axios.get<PostType[]>(`${API_BASE_URL}api/universal-posts/home`),
       // NEW: Fetch home premium posts
@@ -98,7 +98,7 @@ const fetchHomeData = async () => {
 
     setUniversalPosts(filteredUniversalPosts);
     // NEW: Set the home posts state
-    setHomePosts(homePostsRes.data);
+    // setHomePosts(homePostsRes.data);
   } catch (err) {
     console.error("Failed to fetch posts:", err);
   } finally {
@@ -119,8 +119,8 @@ const fetchHomeData = async () => {
 };
   const fetchCategories = async () => {
     try {
-      const categoriesRes = await axios.get<Category[]>(`${API_BASE_URL}api/categories?available=true`);
-      setCategories(categoriesRes.data);
+//       const categoriesRes = await axios.get<Category[]>(`${API_BASE_URL}api/categories?available=true`);
+//       setCategories(categoriesRes.data);
     } catch (err) {
       console.error("Error fetching categories:", err);
     }
@@ -132,12 +132,12 @@ const fetchHomeData = async () => {
     fetchCategories();
   }, []);
 
-  const getTamilCategoryName = (englishCategoryName: string) => {
-    const category = categories.find(
-      (cat) => cat.name.en === englishCategoryName
-    );
-    return category?.name.ta || englishCategoryName; // Fallback to English if not found
-  };
+//   const getTamilCategoryName = (englishCategoryName: string) => {
+//     const category = categories.find(
+//       (cat) => cat.name.en === englishCategoryName
+//     );
+//     return category?.name.ta || englishCategoryName; // Fallback to English if not found
+//   };
 
   const addToCart = async (bookToAdd: BookType) => {
     if (!userId) {
@@ -190,6 +190,7 @@ const fetchHomeData = async () => {
 
   // Determine the number of posts in the first section (3x2 grid)
   const firstSectionPosts = postsToShow.slice(0, 6);
+console.log(firstSectionPosts)
   // The remaining posts will be displayed in the next section.
   const remainingSectionPosts = postsToShow.slice(6);
 
@@ -219,7 +220,7 @@ const fetchHomeData = async () => {
                   date={post.date || post.createdAt}
                   author={post.author}
                   id={post._id}
-                  category={categoryInTamil[post.category] || post.category}
+                  category={post.category}
                   source={
                     post.source === "UniversalPost"
                       ? "universal"
@@ -380,7 +381,7 @@ const fetchHomeData = async () => {
                 author={post.author}
                 subtitle={post.subtitle}
                 id={post._id}
-                category={getTamilCategoryName(post.category)}
+                category={post.category}
               />
             ))}
 {/* {homePosts.map((post) => (
@@ -392,7 +393,7 @@ const fetchHomeData = async () => {
         date={post.date || post.createdAt}
         author={post.author}
         id={post._id}
-        category={categoryInTamil[post.category] || post.category}
+        category={post.category}
         source="premium-articles" // Use the correct source
       />
     ))} */}
