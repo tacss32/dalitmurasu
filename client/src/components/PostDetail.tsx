@@ -268,10 +268,28 @@ export default function PostDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<Post[] | null>(null);
-  const [categories] = useState<Category[]>([]);
+  // State for categories, now with a setter
+  const [categories, setCategories] = useState<Category[]>([]);
   // State for share message and timeout
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [shareMessageTimeoutId, setShareMessageTimeoutId] = useState<number | null>(null);
+
+  // NEW: Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${SERVER_URL}api/categories?available=true`); // Use the same endpoint as your Card component
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        const data = await res.json();
+        setCategories(data);
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    };
+    fetchCategories();
+  }, []); // Empty dependency array ensures this runs once
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -394,7 +412,7 @@ export default function PostDetail() {
           </span>
           <span className="text-2xl">•</span>
           <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
-            {post.category}
+            {getTamilCategoryName(post.category)}
           </span>
         </div>
 
