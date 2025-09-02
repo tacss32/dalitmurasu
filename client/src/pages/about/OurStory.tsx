@@ -3,8 +3,8 @@ export default function OurStory() {
     <div className="flex gap-0 justify-start items-center max-w-6xl mx-auto px-4 py-8">
   {/* <img src={aboutus} alt="story" className="w-100 h-96" /> */}
   <section>
-    <h2 className="text-3xl font-bold mb-4"></h2>
-    <div className="text-gray-700 dark:text-gray-300 font-semibold leading-relaxed  text-justify text-xl">
+    <h2 className="text-3xl font-bold mb-4">வரலாறு</h2>
+    <div className="text-gray-700 dark:text-gray-300 font-semibold leading-relaxed  text-justify">
       
       <p className="mb-4">
         சாதிக்கு எதிரான உரையாடல்கள் வெகு மக்கள் படிக்கும் வணிக ஏடுகளில் இடம் பெறாததால் - அத்தகைய உரையாடல்களை நிகழ்த்துகின்றவர்களுக்கு - சாதி சார்பற்ற, கட்சி மற்றும் அமைப்பு சார்பற்ற ஓர் இதழைத் தொடங்க வேண்டும் என்ற விழைவின் உந்துதலால் உருவாக்கப்பட்டதே ‘தலித் முரசு’ (பிப்ரவரி 13,1997) இதழ்.        </p>

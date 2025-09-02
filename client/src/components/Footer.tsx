@@ -28,8 +28,6 @@ export default function Footer() {
               rel="noopener noreferrer" 
               className="hover:underline cursor-pointer text-black"
             >
-              <p>முகவரி:</p>
-              <p> தலித் முரசு,</p>
               <p>D 11/21, சோழன் தெரு, முதல் மாடி, எம். எம். டி. ஏ. குடியிருப்பு,</p>
               <p>அரும்பாக்கம், சென்னை 600 106</p>
               <p></p>
