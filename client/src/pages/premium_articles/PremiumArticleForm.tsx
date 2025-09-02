@@ -109,10 +109,7 @@ export default function PremiumArticleForm() {
       freeViewLimit: 0, // Default free view limit
     },
   });
-  const categoryInTamil: { [key: string]: string } = {
-  'Premium Article': 'முதன்மை கட்டுரைகள்',
-  
-};
+
 
   // --- Admin Token Verification Function ---
   const verifyAdminToken = async (): Promise<boolean> => {
