@@ -29,6 +29,7 @@ jobs:
           npm run build
         env:
           VITE_API: ${{ secrets.VITE_API }}
+          VITE_RAZORPAY_KEY: ${{ secrets.VITE_RAZORPAY_KEY }}
 
       - name: Deploy frontend via rsync
         uses: burnett01/rsync-deployments@5.2
