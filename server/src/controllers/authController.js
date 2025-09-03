@@ -146,26 +146,41 @@ exports.googleAuth = passportCtl.authenticate("google", {
 
 // Callback after Google grants auth
 exports.googleCallback = (req, res, next) => {
-  try {
-    if (!req.user) {
-      console.error("googleCallback: req.user missing");
-      return res.redirect(buildFrontendRedirectUrl({ error: "no-user" }));
-    }
+  try {
+    if (!req.user) {
+      console.error("googleCallback: req.user missing");
+      return res.redirect(buildFrontendRedirectUrl({ error: "no-user" }));
+    }
 
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
-    const redirectUrl = buildFrontendRedirectUrl({
-      token,
-      uid: req.user._id.toString(),
-    });
 
-    return res.redirect(redirectUrl);
-  } catch (err) {
-    console.error("googleCallback error:", err);
-    return next(err);
-  }
+    if (req.user.isNewUser) {
+      // Call the email sending function
+      sendWelcomeEmail(req.user.email, req.user.name)
+        .then(() => {
+          console.log("Welcome email sent for new Google user.");
+          // Optional: Clear the flag after sending the email
+          // req.user.isNewUser = false;
+          // await req.user.save();
+        })
+        .catch((err) => {
+          console.error("Failed to send welcome email for Google user:", err);
+        });
+    }
+
+    const redirectUrl = buildFrontendRedirectUrl({
+      token,
+      uid: req.user._id.toString(),
+    });
+
+    return res.redirect(redirectUrl);
+  } catch (err) {
+    console.error("googleCallback error:", err);
+    return next(err);
+  }
 };
 
 
