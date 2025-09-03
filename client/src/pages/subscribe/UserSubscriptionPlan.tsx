@@ -52,35 +52,40 @@ export default function UserSubscriptionPlans() {
     fetchPlans();
   }, [API_BASE_URL]);
 
-  const handleSubscribe = async (plan: SubscriptionPlan) => {
-    const token = localStorage.getItem("clientToken");
+// client\src\pages\subscribe\UserSubscriptionPlan.tsx
 
-    if (!token) {
-      alert("Please login to subscribe.");
-      return;
-    }
+const handleSubscribe = async (plan: SubscriptionPlan) => {
+  const token = localStorage.getItem("clientToken");
 
-    try {
-      const createOrderResponse = await axios.post(
-        `${API_BASE_URL}api/subscriptions/create-order`,
-        { planId: plan._id },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  if (!token) {
+    alert("Please login to subscribe.");
+    return;
+  }
 
-      const { razorpayOrderId, amount, currency, userId } = createOrderResponse.data;
+  try {
+    const createOrderResponse = await axios.post(
+      `${API_BASE_URL}api/subscriptions/create-order`,
+      { planId: plan._id },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-      const razorpay = new window.Razorpay({
-        key: import.meta.env.VITE_RAZORPAY_KEY,
-        amount,
-        currency,
-        name: "Dalit Murasu",
-        description: `Subscription: ${plan.title}`,
-        order_id: razorpayOrderId,
-        handler: async function (response: any) {
+    const { razorpayOrderId, amount, currency, userId } = createOrderResponse.data;
+
+    const razorpay = new window.Razorpay({
+      key: import.meta.env.VITE_RAZORPAY_KEY,
+      amount,
+      currency,
+      name: "Dalit Murasu",
+      description: `Subscription: ${plan.title}`,
+      order_id: razorpayOrderId,
+      handler: async function (response: any) {
+        try {
+          // --- FIX APPLIED HERE ---
+          // Add the Authorization header with the token
           const verifyResponse = await axios.post(
             `${API_BASE_URL}api/subscriptions/verify-payment`,
             {
@@ -89,6 +94,11 @@ export default function UserSubscriptionPlans() {
               razorpay_signature: response.razorpay_signature,
               userId,
               planId: plan._id,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             }
           );
 
@@ -98,22 +108,26 @@ export default function UserSubscriptionPlans() {
           } else {
             alert("Payment verification failed.");
           }
-        },
-        prefill: {
-          name: "Dalit Murasu User",
-          email: "",
-        },
-        theme: {
-          color: "#cb1e19",
-        },
-      });
+        } catch (error) {
+          console.error("Verification Error:", error);
+          alert("An error occurred during payment verification.");
+        }
+      },
+      prefill: {
+        name: "Dalit Murasu User",
+        email: "",
+      },
+      theme: {
+        color: "#cb1e19",
+      },
+    });
 
-      razorpay.open();
-    } catch (error) {
-      console.error("Payment Error:", error);
-      alert("Failed to initiate subscription. Please try again.");
-    }
-  };
+    razorpay.open();
+  } catch (error) {
+    console.error("Payment Error:", error);
+    alert("Failed to initiate subscription. Please try again.");
+  }
+};
 
   if (loading) {
     return (

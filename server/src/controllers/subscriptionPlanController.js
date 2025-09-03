@@ -1,7 +1,60 @@
+
 const SubscriptionPlan = require("../models/SubscriptionPlan");
 const ClientUser = require("../models/ClientUser");
 const razorpay = require("../config/razorpay_util");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer"); // Import nodemailer
+
+/* -----------------------------------------------------------------------------
+ * Email Transporter (copied from authController.js for consistency)
+ * --------------------------------------------------------------------------- */
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: process.env.EMAIL_PORT,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+/* -----------------------------------------------------------------------------
+ * Email Helper Function
+ * --------------------------------------------------------------------------- */
+async function sendSubscriptionEmail(toEmail, userName, planTitle, planPrice, expiryDate) {
+  try {
+    console.log(`Attempting to send subscription email to: ${toEmail}`);
+    const formattedPrice = (planPrice / 100).toFixed(2); // Convert paisa back to rupees for display
+    const formattedExpiryDate = new Date(expiryDate).toLocaleDateString();
+
+    await transporter.sendMail({
+      from: `"Dalit Murasu" <${process.env.EMAIL_USER}>`,
+      to: toEmail,
+      subject: "Subscription Confirmation - Dalit Murasu",
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2 style="color: #0056b3;">Hello, ${userName}! 👋</h2>
+          <p>Thank you for subscribing to Dalit Murasu.</p>
+          <p>Your subscription details are as follows:</p>
+          <ul>
+            <li><strong>Plan:</strong> ${planTitle}</li>
+            <li><strong>Price Paid:</strong> ₹${formattedPrice}</li>
+            <li><strong>Status:</strong> Active</li>
+            <li><strong>Expires On:</strong> ${formattedExpiryDate}</li>
+          </ul>
+          <p>You can now enjoy full access to our content. Thank you for your support!</p>
+          <p>Best regards,<br/>The Dalit Murasu Team</p>
+        </div>
+      `,
+    });
+    console.log(`Subscription email successfully sent to ${toEmail}`);
+  } catch (error) {
+    console.error("Error sending subscription email:", error);
+  }
+}
 
 // -----------------------------
 // Admin: Create Plan
@@ -173,6 +226,15 @@ exports.verifySubscriptionPayment = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
+    // ✅ NEW: Send subscription confirmation email
+    await sendSubscriptionEmail(
+      user.email,
+      user.name,
+      plan.title,
+      plan.price,
+      user.subscriptionExpiresAt
+    );
+
     res.status(200).json({
       success: true,
       message: "Subscription activated successfully",
@@ -228,6 +290,16 @@ exports.manualSubscribeUser = async (req, res) => {
     user.subscriptionExpiresAt = expiryDate;
     user.title = plan.title;
     await user.save();
+    
+    // ✅ NEW: Send confirmation email for manual subscription
+    await sendSubscriptionEmail(
+      user.email,
+      user.name,
+      plan.title,
+      plan.price,
+      user.subscriptionExpiresAt
+    );
+
 
     res.status(200).json({
       success: true,

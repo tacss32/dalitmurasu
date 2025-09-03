@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API;
 
 // --- Category Mapping for Tamil Display ---
 const categoryInTamil: { [key: string]: string } = {
-  'Premium Article': 'முதன்மை கட்டுரைகள்',
+  'Premium Articles': 'முதன்மைக் கட்டுரைகள்',
   
 };
 
@@ -81,7 +81,7 @@ export default function PremiumArticlePage() {
 
   return (
     <div className="min-h-screen text-white">
-      <Header text="முதன்மை கட்டுரைகள்" urlPath='premiumarticles'/>
+      <Header text="முதன்மைக் கட்டுரைகள்" urlPath='premiumarticles'/>
       <div className="container mx-auto p-6">
         <h1 className="text-4xl font-bold text-yellow-400 mb-8 text-center"></h1>
         {premiumArticles.length === 0 ? (

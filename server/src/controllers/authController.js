@@ -5,6 +5,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const passportCtl = require("passport"); // ensure passport is initialized in index.js
 const { URLSearchParams } = require("url");
+const nodemailer = require("nodemailer"); // Make sure this is present
+const crypto = require("crypto"); // Keep if you use it elsewhere
 
 /* -----------------------------------------------------------------------------
  * Config helpers (frontend redirect targets)
@@ -15,17 +17,55 @@ const { URLSearchParams } = require("url");
 
 // You can override these in .env:
 // FRONTEND_BASE_URL=https://your-frontend-domain.com
-// FRONTEND_LOGIN_PATH=/login   (default: /login-client)
+// FRONTEND_LOGIN_PATH=/login    (default: /login-client)
 // function getFrontendBaseUrl() {
-//   const fromEnv = process.env.FRONTEND_BASE_URL;
-//   if (fromEnv && typeof fromEnv === "string" && fromEnv.trim() !== "") {
-//     return fromEnv.replace(/\/$/, "");
-//   }
-//   return (process.env.NODE_ENV === "production"
-//     ? FRONTEND_BASE_FALLBACK_PROD
-//     : FRONTEND_BASE_FALLBACK_DEV
-//   ).replace(/\/$/, "");
+//    const fromEnv = process.env.FRONTEND_BASE_URL;
+//    if (fromEnv && typeof fromEnv === "string" && fromEnv.trim() !== "") {
+//      return fromEnv.replace(/\/$/, "");
+//    }
+//    return (process.env.NODE_ENV === "production"
+//      ? FRONTEND_BASE_FALLBACK_PROD
+//      : FRONTEND_BASE_FALLBACK_DEV
+//    ).replace(/\/$/, "");
 // }
+
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: process.env.EMAIL_PORT,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+async function sendWelcomeEmail(toEmail, userName) {
+  try {
+    console.log(`Attempting to send welcome email to: ${toEmail}`);
+    await transporter.sendMail({
+      from: `"Dalit Murasu" <${process.env.EMAIL_USER}>`,
+      to: toEmail,
+      subject: "Welcome to Dalit Murasu!",
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2 style="color: #0056b3;">Hello, ${userName}! 👋</h2>
+          <p>Thank you for registering with Dalit Murasu. We are thrilled to have you join our community.</p>
+          <p>You can now log in and explore all the features we have to offer.</p>
+          <p>If you have any questions, feel free to reach out to us.</p>
+          <p>Best regards,<br/>The Dalit Murasu Team</p>
+        </div>
+      `,
+    });
+    console.log(`Welcome email successfully sent to ${toEmail}`);
+  } catch (error) {
+    console.error("Error sending welcome email:", error);
+    // Log the full error object for more detail
+    console.error(error);
+  }
+}
 
 function getFrontendLoginPath() {
   const fromEnv = process.env.FRONTEND_LOGIN_PATH;
@@ -116,37 +156,44 @@ exports.adminVerifyToken = async (req, res) => {
 
 // Kick off OAuth flow (used in routes)
 exports.googleAuth = passportCtl.authenticate("google", {
-  scope: ["profile", "email"],
+  scope: ["profile", "email"],
 });
 
 // Callback after Google grants auth
-exports.googleCallback = (req, res, next) => {
-  try {
-    if (!req.user) {
-      console.error("googleCallback: req.user missing");
-      return res.redirect(buildFrontendRedirectUrl({ error: "no-user" }));
-    }
+exports.googleCallback = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      console.error("googleCallback: req.user missing");
+      return res.redirect(buildFrontendRedirectUrl({ error: "no-user" }));
+    }
 
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    // Check if this is the first time the user is logging in with Google
+    // If `req.user.isNew` is true, it means Passport just created the user in the database.
+    if (req.user.isNew) {
+      console.log('New Google user detected. Sending welcome email.');
+      await sendWelcomeEmail(req.user.email, req.user.name);
+    }
 
-    const redirectUrl = buildFrontendRedirectUrl({
-      token,
-      uid: req.user._id.toString(),
-    });
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
-    return res.redirect(redirectUrl);
-  } catch (err) {
-    console.error("googleCallback error:", err);
-    return next(err);
-  }
+    const redirectUrl = buildFrontendRedirectUrl({
+      token,
+      uid: req.user._id.toString(),
+    });
+
+    return res.redirect(redirectUrl);
+  } catch (err) {
+    console.error("googleCallback error:", err);
+    return next(err);
+  }
 };
 
 // Build redirect back to frontend login page with query params
 function buildFrontendRedirectUrl({ token, uid, error }) {
-  const base = "https://dalitmurasu.com"
-  const loginPath = getFrontendLoginPath(); // e.g. /login-client or /login
+  const base = getFrontendBaseUrl();
+  const loginPath = getFrontendLoginPath(); // e.g., /login-client or /login
 
   const params = new URLSearchParams();
   if (token) params.set("token", token);
@@ -164,8 +211,9 @@ exports.clientRegister = async (req, res) => {
 
   try {
     const existingUser = await ClientUser.findOne({ email });
-    if (existingUser)
+    if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -191,6 +239,9 @@ exports.clientRegister = async (req, res) => {
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
+
+    // ✅ Add this line to send the welcome email
+    await sendWelcomeEmail(newUser.email, newUser.name);
 
     res.json({ token, userId: newUser._id });
   } catch (err) {
