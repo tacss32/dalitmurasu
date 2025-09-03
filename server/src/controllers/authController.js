@@ -6,28 +6,7 @@ const jwt = require("jsonwebtoken");
 const passportCtl = require("passport"); // ensure passport is initialized in index.js
 const { URLSearchParams } = require("url");
 const nodemailer = require("nodemailer"); // Make sure this is present
-const crypto = require("crypto"); // Keep if you use it elsewhere
 
-/* -----------------------------------------------------------------------------
- * Config helpers (frontend redirect targets)
- * --------------------------------------------------------------------------- */
-
-// const FRONTEND_BASE_FALLBACK_PROD = "https://dalitmurasu.com";
-// const FRONTEND_BASE_FALLBACK_DEV = "http://localhost:5173";
-
-// You can override these in .env:
-// FRONTEND_BASE_URL=https://your-frontend-domain.com
-// FRONTEND_LOGIN_PATH=/login    (default: /login-client)
-// function getFrontendBaseUrl() {
-//    const fromEnv = process.env.FRONTEND_BASE_URL;
-//    if (fromEnv && typeof fromEnv === "string" && fromEnv.trim() !== "") {
-//      return fromEnv.replace(/\/$/, "");
-//    }
-//    return (process.env.NODE_ENV === "production"
-//      ? FRONTEND_BASE_FALLBACK_PROD
-//      : FRONTEND_BASE_FALLBACK_DEV
-//    ).replace(/\/$/, "");
-// }
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -67,13 +46,7 @@ async function sendWelcomeEmail(toEmail, userName) {
   }
 }
 
-function getFrontendLoginPath() {
-  const fromEnv = process.env.FRONTEND_LOGIN_PATH;
-  if (fromEnv && typeof fromEnv === "string" && fromEnv.trim() !== "") {
-    return fromEnv.startsWith("/") ? fromEnv : `/${fromEnv}`;
-  }
-  return "/login-client"; // current default you’ve been using
-}
+
 
 /* -----------------------------------------------------------------------------
  * ADMIN: LOGIN
@@ -150,58 +123,52 @@ exports.adminVerifyToken = async (req, res) => {
   }
 };
 
+// Build redirect back to frontend login page with query params
+function buildFrontendRedirectUrl({ token, uid, error }) {
+
+  // const loginPath = "http://localhost:5173/login"; // e.g. /login-client or /login
+  const loginPath = "https://dalitmurasu.com/login";
+  const params = new URLSearchParams();
+  if (token) params.set("token", token);
+  if (uid) params.set("uid", uid);
+  if (error) params.set("error", error);
+
+  return `${loginPath}?${params.toString()}`;
+}
 /* -----------------------------------------------------------------------------
  * GOOGLE OAUTH
  * --------------------------------------------------------------------------- */
 
 // Kick off OAuth flow (used in routes)
 exports.googleAuth = passportCtl.authenticate("google", {
-  scope: ["profile", "email"],
+  scope: ["profile", "email"],
 });
 
 // Callback after Google grants auth
-exports.googleCallback = async (req, res, next) => {
-  try {
-    if (!req.user) {
-      console.error("googleCallback: req.user missing");
-      return res.redirect(buildFrontendRedirectUrl({ error: "no-user" }));
-    }
+exports.googleCallback = (req, res, next) => {
+  try {
+    if (!req.user) {
+      console.error("googleCallback: req.user missing");
+      return res.redirect(buildFrontendRedirectUrl({ error: "no-user" }));
+    }
 
-    // Check if this is the first time the user is logging in with Google
-    // If `req.user.isNew` is true, it means Passport just created the user in the database.
-    if (req.user.isNew) {
-      console.log('New Google user detected. Sending welcome email.');
-      await sendWelcomeEmail(req.user.email, req.user.name);
-    }
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const redirectUrl = buildFrontendRedirectUrl({
+      token,
+      uid: req.user._id.toString(),
+    });
 
-    const redirectUrl = buildFrontendRedirectUrl({
-      token,
-      uid: req.user._id.toString(),
-    });
-
-    return res.redirect(redirectUrl);
-  } catch (err) {
-    console.error("googleCallback error:", err);
-    return next(err);
-  }
+    return res.redirect(redirectUrl);
+  } catch (err) {
+    console.error("googleCallback error:", err);
+    return next(err);
+  }
 };
 
-// Build redirect back to frontend login page with query params
-function buildFrontendRedirectUrl({ token, uid, error }) {
-  const base = getFrontendBaseUrl();
-  const loginPath = getFrontendLoginPath(); // e.g., /login-client or /login
 
-  const params = new URLSearchParams();
-  if (token) params.set("token", token);
-  if (uid) params.set("uid", uid);
-  if (error) params.set("error", error);
-
-  return `${base}${loginPath}?${params.toString()}`;
-}
 
 /* -----------------------------------------------------------------------------
  * CLIENT: REGISTER (with name, email, phone, gender, password, dob)

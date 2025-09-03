@@ -456,3 +456,136 @@ exports.listPremiumPostsConditional = async (req, res) => {
   }
  
 };
+// GET all home posts (conditional content)
+exports.getHomePostsConditional = async (req, res) => {
+  try {
+    const wordCount = Math.max(
+      1,
+      Math.min(200, parseInt(req.query.words, 10) || 150)
+    );
+
+    const posts = await PremiumPost.find({ isHome: true })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const user = req.user;
+    const isSubscribed = user?.isSubscribed === true;
+
+    const result = posts.map((p) => {
+      const isPremium = p.visibility === "subscribers";
+      const base = {
+        _id: p._id,
+        title: p.title,
+        subtitle: p.subtitle,
+        category: p.category,
+        author: p.author,
+        images: p.images,
+        date: p.date,
+        isHome: p.isHome,
+        isRecent: p.isRecent,
+        visibility: p.visibility,
+        freeViewLimit: p.freeViewLimit,
+        views: p.views,
+        requiresSubscription: isPremium,
+      };
+
+      if (isPremium && !isSubscribed) {
+        const { preview, truncated, totalWords } = getFirstWords(
+          p.content,
+          wordCount
+        );
+        return {
+          ...base,
+          contentPreview: preview,
+          truncated,
+          totalWords,
+          previewWordCount: wordCount,
+        };
+      }
+
+      return {
+        ...base,
+        content: p.content,
+        truncated: false,
+        totalWords: stripHtml(p.content || "")
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean).length,
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load home posts",
+      details: err.message,
+    });
+  }
+};
+
+// GET all recent posts (conditional content)
+exports.getRecentPostsConditional = async (req, res) => {
+  try {
+    const wordCount = Math.max(
+      1,
+      Math.min(200, parseInt(req.query.words, 10) || 150)
+    );
+
+    const posts = await PremiumPost.find({ isRecent: true })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const user = req.user;
+    const isSubscribed = user?.isSubscribed === true;
+
+    const result = posts.map((p) => {
+      const isPremium = p.visibility === "subscribers";
+      const base = {
+        _id: p._id,
+        title: p.title,
+        subtitle: p.subtitle,
+        category: p.category,
+        author: p.author,
+        images: p.images,
+        date: p.date,
+        isHome: p.isHome,
+        isRecent: p.isRecent,
+        visibility: p.visibility,
+        freeViewLimit: p.freeViewLimit,
+        views: p.views,
+        requiresSubscription: isPremium,
+      };
+
+      if (isPremium && !isSubscribed) {
+        const { preview, truncated, totalWords } = getFirstWords(
+          p.content,
+          wordCount
+        );
+        return {
+          ...base,
+          contentPreview: preview,
+          truncated,
+          totalWords,
+          previewWordCount: wordCount,
+        };
+      }
+
+      return {
+        ...base,
+        content: p.content,
+        truncated: false,
+        totalWords: stripHtml(p.content || "")
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean).length,
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load recent posts",
+      details: err.message,
+    });
+  }
+};

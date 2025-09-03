@@ -43,9 +43,7 @@ router.post("/client/verify-token", clientVerifyToken);
 // --- Initiate OAuth (primary) ---
 router.get("/google", googleAuth);
 
-// --- Legacy aliases (optional; safe to keep) ---
-router.get("/client/google", googleAuth);
-router.get("/client-auth/google", googleAuth);
+
 
 // --- Callback (primary) ---
 router.get(
