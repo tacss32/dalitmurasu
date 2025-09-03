@@ -3,12 +3,10 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const ClientUser = require("../models/ClientUser");
 
-// Detect environment
-const isProduction = process.env.NODE_ENV === "production";
 
 // Recommended: Use .env var BACKEND_BASE_URL
 const BACKEND_BASE_URL = "https://dalitmurasu.com" // remove trailing slash
-
+//  const BACKEND_BASE_URL = "http://localhost:3030"
 const callbackURL = `${BACKEND_BASE_URL}/api/auth/google/callback`;
 console.log("[Google OAuth] Using callbackURL:", callbackURL);
 

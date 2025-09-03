@@ -43,6 +43,12 @@ router.get("/previews/list", premiumPostController.getPremiumPostPreviews);
  
 // LIST posts conditionally based on auth (for dashboard/user view)
 router.get("/list", optionalAuth, premiumPostController.listPremiumPostsConditional);
+
+// NEW: READ all home posts
+router.get("/home", optionalAuth, premiumPostController.getHomePostsConditional);
+
+// NEW: READ all recent posts
+router.get("/recent", optionalAuth, premiumPostController.getRecentPostsConditional);
  
 // READ full single post (requires subscription or valid token)
 router.get("/:id", verifyToken, premiumPostController.getPremiumPostById);
