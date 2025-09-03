@@ -10,7 +10,7 @@ export default function About() {
 
   return (
     <div className="flex flex-col gap-5">
-      <Header text="ஓர் அறிமுகம்" />
+      <Header text="ஓர் அறிமுகம்" urlPath="about" />
       {/* <OurMission />  */}
       <OurStory />   
     </div>
