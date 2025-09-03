@@ -268,41 +268,44 @@ export default function PostDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<Post[] | null>(null);
-  const [categories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   // State for share message and timeout
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [shareMessageTimeoutId, setShareMessageTimeoutId] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await fetch(`${SERVER_URL}api/universal-posts/four/${id}`);
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(
-            errorData.message || `HTTP error! Status: ${res.status}`
-          );
-        }
-        const data = await res.json();
-        console.log(data)
-        setPost(data.currentPost);
-        setSuggestions(data.nextPosts);
-      } catch (err) {
-        console.error("Error fetching post:", err);
-        setError(
-          (err as Error).message ||
-            "Failed to load post. Please try again later."
-        );
-        setPost(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPost();
-  }, [id]);
+  const fetchPost = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch both the post and the categories
+      const [postRes, categoriesRes] = await Promise.all([
+        fetch(`${SERVER_URL}api/universal-posts/four/${id}`),
+        fetch(`${SERVER_URL}api/categories`) // Assuming this is your categories endpoint
+      ]);
 
+      if (!postRes.ok || !categoriesRes.ok) {
+        throw new Error("Failed to load data.");
+      }
+
+      const postData = await postRes.json();
+      const categoriesData = await categoriesRes.json();
+
+      setPost(postData.currentPost);
+      setSuggestions(postData.nextPosts);
+      setCategories(categoriesData); // Set the categories here
+
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load content. Please try again later.");
+      setPost(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchPost();
+}, [id]);
   useEffect(() => {
     // Cleanup function to clear the timeout when the component unmounts or shareMessage changes
     return () => {
@@ -394,8 +397,8 @@ export default function PostDetail() {
           </span>
           <span className="text-2xl">•</span>
           <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
-            {post.category}
-          </span>
+  {getTamilCategoryName(post.category)}
+</span>
         </div>
 
         <h1 className="text-4xl font-bold text-gray-900 leading-tight">
