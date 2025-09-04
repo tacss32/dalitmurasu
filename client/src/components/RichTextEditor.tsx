@@ -10,7 +10,6 @@ import {
   AlignRight,
   List,
   ListOrdered,
-  Quote,
   Undo,
   Redo,
   Palette,
@@ -36,6 +35,10 @@ function RichTextEditor({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedColor, setSelectedColor] = useState("#000000");
+  const [activeStyles, setActiveStyles] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [currentFontSize, setCurrentFontSize] = useState("3");
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const savedRange = useRef<Range | null>(null);
@@ -43,48 +46,16 @@ function RichTextEditor({
 
   // Predefined color palette
   const colorPalette = [
-    "#000000",
-    "#404040",
-    "#808080",
-    "#C0C0C0",
-    "#FFFFFF",
-    "#FF0000",
-    "#FF8000",
-    "#FFFF00",
-    "#80FF00",
-    "#00FF00",
-    "#00FF80",
-    "#00FFFF",
-    "#0080FF",
-    "#0000FF",
-    "#8000FF",
-    "#FF00FF",
-    "#FF0080",
-    "#800000",
-    "#808000",
-    "#008000",
-    "#008080",
-    "#000080",
-    "#800080",
-    "#FF4444",
-    "#FF8844",
-    "#FFFF44",
-    "#88FF44",
-    "#44FF44",
-    "#44FF88",
-    "#44FFFF",
-    "#4488FF",
-    "#4444FF",
-    "#8844FF",
-    "#FF44FF",
-    "#FF4488",
+    "#000000", "#404040", "#808080", "#C0C0C0", "#FFFFFF", "#FF0000",
+    "#FF8000", "#FFFF00", "#80FF00", "#00FF00", "#00FF80", "#00FFFF",
+    "#0080FF", "#0000FF", "#8000FF", "#FF00FF", "#FF0080", "#800000",
+    "#808000", "#008000", "#008080", "#000080", "#800080", "#FF4444",
+    "#FF8844", "#FFFF44", "#88FF44", "#44FF44", "#44FF88", "#44FFFF",
+    "#4488FF", "#4444FF", "#8844FF", "#FF44FF", "#FF4488",
   ];
 
   const execCommand = useCallback((command: string, value?: string) => {
     document.execCommand(command, false, value);
-    if (editorRef.current) {
-      setContent(editorRef.current.innerHTML);
-    }
   }, []);
 
   const handleColorChange = useCallback(
@@ -104,7 +75,6 @@ function RichTextEditor({
     [showColorPicker]
   );
 
-  // Close color picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -114,37 +84,63 @@ function RichTextEditor({
         setShowColorPicker(false);
       }
     };
-
     if (showColorPicker) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showColorPicker]);
 
-  const handleEditorInput = useCallback(() => {
-    if (editorRef.current) {
-      const newContent = editorRef.current.innerHTML;
-      // Prevent setting content to the browser's default <br> on empty
-      if (newContent === "<div><br></div>" || newContent === "<br>") {
-        setContent("");
-      } else {
-        setContent(newContent);
-      }
+  const updateActiveStyles = useCallback(() => {
+    const styles = {
+      bold: document.queryCommandState("bold"),
+      italic: document.queryCommandState("italic"),
+      underline: document.queryCommandState("underline"),
+      justifyLeft: document.queryCommandState("justifyLeft"),
+      justifyCenter: document.queryCommandState("justifyCenter"),
+      justifyRight: document.queryCommandState("justifyRight"),
+      insertUnorderedList: document.queryCommandState("insertUnorderedList"),
+      insertOrderedList: document.queryCommandState("insertOrderedList"),
+    };
+    setActiveStyles(styles);
+
+    const size = document.queryCommandValue("fontSize");
+    if (size) {
+      setCurrentFontSize(size);
     }
   }, []);
 
-  // This effect synchronizes the React state back to the DOM
-  // ONLY when it's absolutely necessary (e.g., undo/redo).
+  // Corrected handleEditorInput to handle newlines and content changes
+  const handleEditorInput = useCallback(() => {
+    if (editorRef.current) {
+      const newContent = editorRef.current.innerHTML;
+      setContent(newContent);
+    }
+  }, [setContent]);
+
+  // Use useEffect to sync the content prop with the ref's innerHTML
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== content) {
       editorRef.current.innerHTML = content;
     }
   }, [content]);
+
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      updateActiveStyles();
+    };
+    document.addEventListener("selectionchange", handleSelectionChange);
+    return () => {
+      document.removeEventListener("selectionchange", handleSelectionChange);
+    };
+  }, [updateActiveStyles]);
+
+  const handleEditorMouseUp = useCallback(() => {
+    updateActiveStyles();
+  }, [updateActiveStyles]);
 
   const handleImageUpload = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,13 +173,11 @@ function RichTextEditor({
 
         if (editorRef.current) {
           editorRef.current.focus();
-
           const selection = window.getSelection();
           if (selection && savedRange.current) {
             selection.removeAllRanges();
             selection.addRange(savedRange.current);
             savedRange.current = null;
-
             const range = selection.getRangeAt(0);
             range.deleteContents();
             range.insertNode(range.createContextualFragment(img));
@@ -191,7 +185,6 @@ function RichTextEditor({
           } else {
             execCommand("insertHTML", img);
           }
-
           handleEditorInput();
         }
       } catch (err: any) {
@@ -201,7 +194,7 @@ function RichTextEditor({
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [handleEditorInput]
+    [handleEditorInput, execCommand]
   );
 
   const handleImageClick = useCallback(
@@ -219,9 +212,7 @@ function RichTextEditor({
         ) as HTMLImageElement;
         if (imgElement) {
           imgElement.classList.remove("float-left", "float-right", "block");
-
           imgElement.classList.add(newPosition);
-
           switch (newPosition) {
             case "float-left":
               imgElement.style.cssText =
@@ -237,8 +228,7 @@ function RichTextEditor({
                 "display: block; margin: 1rem auto; max-width: 100%; height: auto;";
               break;
           }
-
-          handleEditorInput(); // Sync state after change
+          handleEditorInput();
           setImages((prev) =>
             prev.map((img) =>
               img.id === imageId ? { ...img, position: newPosition } : img
@@ -258,7 +248,7 @@ function RichTextEditor({
         ) as HTMLImageElement;
         if (imgElement) {
           imgElement.style.maxWidth = `${newWidth}%`;
-          handleEditorInput(); // Sync state after change
+          handleEditorInput();
         }
       }
     },
@@ -273,7 +263,7 @@ function RichTextEditor({
         );
         if (imgElement) {
           imgElement.remove();
-          handleEditorInput(); // Sync state after change
+          handleEditorInput();
           setImages((prev) => prev.filter((img) => img.id !== imageId));
           setSelectedImage(null);
         }
@@ -291,7 +281,6 @@ function RichTextEditor({
           handleImageClick(imageId);
         }
       } else {
-        // Deselect image if clicking elsewhere in the editor
         if (selectedImage) {
           setSelectedImage(null);
         }
@@ -302,7 +291,6 @@ function RichTextEditor({
 
   const handleEditorFocus = useCallback(() => {
     if (editorRef.current && editorRef.current.innerHTML.trim() === "") {
-      // The CSS placeholder handles the visual cue, so we just focus.
       editorRef.current.focus();
     }
   }, []);
@@ -310,7 +298,7 @@ function RichTextEditor({
   const handleImageButtonClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     if (editorRef.current) {
-      editorRef.current.focus(); // Ensure editor is focused
+      editorRef.current.focus();
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
         savedRange.current = selection.getRangeAt(0).cloneRange();
@@ -332,12 +320,6 @@ function RichTextEditor({
       command: "insertOrderedList",
       title: "Numbered List",
     },
-    {
-      icon: Quote,
-      command: "formatBlock",
-      value: "blockquote",
-      title: "Quote",
-    },
     { icon: Link, command: "createLink", title: "Insert Link" },
     { icon: Undo, command: "undo", title: "Undo" },
     { icon: Redo, command: "redo", title: "Redo" },
@@ -357,7 +339,7 @@ function RichTextEditor({
         <select
           onChange={(e) => execCommand("fontSize", e.target.value)}
           className="ml-1 px-2 py-1 border rounded text-sm"
-          defaultValue="3"
+          value={currentFontSize}
         >
           <option value="2">S</option>
           <option value="3">M</option>
@@ -367,26 +349,26 @@ function RichTextEditor({
         {toolbarButtons.map((button, index) => (
           <button
             key={index}
-            type="button" // FIX: Prevents form submission
+            type="button"
             onMouseDown={(e) => {
-              // Use onMouseDown to prevent editor blur
               e.preventDefault();
               button.command === "createLink"
                 ? handleLinkClick()
-                : execCommand(button.command, button.value);
+                : execCommand(button.command);
             }}
-            className="p-2 hover:bg-gray-200 rounded-md transition-colors duration-200 text-gray-700 hover:text-gray-900"
+            className={`p-2 rounded-md transition-colors duration-200 text-gray-700 hover:text-gray-900 ${
+              activeStyles[button.command] ? "bg-gray-300 text-gray-900" : "hover:bg-gray-200"
+            }`}
             title={button.title}
           >
             <button.icon size={18} />
           </button>
         ))}
         <div className="w-px h-6 bg-gray-300 mx-2" />
-
-        {/* Color Picker */}
+        {/* Color Pickr */}
         <div className="relative" ref={colorPickerRef}>
           <button
-            type="button" // FIX: Prevents form submission
+            type="button"
             onMouseDown={handleColorPickerToggle}
             className="p-2 hover:bg-gray-200 rounded-md transition-colors duration-200 text-gray-700 hover:text-gray-900 flex items-center gap-1"
             title="Text Color"
@@ -397,14 +379,13 @@ function RichTextEditor({
               style={{ backgroundColor: selectedColor }}
             />
           </button>
-
           {showColorPicker && (
             <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-lg shadow-lg border z-20">
               <div className="grid grid-cols-5 gap-1 mb-2">
                 {colorPalette.map((color, index) => (
                   <button
                     key={index}
-                    type="button" // Also set type here for safety
+                    type="button"
                     className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
                     style={{ backgroundColor: color }}
                     onClick={() => handleColorChange(color)}
@@ -425,12 +406,10 @@ function RichTextEditor({
             </div>
           )}
         </div>
-
         <div className="w-px h-6 bg-gray-300 mx-2" />
-
         <button
-          type="button" // FIX: Prevents form submission
-          onMouseDown={handleImageButtonClick} // Use the new handler
+          type="button"
+          onMouseDown={handleImageButtonClick}
           className="p-2 hover:bg-gray-200 rounded-md transition-colors duration-200 text-gray-700 hover:text-gray-900 flex items-center gap-2"
           title="Insert Image"
         >
@@ -438,7 +417,6 @@ function RichTextEditor({
           <span className="text-sm">Image</span>
         </button>
       </div>
-
       {/* Editor */}
       <div className="relative">
         <div
@@ -446,24 +424,24 @@ function RichTextEditor({
           contentEditable
           onInput={handleEditorInput}
           onClick={handleEditorClick}
+          onMouseUp={handleEditorMouseUp}
           onFocus={handleEditorFocus}
           className={`min-h-96 p-3 border-2 overflow-auto border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none bg-white text-left prose prose-sm w-full ${
             !content ? "is-empty" : ""
           }`}
           style={{
             minHeight: "100px",
-            height: "450px", // Set a fixed height
+            height: "450px",
             overflowY: "auto",
             direction: "ltr",
           }}
-          suppressContentEditableWarning={true}
         />
         <style>
           {`
             .is-empty:before {
               content: 'Start typing your content here...';
               position: absolute;
-              color: #a1a1aa; /* Zinc 400 */
+              color: #a1a1aa;
               pointer-events: none;
               left: 1rem;
               top: 1rem;
@@ -504,9 +482,8 @@ function RichTextEditor({
               display: block;
               margin: 1rem auto;
             }
-            /* Add this new CSS rule for links */
             div[contenteditable] a {
-              color: #3b82f6; /* Tailwind's blue-500 */
+              color: #3b82f6;
               text-decoration: underline;
             }
           `}
@@ -551,7 +528,7 @@ function RichTextEditor({
                 />
               </div>
               <button
-                type="button" // Also set type here for safety
+                type="button"
                 onClick={() => handleImageDelete(selectedImage)}
                 className="w-full px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
               >
@@ -561,8 +538,7 @@ function RichTextEditor({
           </div>
         )}
       </div>
-
-      {/* Hidden file input */}
+      {/* Hidden file inpt */}
       <input
         ref={fileInputRef}
         type="file"
@@ -570,7 +546,6 @@ function RichTextEditor({
         onChange={handleImageUpload}
         className="hidden"
       />
-
       {/* Status bar */}
       <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
         <div className="flex justify-between items-center">

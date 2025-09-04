@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-
+//interface
 interface Post {
   _id: string;
   title: string;
   content: string | string[];
   headerImage?: string;
   middleImage?: string;
-  createdAt: string;
+  date: string;
   author: string;
   category: string;
 }
@@ -96,7 +96,7 @@ export default function PeriyarSpeaks() {
                     {highlightMatch(article.title, search)}
                   </h2>
                   <p className="text-md text-gray-600">
-                    {new Date(article.createdAt).toLocaleDateString()}
+                    {new Date(article.date).toLocaleDateString()}
                   </p>
                 </div>
               </Link>
