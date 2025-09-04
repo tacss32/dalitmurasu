@@ -30,22 +30,17 @@ export default function Card({
   author: string;
   category: string;
   id: string;
-  source?: "universal" | "premium-articles" | "pdf" | "posts" | "bookmarks";
+  source?: "universal" | "premium-articles" | "pdf" | "posts";
 }) {
   const [categories, setCategories] = useState<Category | undefined>();
   const [tamilCategory, setTamilCategory] = useState<string>("");
-
-  const normalize = (str: string) =>
-    str.toLowerCase().replace(/[\s\-\/]+/g, "");
-
+  const normalize = (str: string) => str.toLowerCase().replace(/[\s\-\/]+/g, "");
   const fetchCategories = async () => {
     try {
-      const categoriesRes = await axios.get<Category[]>(
-        `${SERVER_URL}api/categories`
-      );
+      const categoriesRes = await axios.get<Category[]>(`${SERVER_URL}api/categories`);
       const foundCategory = categoriesRes.data.find(
-        (cat) => normalize(cat.name.en) === normalize(category)
-      );
+        (cat) => normalize(cat.name.en) === normalize(category)
+      );
       setCategories(foundCategory);
     } catch (err) {
       console.error("Error fetching categories:", err);
@@ -73,9 +68,6 @@ export default function Card({
     return `/posts/${id}`;
   };
 
-  // --- Conditionally hide date for bookmarks ---
-  const showDate = source !== "bookmarks";
-
   if (!hasImage) {
     return (
       <Link
@@ -94,12 +86,8 @@ export default function Card({
           <div className="font-semibold text-white/90">{author}</div>
           <div className="text-white/80">
             {tamilCategory}
-            {showDate && (
-              <>
-                <span className="mx-2">•</span>
-                {new Date(date).toLocaleDateString()}
-              </>
-            )}
+            <span className="mx-2">•</span>
+            {new Date(date).toLocaleDateString()}
           </div>
         </div>
       </Link>
@@ -128,12 +116,8 @@ export default function Card({
             </h3>
           )}
           <p className="text-sm text-gray-200 font-medium">
-            {showDate && (
-              <>
-                {new Date(date).toLocaleDateString()}
-                <span className="mx-2 text-gray-300">•</span>
-              </>
-            )}
+            {new Date(date).toLocaleDateString()}
+            <span className="mx-2 text-gray-300">•</span>
             {tamilCategory}
             <span className="mx-2 text-gray-300">•</span>
             {author}

@@ -12,6 +12,15 @@ interface SubscriptionPlan {
   updatedAt: string;
 }
 
+interface UserSubscription {
+  _id: string;
+  planId: SubscriptionPlan; // Or just the string ID if your API returns that
+  userId: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
 declare global {
   interface Window {
     Razorpay: any;
@@ -22,13 +31,17 @@ export default function UserSubscriptionPlans() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
 
   const API_BASE_URL = import.meta.env.VITE_API;
 
   useEffect(() => {
-    const fetchPlans = async () => {
+    const fetchPlansAndSubscription = async () => {
       try {
-        const response = await axios.get<SubscriptionPlan[]>(
+        const token = localStorage.getItem("clientToken");
+
+        // Fetch subscription plans
+        const plansResponse = await axios.get<SubscriptionPlan[]>(
           `${API_BASE_URL}api/subscriptions`,
           {
             headers: {
@@ -36,9 +49,29 @@ export default function UserSubscriptionPlans() {
             },
           }
         );
-        setPlans(response.data);
+        setPlans(plansResponse.data);
+
+        // Fetch user's current subscription if they are logged in
+        if (token) {
+          try {
+            const userSubResponse = await axios.get(
+              `${API_BASE_URL}api/subscriptions/user-status`, // Assumed new API endpoint
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            // The API should return the active subscription or null/undefined
+            setUserSubscription(userSubResponse.data.subscription);
+          } catch (userSubError) {
+            console.error("Error fetching user subscription status:", userSubError);
+            // It's fine if this fails; it just means the user isn't subscribed
+            setUserSubscription(null);
+          }
+        }
       } catch (err) {
-        console.error('Error fetching subscription plans for user:', err);
+        console.error('Error fetching data:', err);
         if (axios.isAxiosError(err)) {
           setError(err.response?.data?.error || 'Failed to load plans. Please try again.');
         } else {
@@ -49,85 +82,87 @@ export default function UserSubscriptionPlans() {
       }
     };
 
-    fetchPlans();
+    fetchPlansAndSubscription();
   }, [API_BASE_URL]);
 
-// client\src\pages\subscribe\UserSubscriptionPlan.tsx
+  const handleSubscribe = async (plan: SubscriptionPlan) => {
+    const token = localStorage.getItem("clientToken");
 
-const handleSubscribe = async (plan: SubscriptionPlan) => {
-  const token = localStorage.getItem("clientToken");
+    if (!token) {
+      alert("Please login to subscribe.");
+      return;
+    }
 
-  if (!token) {
-    alert("Please login to subscribe.");
-    return;
-  }
+    // Check if the user is already subscribed to this plan
+    if (userSubscription && userSubscription.planId._id === plan._id) {
+      alert("You are already subscribed to this plan.");
+      return;
+    }
 
-  try {
-    const createOrderResponse = await axios.post(
-      `${API_BASE_URL}api/subscriptions/create-order`,
-      { planId: plan._id },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const { razorpayOrderId, amount, currency, userId } = createOrderResponse.data;
-
-    const razorpay = new window.Razorpay({
-      key: import.meta.env.VITE_RAZORPAY_KEY,
-      amount,
-      currency,
-      name: "Dalit Murasu",
-      description: `Subscription: ${plan.title}`,
-      order_id: razorpayOrderId,
-      handler: async function (response: any) {
-        try {
-          // --- FIX APPLIED HERE ---
-          // Add the Authorization header with the token
-          const verifyResponse = await axios.post(
-            `${API_BASE_URL}api/subscriptions/verify-payment`,
-            {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              userId,
-              planId: plan._id,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          if (verifyResponse.data.success) {
-            alert("Subscription successful!");
-            window.location.reload();
-          } else {
-            alert("Payment verification failed.");
-          }
-        } catch (error) {
-          console.error("Verification Error:", error);
-          alert("An error occurred during payment verification.");
+    try {
+      const createOrderResponse = await axios.post(
+        `${API_BASE_URL}api/subscriptions/create-order`,
+        { planId: plan._id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      },
-      prefill: {
-        name: "Dalit Murasu User",
-        email: "",
-      },
-      theme: {
-        color: "#cb1e19",
-      },
-    });
+      );
 
-    razorpay.open();
-  } catch (error) {
-    console.error("Payment Error:", error);
-    alert("Failed to initiate subscription. Please try again.");
-  }
-};
+      const { razorpayOrderId, amount, currency, userId } = createOrderResponse.data;
+
+      const razorpay = new window.Razorpay({
+        key: import.meta.env.VITE_RAZORPAY_KEY,
+        amount,
+        currency,
+        name: "Dalit Murasu",
+        description: `Subscription: ${plan.title}`,
+        order_id: razorpayOrderId,
+        handler: async function (response: any) {
+          try {
+            const verifyResponse = await axios.post(
+              `${API_BASE_URL}api/subscriptions/verify-payment`,
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                userId,
+                planId: plan._id,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (verifyResponse.data.success) {
+              alert("Subscription successful!");
+              window.location.reload();
+            } else {
+              alert("Payment verification failed.");
+            }
+          } catch (error) {
+            console.error("Verification Error:", error);
+            alert("An error occurred during payment verification.");
+          }
+        },
+        prefill: {
+          name: "Dalit Murasu User",
+          email: "",
+        },
+        theme: {
+          color: "#cb1e19",
+        },
+      });
+
+      razorpay.open();
+    } catch (error) {
+      console.error("Payment Error:", error);
+      alert("Failed to initiate subscription. Please try again.");
+    }
+  };
 
   if (loading) {
     return (
@@ -186,12 +221,16 @@ const handleSubscribe = async (plan: SubscriptionPlan) => {
                 </li>
               </ul>
             </div>
+            {/* Conditional button rendering logic */}
             <button
               onClick={() => handleSubscribe(plan)}
-              className="w-full py-3 rounded-lg text-white font-semibold transition duration-300 ease-in-out"
-              style={{ backgroundColor: '#cb1e19' }}
+              disabled={userSubscription?.planId._id === plan._id}
+              className={`w-full py-3 rounded-lg text-white font-semibold transition duration-300 ease-in-out ${
+                userSubscription?.planId._id === plan._id ? 'bg-gray-400 cursor-not-allowed' : 'hover:opacity-90'
+              }`}
+              style={{ backgroundColor: userSubscription?.planId._id === plan._id ? '' : '#cb1e19' }}
             >
-              Subscribe Now
+              {userSubscription?.planId._id === plan._id ? 'Subscribed' : 'Subscribe Now'}
             </button>
           </div>
         ))}

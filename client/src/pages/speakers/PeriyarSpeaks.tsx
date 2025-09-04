@@ -8,7 +8,7 @@ interface Post {
   content: string | string[];
   headerImage?: string;
   middleImage?: string;
-  date: string;
+  createdAt: string;
   author: string;
   category: string;
 }
@@ -96,7 +96,7 @@ export default function PeriyarSpeaks() {
                     {highlightMatch(article.title, search)}
                   </h2>
                   <p className="text-md text-gray-600">
-                    {new Date(article.date).toLocaleDateString()}
+                    {new Date(article.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </Link>

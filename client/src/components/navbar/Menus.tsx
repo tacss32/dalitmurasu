@@ -442,19 +442,19 @@ useEffect(() => {
     if (newDropdownState) fetchAndProcessUserNotifications(currentUserName);
   };
 
-  // const authenticatedNavItems = [
-  //   {
-  //     href: "/bookmarks",
-  //     label: "Bookmarks",
-  //     icon: (
-  //       <path
-  //         strokeLinecap="round"
-  //         strokeLinejoin="round"
-  //         d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"
-  //       />
-  //     ),
-  //   },
-  // ];
+  const authenticatedNavItems = [
+    {
+      href: "/bookmarks",
+      label: "Bookmarks",
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"
+        />
+      ),
+    },
+  ];
 
   const handleLoginClick = () => {
     navigate("/login");
@@ -633,13 +633,13 @@ useEffect(() => {
           </li>
 
           {/* Bookmarks */}
-          {/* {authenticatedNavItems.map(({ href, label, icon }, index) => (
+          {authenticatedNavItems.map(({  label, icon }, index) => (
             <li
               key={index}
               className="relative hover:text-highlight-1 transition-colors duration-150 ease-in-out group"
             >
               <Link
-                to={href}
+                to="/bookmarks"
                 aria-label={label}
                 className="relative flex items-center justify-center"
               >
@@ -658,7 +658,7 @@ useEffect(() => {
                 </span>
               </Link>
             </li>
-          ))} */}
+          ))}
 
           {/* Notifications */}
           <li className="relative" ref={dropdownRef}>
