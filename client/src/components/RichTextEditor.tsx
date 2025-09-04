@@ -538,7 +538,7 @@ function RichTextEditor({
           </div>
         )}
       </div>
-      {/* Hidden file input */}
+      {/* Hidden file inpt */}
       <input
         ref={fileInputRef}
         type="file"
