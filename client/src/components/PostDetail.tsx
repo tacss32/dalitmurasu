@@ -234,10 +234,16 @@
 //     </div>
 //   );
 // }
+// client\src\components\PostDetail.tsx
+
+// client\src\components\PostDetail.tsx
+
 import { useEffect, useState } from "react";
-import { Share2 } from "lucide-react";
+import { Share2, Bookmark, BookmarkCheck } from "lucide-react";
 import { useParams } from "react-router-dom";
 import Card from "./Card";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const SERVER_URL = import.meta.env.VITE_API;
 
@@ -261,6 +267,12 @@ type Category = {
   };
 };
 
+// Define the bookmark type to handle populated and unpopulated states
+type BookmarkData = {
+  _id: string;
+  postId: Post | string; // It could be a populated Post object or just a string ID
+};
+
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const [post, setPost] = useState<Post | null>(null);
@@ -269,66 +281,71 @@ export default function PostDetail() {
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<Post[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  // State for share message and timeout
-  const [shareMessage, setShareMessage] = useState<string | null>(null);
-  const [shareMessageTimeoutId, setShareMessageTimeoutId] = useState<number | null>(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkId, setBookmarkId] = useState<string | null>(null); // State to store the bookmark's ID
 
+  const userId = localStorage.getItem("userId");
+  const clientToken = localStorage.getItem("clientToken");
+
+  // Fetch post details and categories
   useEffect(() => {
-  const fetchPost = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Fetch both the post and the categories
-      const [postRes, categoriesRes] = await Promise.all([
-        fetch(`${SERVER_URL}api/universal-posts/four/${id}`),
-        fetch(`${SERVER_URL}api/categories`) // Assuming this is your categories endpoint
-      ]);
-
-      if (!postRes.ok || !categoriesRes.ok) {
-        throw new Error("Failed to load data.");
-      }
-
-      const postData = await postRes.json();
-      const categoriesData = await categoriesRes.json();
-
-      setPost(postData.currentPost);
-      setSuggestions(postData.nextPosts);
-      setCategories(categoriesData); // Set the categories here
-
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Failed to load content. Please try again later.");
-      setPost(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchPost();
-}, [id]);
-  useEffect(() => {
-    // Cleanup function to clear the timeout when the component unmounts or shareMessage changes
-    return () => {
-      if (shareMessageTimeoutId) {
-        clearTimeout(shareMessageTimeoutId);
+    const fetchPost = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const [postRes, categoriesRes] = await Promise.all([
+          axios.get(`${SERVER_URL}api/universal-posts/four/${id}`),
+          axios.get(`${SERVER_URL}api/categories`),
+        ]);
+        const postData = postRes.data;
+        const categoriesData = categoriesRes.data;
+        setPost(postData.currentPost);
+        setSuggestions(postData.nextPosts);
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load content. Please try again later.");
+        setPost(null);
+      } finally {
+        setLoading(false);
       }
     };
-  }, [shareMessage, shareMessageTimeoutId]);
+    fetchPost();
+  }, [id]);
+
+  // Fetch bookmark status for the current user and post
+  useEffect(() => {
+    const fetchBookmarkStatus = async () => {
+      if (!userId || !id) return;
+      try {
+        const response = await axios.get(`${SERVER_URL}api/bookmarks/${userId}`);
+        const bookmarks = response.data;
+        
+        // Filter out null bookmarks first, then check if the current post is among the valid ones
+        const validBookmarks = bookmarks.filter((b: BookmarkData) => b.postId !== null);
+        const foundBookmark = validBookmarks.find((b: BookmarkData) => (b.postId as Post)._id === id);
+
+        if (foundBookmark) {
+          setIsBookmarked(true);
+          setBookmarkId(foundBookmark._id);
+        } else {
+          setIsBookmarked(false);
+          setBookmarkId(null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch bookmark status:", err);
+      }
+    };
+    fetchBookmarkStatus();
+  }, [userId, id]);
 
   const getTamilCategoryName = (englishCategoryName: string) => {
-    const category = categories.find(
-      (cat) => cat.name.en === englishCategoryName
-    );
-    return category?.name.ta || englishCategoryName; // Fallback to English if not found
+    const category = categories.find((cat) => cat.name.en === englishCategoryName);
+    return category?.name.ta || englishCategoryName;
   };
+
   const handleShare = async () => {
     if (!post) return;
-
-    // Clear any existing timeout before setting a new one
-    if (shareMessageTimeoutId) {
-      clearTimeout(shareMessageTimeoutId);
-    }
-
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({
@@ -336,33 +353,73 @@ export default function PostDetail() {
           text: post.content.replace(/<[^>]*>/g, "").substring(0, 100) + "...",
           url: window.location.href,
         });
-        console.log("Post shared successfully!");
-        setShareMessage("Post shared successfully!");
-        const newTimeoutId = window.setTimeout(() => setShareMessage(null), 3000);
-        setShareMessageTimeoutId(newTimeoutId);
+        toast.success("Post shared successfully!");
       } catch (error) {
-        console.error("Error sharing post:", error);
-        setShareMessage("Error sharing page.");
-        const newTimeoutId = window.setTimeout(() => setShareMessage(null), 3000);
-        setShareMessageTimeoutId(newTimeoutId);
+        toast.error("Error sharing page.");
       }
     } else {
       try {
         await navigator.clipboard.writeText(window.location.href);
-        console.log("Link copied to clipboard!");
-        setShareMessage("Link copied to clipboard!");
-        const newTimeoutId = window.setTimeout(() => setShareMessage(null), 3000);
-        setShareMessageTimeoutId(newTimeoutId);
+        toast.success("Link copied to clipboard!");
       } catch (error) {
-        console.error("Unable to copy link:", error);
-        setShareMessage("Unable to copy link. Please copy the URL manually.");
-        const newTimeoutId = window.setTimeout(() => setShareMessage(null), 5000);
-        setShareMessageTimeoutId(newTimeoutId);
+        toast.error("Unable to copy link. Please copy the URL manually.");
       }
     }
   };
 
-  // --- Loading State ---
+  const handleBookmark = async () => {
+    if (!userId || !post) {
+      toast.error("Please log in to bookmark posts.");
+      return;
+    }
+    if (isBookmarked) {
+      handleRemoveBookmark();
+      return;
+    }
+    const payload = {
+      userId,
+      postId: post._id,
+      postType: "UniversalPost",
+    };
+    try {
+      const res = await axios.post(`${SERVER_URL}api/bookmarks`, payload, {
+        headers: {
+          Authorization: `Bearer ${clientToken}`,
+        },
+      });
+      setIsBookmarked(true);
+      setBookmarkId(res.data.bookmark._id); // Save the new bookmark ID
+      toast.success("Post bookmarked successfully!");
+    } catch (error: any) {
+      // Handle the 409 Conflict error specifically
+      if (error.response?.status === 409) {
+        setIsBookmarked(true); // Update state to reflect existing bookmark
+        toast.info("This post is already bookmarked.");
+        // Optionally, refetch the bookmark status to get the bookmarkId
+        fetchBookmarkStatus();
+      } else {
+        toast.error(error.response?.data?.error || "Error bookmarking post.");
+      }
+    }
+  };
+
+  const handleRemoveBookmark = async () => {
+    if (!userId || !bookmarkId) return; // Use the stored bookmarkId
+
+    try {
+      await axios.delete(`${SERVER_URL}api/bookmarks/${bookmarkId}`, {
+        headers: {
+          Authorization: `Bearer ${clientToken}`,
+        },
+      });
+      setIsBookmarked(false);
+      setBookmarkId(null);
+      toast.success("Bookmark removed successfully!");
+    } catch (error: any) {
+      toast.error("Failed to remove bookmark.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-4 flex items-center justify-center min-h-[400px]">
@@ -374,7 +431,6 @@ export default function PostDetail() {
     );
   }
 
-  // --- Error or Post Not Found State ---
   if (error || !post) {
     return (
       <div className="max-w-4xl mx-auto p-4 flex items-center justify-center min-h-[400px]">
@@ -389,7 +445,6 @@ export default function PostDetail() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 flex flex-col gap-6">
-      {/* --- Header Section --- */}
       <div className="flex flex-col gap-3 py-6 border-b-4 border-highlight-1 relative">
         <div className="flex items-center gap-2 text-sm">
           <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
@@ -397,17 +452,15 @@ export default function PostDetail() {
           </span>
           <span className="text-2xl">•</span>
           <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
-  {getTamilCategoryName(post.category)}
-</span>
+            {getTamilCategoryName(post.category)}
+          </span>
         </div>
-
         <h1 className="text-4xl font-bold text-gray-900 leading-tight">
           {post.title}
         </h1>
         <h1 className="text-2xl font-bold text-gray-900 leading-tight ">
           {post.subtitle}
         </h1>
-
         <p className="text-xl text-gray-600 flex items-center gap-2">
           <span className="w-7 h-7 bg-highlight-1 rounded-full flex items-center justify-center text-white font-semibold text-sm">
             {post.author.charAt(0).toUpperCase()}
@@ -415,39 +468,37 @@ export default function PostDetail() {
           {post.author}
         </p>
 
-        {/* Share Button */}
-        <button
-          onClick={handleShare}
-          className="absolute top-6 right-0 group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2"
-        >
-          <Share2 size={18} />
-          <span className="hidden sm:inline">Share</span>
-        </button>
-        {/* Share message display */}
-        {shareMessage && (
-          <div className="absolute top-full right-0 mt-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-md shadow-lg whitespace-nowrap z-20">
-            {shareMessage}
-          </div>
-        )}
+        {/* Share and Bookmark Buttons Container */}
+        <div className="absolute top-6 right-0 flex items-center gap-2">
+          <button
+            onClick={handleShare}
+            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2"
+          >
+            <Share2 size={18} />
+            <span className="hidden sm:inline">Share</span>
+          </button>
+          
+          <button
+            onClick={handleBookmark}
+            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center justify-center"
+          >
+            {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+          </button>
+        </div>
       </div>
-
-      {/* --- Image Carousel --- */}
       {imageUrls.length > 0 && (
         <div className="relative w-full h-auto rounded-xl overflow-hidden shadow-lg bg-gray-100">
           <img
             src={imageUrls[imageIndex]}
             alt={`Post Image ${imageIndex + 1}`}
             className="object-cover w-full h-full transition-all duration-500"
-            // Fallback image if the primary image fails to load
             onError={(e) => {
               e.currentTarget.src =
                 "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=400&fit=crop";
             }}
           />
-
           {imageUrls.length > 1 && (
             <>
-              {/* Previous Image Button */}
               <button
                 onClick={() =>
                   setImageIndex(
@@ -459,7 +510,6 @@ export default function PostDetail() {
               >
                 ‹
               </button>
-              {/* Next Image Button */}
               <button
                 onClick={() =>
                   setImageIndex((prev) => (prev + 1) % imageUrls.length)
@@ -469,17 +519,16 @@ export default function PostDetail() {
               >
                 ›
               </button>
-
-              {/* Image indicators (dots) */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                 {imageUrls.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setImageIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ${index === imageIndex
-                        ? "bg-white" // Active dot
-                        : "bg-white bg-opacity-50" // Inactive dot
-                      }`}
+                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                      index === imageIndex
+                        ? "bg-white"
+                        : "bg-white bg-opacity-50"
+                    }`}
                     aria-label={`Go to image ${index + 1}`}
                   />
                 ))}
@@ -492,7 +541,7 @@ export default function PostDetail() {
         <style>
           {`
             .rich-content a {
-              color: #3b82f6; /* Tailwind's blue-500 */
+              color: #3b82f6;
               text-decoration: underline;
             }
           `}
@@ -503,19 +552,24 @@ export default function PostDetail() {
         />
       </article>
       <div className="grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
-        {suggestions && suggestions.map((post) => (
-          <Card
-            key={post._id}
-            title={post.title}
-            subtitle={post.subtitle}
-            image={post?.images?.[0]}
-            date={post.date || post.createdAt}
-            author={post.author}
-            id={post._id}
-            category={getTamilCategoryName(post.category)}
-          />
-        ))}
+        {suggestions &&
+          suggestions.map((post) => (
+            <Card
+              key={post._id}
+              title={post.title}
+              subtitle={post.subtitle}
+              image={post?.images?.[0]}
+              date={post.date || post.createdAt}
+              author={post.author}
+              id={post._id}
+              category={getTamilCategoryName(post.category)}
+            />
+          ))}
       </div>
     </div>
   );
+}
+
+function fetchBookmarkStatus() {
+  throw new Error("Function not implemented.");
 }

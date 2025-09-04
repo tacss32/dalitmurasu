@@ -14,6 +14,7 @@ const newsletterImageRoutes = require("./routes/newsletterImage");
 const subscriptionRoutes = require("./routes/subscriptionPlanRoutes");
 const forgotPasswordRoutes = require("./routes/forgotPasswordRoutes");
 const pdfUploadRoutes = require("./routes/pdfUploadRoutes");
+const bookmarkRoutes = require("./routes/bookmarks");
 
 // Load environment variables
 dotenv.config();
@@ -102,6 +103,7 @@ connectDB()
     // ------------------------------------------------------------------------
     // API Routes
     // ------------------------------------------------------------------------
+    app.use("/api/bookmarks", bookmarkRoutes); 
     app.use("/api/auth", require("./routes/authRoutes"));
     app.use("/api/categories", require("./routes/categoryRoutes"));
     app.use("/api/post_titles", require("./routes/postTitlesRoutes"));
@@ -125,6 +127,7 @@ connectDB()
     app.use("/api/forgot-password", forgotPasswordRoutes);
     app.use("/api/combined-posts", require("./routes/combinedPostRoutes"));
     app.use("/api/pdf-uploads", pdfUploadRoutes);
+  
     // ------------------------------------------------------------------------
     // Health Check
     // ------------------------------------------------------------------------
