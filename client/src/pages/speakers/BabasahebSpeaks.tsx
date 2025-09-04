@@ -8,7 +8,7 @@ interface Post {
   content: string | string[];
   headerImage?: string;
   middleImage?: string;
-  createdAt: string;
+  date: string;
   author: string;
   category: string;
 }
@@ -96,7 +96,7 @@ export default function BabasahebSpeaks() {
                   <h2 className="text-xl font-bold">
                     {highlightMatch(article.title, search)}
                   </h2>
-                  <p className="text-sm text-gray-500">{article.createdAt}</p>
+                  <p className="text-sm text-gray-500">{new Date(article.date).toLocaleDateString()}</p>
                 </div>
               </Link>
             ))
