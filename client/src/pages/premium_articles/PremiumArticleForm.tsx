@@ -302,6 +302,9 @@ export default function PremiumArticleForm() {
     setCrop(undefined);
     setCompletedCrop(undefined);
   };
+    const handleCancel = () => {
+    navigate(-1);
+  };
 
   // --- Form Submission ---
   const onSubmit: SubmitHandler<IPremiumPostFormInput> = async (data) => {
@@ -758,6 +761,16 @@ export default function PremiumArticleForm() {
         </div>
 
         <div className="text-center pt-4">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isSubmitting || isLoadingFullPage}
+            className={`bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
+              isSubmitting || isLoadingFullPage ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={isSubmitting || isLoadingFullPage} // Disable button if form is submitting OR full page is loading
