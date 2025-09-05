@@ -13,7 +13,7 @@ import PostDetail from "./components/PostDetail";
 import Layout from "./pages/Layout";
 import About from "./pages/about/About";
 import GalleryPage from "./pages/gallery/GalleryPage";
-import Bookmark from "./pages/bookmarks/Bookmarks";
+// import Bookmark from "./pages/bookmarks/Bookmarks";
 import Contact from "./pages/contact/Contact";
 import NewsHud from "./pages/home/NewsHud";
 import Notifications from "./pages/notifications/Notifications";
@@ -35,6 +35,8 @@ import SearchResultsPage from './pages/search/SearchResultPage';
 
 import PremiumArticleList from './pages/premium_articles/PremiumArticleList';
 import PremiumArticleForm from './pages/premium_articles/PremiumArticleForm';
+
+import Bookmark from "./components/bookmarks";
 
 // New ProfilePage (direct route)
 import ProfilePage from "./pages/ProfilePage";
@@ -81,6 +83,7 @@ import OrderDashboard from './pages/orders/OrderDashboard';
 import AdminPremiumUsers from "./pages/premium_articles/AdminPremiumUsers"  ;
 import PremiumArticlePage from './pages/premium_articles/PremiumArticlePage';
 import PremiumArticleDetail from './pages/premium_articles/PremiumArticleDetail';
+
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -139,7 +142,7 @@ createRoot(document.getElementById("root")!).render(
             </Route>
 
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/bookmarks" element={<Bookmark />} />
+            <Route path="/bookmarks" element={<Bookmark/>} />
             <Route path="/notifications" element={<Notifications />} />
           </Route>
 
