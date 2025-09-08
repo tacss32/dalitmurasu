@@ -174,7 +174,7 @@ export default function CartPage() {
         isUpdatingCart={isUpdatingCart}
       />
 
-      "Proceed to Checkout" button
+    
       {cartItems.length > 0 && !loadingCart && !cartError && (
         <div className="flex justify-end mt-8">
           <button

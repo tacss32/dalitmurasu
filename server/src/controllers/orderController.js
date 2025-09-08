@@ -2,6 +2,87 @@ const jwt = require("jsonwebtoken");
 const Order = require("../models/Order");
 const Book = require("../models/Book");
 const razorpay = require("../config/razorpay_util");
+const nodemailer = require("nodemailer");
+const ClientUser = require("../models/ClientUser");
+const mongoose = require("mongoose");
+
+/* -----------------------------------------------------------------------------
+ * Email Transporter
+ * --------------------------------------------------------------------------- */
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: process.env.EMAIL_PORT,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+/* -----------------------------------------------------------------------------
+ * Email Helper Function
+ * --------------------------------------------------------------------------- */
+async function sendOrderConfirmationEmail(order, userEmail) {
+  console.log(`[Email] Attempting to send order confirmation to: ${userEmail}`);
+  try {
+    const itemDetails = order.items.map(item => `
+      <li><strong>${item.title}</strong> - Quantity: ${item.quantity}, Price: ₹${item.price.toFixed(2)}</li>
+    `).join('');
+
+    const formattedTotal = order.totalAmount.toFixed(2);
+    const formattedDelivery = order.deliveryFee.toFixed(2);
+    const totalWithDelivery = (order.totalAmount + order.deliveryFee).toFixed(2);
+
+    const mailOptions = {
+      from: `"Dalit Murasu" <${process.env.EMAIL_USER}>`,
+      to: userEmail,
+      subject: `Order Confirmation #${order.orderId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2 style="color: #0056b3;">Hello, ${order.name}! 👋</h2>
+          <p>Thank you for your order with Dalit Murasu. Your order has been successfully placed and is being processed.</p>
+          <h3 style="color: #0056b3;">Order Details</h3>
+          <p><strong>Order ID:</strong> ${order.orderId}</p>
+          <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
+         
+          <h4 style="color: #0056b3;">Items Purchased:</h4>
+          <ul style="list-style-type: none; padding: 0;">
+            ${itemDetails}
+          </ul>
+          <p><strong>Subtotal:</strong> ₹${formattedTotal}</p>
+          <p><strong>Delivery Fee:</strong> ₹${formattedDelivery}</p>
+          <p style="font-size: 1.2em; font-weight: bold;"><strong>Total Amount:</strong> ₹${totalWithDelivery}</p>
+          <h4 style="color: #0056b3;">Shipping Address:</h4>
+          <p>
+            ${order.name}<br>
+            ${order.address.replace(/\n/g, '<br>')}<br>
+            Phone: ${order.phone}
+          </p>
+          <p>We'll notify you once your order has been shipped. If you have any questions, please contact our support team.</p>
+          <p>94444 52877</p>
+          <p>Best regards,<br/>The Dalit Murasu Team</p>
+        </div>
+      `,
+    };
+
+    // Use .then() and .catch() to log success or failure
+    await transporter.sendMail(mailOptions)
+      .then(info => {
+        console.log("[Email] Order confirmation email successfully sent.");
+        console.log("[Email] Message ID:", info.messageId);
+        console.log("[Email] Response:", info.response);
+      })
+      .catch(error => {
+        console.error("[Email] Error sending order confirmation email:", error);
+      });
+
+  } catch (error) {
+    console.error("[Email] Unhandled error in sendOrderConfirmationEmail:", error);
+  }
+}
 
 // ---------------------------
 // Razorpay: Create Payment Order
@@ -23,7 +104,9 @@ exports.createRazorpayOrder = async (req, res) => {
       receipt: "receipt_order_" + Math.random().toString().slice(2, 10),
     };
 
+    console.log("[Razorpay] Attempting to create order with options:", options);
     const razorpayOrder = await razorpay.orders.create(options);
+    console.log("[Razorpay] Order created successfully:", razorpayOrder.id);
 
     return res.status(200).json({
       success: true,
@@ -32,7 +115,7 @@ exports.createRazorpayOrder = async (req, res) => {
       currency: razorpayOrder.currency,
     });
   } catch (error) {
-    console.error("Razorpay Order Error:", error);
+    console.error("[Razorpay] Order Error:", error);
     res
       .status(500)
       .json({ success: false, message: "Razorpay order creation failed" });
@@ -42,6 +125,7 @@ exports.createRazorpayOrder = async (req, res) => {
 // ---------------------------
 // Create Order in DB
 exports.createOrder = async (req, res) => {
+  console.log("[Order] Received new order creation request.");
   try {
     const {
       name,
@@ -61,16 +145,17 @@ exports.createOrder = async (req, res) => {
     } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
+      console.log("[Order] Validation failed: Items are required.");
       return res
         .status(400)
         .json({ success: false, message: "Items are required" });
     }
 
-    // Calculate totalDeliveryFee from books
     let totalDeliveryFee = 0;
     for (const item of items) {
       const book = await Book.findById(item.productId);
       if (!book) {
+        console.log(`[Order] Validation failed: Book not found for ID ${item.productId}`);
         return res
           .status(400)
           .json({
@@ -81,7 +166,6 @@ exports.createOrder = async (req, res) => {
       totalDeliveryFee += (book.deliveryFee || 0) * (item.quantity || 1);
     }
 
-    // Create formatted address
     const fullAddress = `${addressLine1 || ""}${
       addressLine2 ? ", " + addressLine2 : ""
     }
@@ -90,8 +174,7 @@ ${state}
 ${pincode}
 ${country}`.trim();
 
-    // Generate custom order ID
-    const orderId = "DM_" + Date.now(); // or use UUID/random string
+    const orderId = "DM_" + Date.now();
 
     const authHeader = req.headers.authorization || req.headers.Authorization;
     const token =
@@ -99,20 +182,35 @@ ${country}`.trim();
         ? authHeader.split(" ")[1]
         : null;
     let userId = null;
+    let userEmail = null;
 
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        userId = decoded.userId;
+        // Corrected line: Use decoded.id to get the user ID
+        userId = decoded.id;
+        console.log(`[Auth] Token decoded, userId: ${userId}`);
+
+        const user = await ClientUser.findById(userId).select('email');
+        if (user) {
+          userEmail = user.email;
+          console.log(`[Auth] Found user email: ${userEmail}`);
+        } else {
+          console.log(`[Auth] No user found for userId: ${userId}`);
+        }
       } catch (err) {
+        console.error("[Auth] Token verification failed:", err.message);
         return res
           .status(401)
           .json({ success: false, message: "Invalid token user" });
       }
+    } else {
+      console.log("[Auth] No authentication token provided. Order will be created without a userId.");
     }
 
     const mode = paymentMode?.toLowerCase();
     if (!["cod", "online"].includes(mode)) {
+      console.log("[Order] Validation failed: Invalid payment mode.");
       return res
         .status(400)
         .json({
@@ -139,13 +237,24 @@ ${country}`.trim();
       paymentStatus,
     });
 
+    console.log("[Order] Saving order to database...");
     const saved = await order.save();
+    console.log("[Order] Order saved with ID:", saved._id);
+    
+    if (userEmail) {
+      sendOrderConfirmationEmail(saved, userEmail)
+        .catch(console.error);
+    }
+
+    console.log("[Order] Sending successful response to client.");
     res.status(201).json({ success: true, data: saved });
   } catch (err) {
-    console.error("Create Order Error:", err);
+    console.error("[Order] Create Order Error:", err);
     res.status(500).json({ success: false, message: "Failed to create order" });
   }
 };
+
+
 
 // ---------------------------
 // Get All Orders (Admin)
@@ -160,7 +269,7 @@ exports.getAllOrders = async (req, res) => {
 
 // ---------------------------
 // Get Single Order by ID
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
 
 exports.getOrderById = async (req, res) => {
   const { id } = req.params;
