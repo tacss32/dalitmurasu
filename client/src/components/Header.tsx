@@ -10,6 +10,11 @@ interface Category {
   order?: number;
 }
 
+interface BannerData {
+  desktopImage?: string;
+  mobileImage?: string;
+}
+
 export default function Header({
   text,
   urlPath,
@@ -17,7 +22,7 @@ export default function Header({
   text?: string;
   urlPath?: string;
 }) {
-  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [bannerData, setBannerData] = useState<BannerData | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
@@ -46,21 +51,30 @@ export default function Header({
 
   useEffect(() => {
     const fetchBanner = async () => {
+      // Don't fetch if we don't have a category identifier
+      const bannerCategory = urlPath ? urlPath : categorySlug;
+      if (!bannerCategory) return;
+
       try {
-        const banner = urlPath ? urlPath : categorySlug;
         const res = await fetch(
-          `${import.meta.env.VITE_API}api/post_header?category=${banner}`
+          `${import.meta.env.VITE_API}api/post_header?category=${bannerCategory}`
         );
         const data = await res.json();
-        if (res.ok && data && data.banner) {
-          setBannerUrl(data.banner);
+        if (res.ok && (data.desktopImage || data.mobileImage)) {
+          setBannerData({
+            desktopImage: data.desktopImage,
+            mobileImage: data.mobileImage,
+          });
         } else {
-          console.error("Failed to fetch banner or banner URL missing:", data);
+          setBannerData(null); // Reset if no banner is found
+          console.log("No banner found for this category or missing image URL:", data);
         }
       } catch (err) {
         console.error("Error fetching banner:", err);
+        setBannerData(null);
       }
     };
+
     fetchBanner();
   }, [categorySlug, urlPath]);
 
@@ -80,14 +94,29 @@ export default function Header({
     }
   }
 
+  // Use the mobile image as a fallback for the desktop image and vice versa
+  const desktopSrc = bannerData?.desktopImage || bannerData?.mobileImage;
+  const mobileSrc = bannerData?.mobileImage || bannerData?.desktopImage;
+  const fallbackSrc = "/headerImg.jpg";
+
   return (
     <div className="relative w-full">
-      {/* Banner Image */}
-      <img
-        src={bannerUrl ? bannerUrl : "/headerImg.jpg"}
-        alt="Header Banner"
-        className="w-full h-auto rounded-lg object-cover"
-      />
+      {/* Banner Image using <picture> for responsiveness */}
+      <picture>
+        {/* Mobile source: shown on screens smaller than 768px */}
+        {mobileSrc && <source media="(max-width: 767px)" srcSet={mobileSrc} />}
+        
+        {/* Desktop source: shown on screens 768px and wider */}
+        {desktopSrc && <source media="(min-width: 768px)" srcSet={desktopSrc} />}
+
+        {/* Fallback image if no banner is found or for browsers that don't support <picture> */}
+        <img
+          src={desktopSrc || fallbackSrc}
+          alt="Header Banner"
+          className="w-full h-auto rounded-lg object-cover"
+        />
+      </picture>
+
 
       <h1 className="text-lg md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
         <span>{headerText}</span>

@@ -23,7 +23,10 @@ const upload = multer({ storage });
 router.get("/", postTitleController.getSelectedHeader);
 router.post(
   "/",
-  upload.fields([{ name: "banner-image", maxCount: 1 }]),
+  upload.fields([
+    { name: "desktop-image", maxCount: 1 },
+    { name: "mobile-image", maxCount: 1 },
+  ]),
   postTitleController.addToPostHeader
 );
 
