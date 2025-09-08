@@ -1,15 +1,15 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import Header from "../../components/Header";
-import axios from "axios";
+import axios from "axios"; // Import AxiosError
 import { MdClose } from 'react-icons/md';
-import { Link } from "react-router-dom"; 
+import { Link } from "react-router-dom";
 
 // Import necessary modules from @react-pdf-viewer
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 
 // Import the Zoom plugin and its styles
-import { zoomPlugin } from '@react-pdf-viewer/zoom'; 
+import { zoomPlugin } from '@react-pdf-viewer/zoom';
 import '@react-pdf-viewer/zoom/lib/styles/index.css';
 
 // Import styles for the viewer and default layout
@@ -84,8 +84,8 @@ const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
 // ---------------- Helpers ----------------
 const getMonthName = (monthNumber: number, locale: string = "en-US") => {
     const date = new Date();
-    
-    date.setDate(1); 
+
+    date.setDate(1);
     date.setMonth(monthNumber - 1);
     return date.toLocaleString(locale, { month: "long" });
 };
@@ -105,8 +105,9 @@ export default function Archive() {
     const [loadingPdf, setLoadingPdf] = useState(false);
     // New state for the subscription popup
     const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(false);
-
-   
+    
+    // Ref to store the AbortController for a cancellable request
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -146,45 +147,45 @@ export default function Archive() {
         }
     };
 
-// Build map: year -> month -> Archive items (pdfs)
-const archiveMap = useMemo(() => {
-    const map: Record<number, Record<number, ArchiveItem[]>> = {};
-    pdfs.forEach((pdf) => {
-        // --- PROBLEM AREA ---
-        // OLD CODE: This converts the date to the user's local timezone.
-        // const date = new Date(pdf.date || pdf.createdAt);
-        // const y = date.getFullYear();
-        // const mm = date.getMonth() + 1;
+    // Build map: year -> month -> Archive items (pdfs)
+    const archiveMap = useMemo(() => {
+        const map: Record<number, Record<number, ArchiveItem[]>> = {};
+        pdfs.forEach((pdf) => {
+            // --- PROBLEM AREA ---
+            // OLD CODE: This converts the date to the user's local timezone.
+            // const date = new Date(pdf.date || pdf.createdAt);
+            // const y = date.getFullYear();
+            // const mm = date.getMonth() + 1;
 
-        // --- CORRECTED CODE ---
-        // Create a date object from the ISO string.
-        const date = new Date(pdf.date || pdf.createdAt); 
-        // Use UTC methods to avoid timezone conversion issues.
-        const y = date.getUTCFullYear();       // Use getUTCFullYear()
-        const mm = date.getUTCMonth() + 1;     // Use getUTCMonth() (which is 0-11) and add 1
-        
-        map[y] = map[y] || {};
-        map[y][mm] = map[y][mm] || [];
-        map[y][mm].push({
-            _id: pdf._id,
-            title: pdf.title,
-            subtitle: pdf.subtitle,
-            imageUrl: pdf.imageUrl,
-            dateISO: pdf.date || pdf.createdAt,
-            pdfUrl: pdf.pdfUrl,
-            pdf: pdf,
+            // --- CORRECTED CODE ---
+            // Create a date object from the ISO string.
+            const date = new Date(pdf.date || pdf.createdAt);
+            // Use UTC methods to avoid timezone conversion issues.
+            const y = date.getUTCFullYear();      // Use getUTCFullYear()
+            const mm = date.getUTCMonth() + 1;    // Use getUTCMonth() (which is 0-11) and add 1
+
+            map[y] = map[y] || {};
+            map[y][mm] = map[y][mm] || [];
+            map[y][mm].push({
+                _id: pdf._id,
+                title: pdf.title,
+                subtitle: pdf.subtitle,
+                imageUrl: pdf.imageUrl,
+                dateISO: pdf.date || pdf.createdAt,
+                pdfUrl: pdf.pdfUrl,
+                pdf: pdf,
+            });
         });
-    });
-    // ... rest of the hook remains the same
-    Object.keys(map).forEach((yStr) => {
-        const y = Number(yStr);
-        Object.keys(map[y]).forEach((mStr) => {
-            const m = Number(mStr);
-            map[y][m].sort((a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime());
+        // ... rest of the hook remains the same
+        Object.keys(map).forEach((yStr) => {
+            const y = Number(yStr);
+            Object.keys(map[y]).forEach((mStr) => {
+                const m = Number(mStr);
+                map[y][m].sort((a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime());
+            });
         });
-    });
-    return map;
-}, [pdfs]);
+        return map;
+    }, [pdfs]);
 
     // Build year summary list with counts per month (for sidebar)
     const yearSummaries = useMemo(() => {
@@ -201,10 +202,22 @@ const archiveMap = useMemo(() => {
             };
         });
     }, [archiveMap]);
-    
+
     // Helper to get items for a specific month (used in month-detail view)
     const getItemsForMonth = (year: number, month: number) => {
         return archiveMap[year]?.[month] || [];
+    };
+    
+    // Function to handle cancellation
+    const handleCancelRequest = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setLoadingPdf(false);
+        setActivePdf(null);
+        setViewMessage(null);
+        setShowSubscriptionPopup(false);
     };
 
     const handleCardClick = async (item: ArchiveItem) => {
@@ -214,16 +227,24 @@ const archiveMap = useMemo(() => {
         setShowSubscriptionPopup(false); // Close any existing popup
 
         // IMPORTANT: Use 'clientToken' as stored by ClientLogin.tsx
-        const token = localStorage.getItem('clientToken'); 
+        const token = localStorage.getItem('clientToken');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+        // Create a new AbortController for the request
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         try {
-            const res = await axios.get(`${SERVER_URL}api/pdf-uploads/access/${item._id}`, { headers });
+            const res = await axios.get(`${SERVER_URL}api/pdf-uploads/access/${item._id}`, { headers, signal: controller.signal });
             if (res.status === 200) {
                 setActivePdf(res.data);
             }
         } catch (err: any) {
             console.error('Error fetching PDF with access:', err);
+            if (axios.isCancel(err)) {
+                console.log('Request canceled:', err.message);
+                return; // Do nothing if it's a cancellation error
+            }
             if (err?.response) {
                 if (err.response.status === 401) {
                     setViewMessage("Login required to view this PDF.");
@@ -238,6 +259,7 @@ const archiveMap = useMemo(() => {
             }
         } finally {
             setLoadingPdf(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -249,7 +271,7 @@ const archiveMap = useMemo(() => {
         setSelectedYear(y);
         setSelectedMonth(null); // Reset month selection when a new year is chosen
     };
-    
+
     const handleMonthSelect = (m: number) => {
         setSelectedMonth(m);
     };
@@ -259,7 +281,7 @@ const archiveMap = useMemo(() => {
 
     // customize various aspects of the viewer's layout, including the toolbar.
     const defaultLayoutPluginInstance = defaultLayoutPlugin({
-       
+
         renderToolbar: (Toolbar) => (
             <>
                 <Toolbar>
@@ -270,14 +292,14 @@ const archiveMap = useMemo(() => {
                         const { ZoomIn, ZoomOut } = props;
                         return (
                             <div className="flex justify-center items-center p-4 border-b border-gray-200 rounded-t-lg">
-                               
+
                                 <div className="flex gap-2 items-center">
                                     {/* Render the ZoomOut and ZoomIn components */}
                                     <ZoomOut />
                                     <ZoomIn />
                                     <button
                                         onClick={handleClosePdfViewer}
-                                         className="p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600 absolute right-4"
+                                        className="p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600 absolute right-4"
                                         aria-label="Close PDF viewer"
                                     >
                                         <MdClose className="text-2xl" />
@@ -338,7 +360,7 @@ const archiveMap = useMemo(() => {
                                             selectedYear === y.year
                                                 ? "text-blue-600 underline"
                                                 : "text-gray-800 hover:text-blue-500"
-                                        }`}
+                                            }`}
                                     >
                                         {y.year}
                                     </li>
@@ -348,7 +370,7 @@ const archiveMap = useMemo(() => {
                             <p className="text-sm text-gray-500">No years found.</p>
                         )}
                     </div>
-                    
+
                     {/* Months Column */}
                     <div className="flex-1 border-l pl-4">
                         <h3 className="font-bold mb-2">Months</h3>
@@ -363,7 +385,7 @@ const archiveMap = useMemo(() => {
                                             onClick={() => handleMonthSelect(m)}
                                             className={`cursor-pointer py-1 border-b hover:text-blue-600 ${
                                                 selectedMonth === m ? "text-blue-600 font-semibold underline" : ""
-                                            }`}
+                                                }`}
                                         >
                                             {getMonthName(m)} <span className="ml-1 text-sm text-gray-500">({archiveMap[selectedYear][m]?.length || 0})</span>
                                         </li>
@@ -403,8 +425,18 @@ const archiveMap = useMemo(() => {
 
             {/* Conditional loading and error messages */}
             {loadingPdf && (
-                <div className="flex justify-center items-center min-h-screen text-highlight-1">
-                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
+                <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
+                    <div className="relative flex flex-col items-center p-6 bg-white rounded-lg shadow-xl text-center">
+                        <button
+                            onClick={handleCancelRequest}
+                            className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
+                            aria-label="Cancel loading PDF"
+                        >
+                            <MdClose className="text-2xl" />
+                        </button>
+                        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
+                        <p className="mt-4 text-gray-700">Loading PDF...</p>
+                    </div>
                 </div>
             )}
 
@@ -449,7 +481,7 @@ const archiveMap = useMemo(() => {
             {showSubscriptionPopup && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
                     <div className="w-11/12 max-w-md p-6 bg-white rounded-lg shadow-xl md:w-3/4">
-                    
+
                         <h2 className="text-2xl font-bold text-gray-900">Free View Limit Exceeded</h2>
                         <p className="mt-4 text-gray-700">
                             You've read your free preview of this PDF. To continue reading and unlock unlimited access to all PDF, please subscribe.

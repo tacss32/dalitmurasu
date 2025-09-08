@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { MdEdit, MdClose, MdCheckCircle, MdErrorOutline, MdInfoOutline, MdFileDownload } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import { CSVLink } from "react-csv"; 
+import { CSVLink } from "react-csv";
 
 // Interfaces (re-defined for clarity, assuming they are not globally available)
 interface OrderItem {
@@ -36,6 +36,10 @@ export default function AdminOrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // New state for filters
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("");
+
   // State for the update modal
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -54,7 +58,6 @@ export default function AdminOrdersPage() {
     if (!token) {
       setError("Admin not authenticated. Please log in.");
       setLoading(false);
-      // Redirect to admin login if no token
       navigate("/auth/login", { replace: true });
       return;
     }
@@ -74,7 +77,7 @@ export default function AdminOrdersPage() {
       console.error("Error fetching orders:", err);
       if (err.response && err.response.status === 401) {
         setError("Unauthorized: Your session may have expired. Please log in again.");
-        localStorage.removeItem("token"); // Clear invalid token
+        localStorage.removeItem("token");
         navigate("/auth/login", { replace: true });
       } else {
         setError(err.response?.data?.message || "An error occurred while fetching orders.");
@@ -180,8 +183,20 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Filter orders based on state
+  const filteredOrders = orders.filter((order) => {
+    // Filter by status
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+
+    // Filter by date
+    const orderDate = new Date(order.createdAt).toISOString().split("T")[0];
+    const matchesDate = !dateFilter || orderDate === dateFilter;
+
+    return matchesStatus && matchesDate;
+  });
+
   // Prepare data for CSV export
-  const csvData = orders.map((order) => ({
+  const csvData = filteredOrders.map((order) => ({
     "Order ID": order.orderId,
     "Customer Name": order.name,
     "Customer Phone": order.phone,
@@ -214,7 +229,7 @@ export default function AdminOrdersPage() {
         <h1 className="text-4xl font-extrabold text-gray-800">
           Manage Orders
         </h1>
-        {orders.length > 0 && (
+        {filteredOrders.length > 0 && (
           <CSVLink
             data={csvData}
             headers={csvHeaders}
@@ -225,6 +240,36 @@ export default function AdminOrdersPage() {
             Export as CSV
           </CSVLink>
         )}
+      </div>
+
+      {/* Filter controls */}
+      <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
+        <div className="w-full md:w-auto">
+          <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
+          <select
+            id="status-filter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          >
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div className="w-full md:w-auto">
+          <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Date</label>
+          <input
+            type="date"
+            id="date-filter"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          />
+        </div>
       </div>
 
       {loading && (
@@ -248,14 +293,14 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {!loading && orders.length === 0 && !error && (
+      {!loading && filteredOrders.length === 0 && !error && (
         <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative flex items-center justify-center">
           <MdInfoOutline className="text-xl mr-2" />
-          <span>No orders found.</span>
+          <span>No orders match the current filters. Try adjusting your search criteria.</span>
         </div>
       )}
 
-      {!loading && orders.length > 0 && (
+      {!loading && filteredOrders.length > 0 && (
         <div className="overflow-x-auto bg-white rounded-lg shadow-md">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -290,7 +335,7 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {order.orderId}

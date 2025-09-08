@@ -239,8 +239,8 @@
 // client\src\components\PostDetail.tsx
 
 import { useEffect, useState } from "react";
-import { Share2 } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { Share2, ArrowLeft } from "lucide-react"; // ⬅️ Added ArrowLeft
+import { useParams, useNavigate } from "react-router-dom"; // ⬅️ Added useNavigate
 import Card from "./Card";
 
 const SERVER_URL = import.meta.env.VITE_API;
@@ -267,13 +267,13 @@ type Category = {
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate(); // ✅ Hook for back button
   const [post, setPost] = useState<Post | null>(null);
   const [imageIndex, setImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<Post[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  // State for share message and timeout
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [shareMessageTimeoutId, setShareMessageTimeoutId] = useState<number | null>(null);
 
@@ -282,11 +282,10 @@ export default function PostDetail() {
       try {
         setLoading(true);
         setError(null);
-        
-        // Step 1: Fetch the specific post and all categories
+
         const [postRes, categoriesRes] = await Promise.all([
-          fetch(`${SERVER_URL}api/universal-posts/${id}`), // Fetch the single post
-          fetch(`${SERVER_URL}api/categories`)
+          fetch(`${SERVER_URL}api/universal-posts/${id}`),
+          fetch(`${SERVER_URL}api/categories`),
         ]);
 
         if (!postRes.ok || !categoriesRes.ok) {
@@ -299,7 +298,6 @@ export default function PostDetail() {
         setPost(postData);
         setCategories(categoriesData);
 
-        // Step 2: After getting the post, fetch suggestions from the same category
         if (postData.category) {
           const suggestionsRes = await fetch(
             `${SERVER_URL}api/universal-posts/category/${postData.category}`
@@ -308,15 +306,13 @@ export default function PostDetail() {
             throw new Error("Failed to load suggestions.");
           }
           const allSuggestions = await suggestionsRes.json();
-          
-          // Filter out the current post and limit the number of suggestions
+
           const filteredSuggestions = allSuggestions
             .filter((suggestion: Post) => suggestion._id !== id)
             .slice(0, 3);
-            
+
           setSuggestions(filteredSuggestions);
         }
-
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load content. Please try again later.");
@@ -329,7 +325,6 @@ export default function PostDetail() {
   }, [id]);
 
   useEffect(() => {
-    // Cleanup function to clear the timeout when the component unmounts or shareMessage changes
     return () => {
       if (shareMessageTimeoutId) {
         clearTimeout(shareMessageTimeoutId);
@@ -341,13 +336,11 @@ export default function PostDetail() {
     const category = categories.find(
       (cat) => cat.name.en === englishCategoryName
     );
-    return category?.name.ta || englishCategoryName; // Fallback to English if not found
+    return category?.name.ta || englishCategoryName;
   };
-  
+
   const handleShare = async () => {
     if (!post) return;
-
-    // Clear any existing timeout before setting a new one
     if (shareMessageTimeoutId) {
       clearTimeout(shareMessageTimeoutId);
     }
@@ -359,12 +352,10 @@ export default function PostDetail() {
           text: post.content.replace(/<[^>]*>/g, "").substring(0, 100) + "...",
           url: window.location.href,
         });
-        console.log("Post shared successfully!");
         setShareMessage("Post shared successfully!");
         const newTimeoutId = window.setTimeout(() => setShareMessage(null), 3000);
         setShareMessageTimeoutId(newTimeoutId);
       } catch (error) {
-        console.error("Error sharing post:", error);
         setShareMessage("Error sharing page.");
         const newTimeoutId = window.setTimeout(() => setShareMessage(null), 3000);
         setShareMessageTimeoutId(newTimeoutId);
@@ -372,12 +363,10 @@ export default function PostDetail() {
     } else {
       try {
         await navigator.clipboard.writeText(window.location.href);
-        console.log("Link copied to clipboard!");
         setShareMessage("Link copied to clipboard!");
         const newTimeoutId = window.setTimeout(() => setShareMessage(null), 3000);
         setShareMessageTimeoutId(newTimeoutId);
       } catch (error) {
-        console.error("Unable to copy link:", error);
         setShareMessage("Unable to copy link. Please copy the URL manually.");
         const newTimeoutId = window.setTimeout(() => setShareMessage(null), 5000);
         setShareMessageTimeoutId(newTimeoutId);
@@ -385,7 +374,6 @@ export default function PostDetail() {
     }
   };
 
-  // --- Loading State ---
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-4 flex items-center justify-center min-h-[400px]">
@@ -397,7 +385,6 @@ export default function PostDetail() {
     );
   }
 
-  // --- Error or Post Not Found State ---
   if (error || !post) {
     return (
       <div className="max-w-4xl mx-auto p-4 flex items-center justify-center min-h-[400px]">
@@ -415,6 +402,15 @@ export default function PostDetail() {
       {/* --- Header Section --- */}
       <div className="flex flex-col gap-3 py-6 border-b-4 border-highlight-1 relative">
         <div className="flex items-center gap-2 text-sm">
+          {/* Back button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1 text-highlight-1 hover:text-highlight-1/80 transition"
+          >
+            <ArrowLeft size={18} />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+
           <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
             {new Date(post.date).toLocaleDateString()}
           </span>
@@ -446,7 +442,7 @@ export default function PostDetail() {
           <Share2 size={18} />
           <span className="hidden sm:inline">Share</span>
         </button>
-        {/* Share message display */}
+
         {shareMessage && (
           <div className="absolute top-full right-0 mt-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-md shadow-lg whitespace-nowrap z-20">
             {shareMessage}
@@ -461,7 +457,6 @@ export default function PostDetail() {
             src={imageUrls[imageIndex]}
             alt={`Post Image ${imageIndex + 1}`}
             className="object-cover w-full h-full transition-all duration-500"
-            // Fallback image if the primary image fails to load
             onError={(e) => {
               e.currentTarget.src =
                 "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=400&fit=crop";
@@ -470,7 +465,6 @@ export default function PostDetail() {
 
           {imageUrls.length > 1 && (
             <>
-              {/* Previous Image Button */}
               <button
                 onClick={() =>
                   setImageIndex(
@@ -482,7 +476,6 @@ export default function PostDetail() {
               >
                 ‹
               </button>
-              {/* Next Image Button */}
               <button
                 onClick={() =>
                   setImageIndex((prev) => (prev + 1) % imageUrls.length)
@@ -493,16 +486,16 @@ export default function PostDetail() {
                 ›
               </button>
 
-              {/* Image indicators (dots) */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                 {imageUrls.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setImageIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ${index === imageIndex
-                        ? "bg-white" // Active dot
-                        : "bg-white bg-opacity-50" // Inactive dot
-                      }`}
+                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                      index === imageIndex
+                        ? "bg-white"
+                        : "bg-white bg-opacity-50"
+                    }`}
                     aria-label={`Go to image ${index + 1}`}
                   />
                 ))}
@@ -511,11 +504,12 @@ export default function PostDetail() {
           )}
         </div>
       )}
+
       <article className="prose prose-lg max-w-none">
         <style>
           {`
             .rich-content a {
-              color: #3b82f6; /* Tailwind's blue-500 */
+              color: #3b82f6;
               text-decoration: underline;
             }
           `}
@@ -525,11 +519,10 @@ export default function PostDetail() {
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
       </article>
+
       {suggestions && suggestions.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            
-          </h2>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4"></h2>
           <div className="grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
             {suggestions.map((post) => (
               <Card
