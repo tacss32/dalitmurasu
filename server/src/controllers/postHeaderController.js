@@ -1,5 +1,4 @@
 const PostHeader = require("../models/PostHeader");
-
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs/promises");
 
@@ -58,22 +57,31 @@ exports.getSelectedHeader = async (req, res) => {
 
 exports.addToPostHeader = async (req, res) => {
   try {
-    const file = req.files?.["banner-image"]?.[0];
+    const desktopFile = req.files?.["desktop-image"]?.[0];
+    const mobileFile = req.files?.["mobile-image"]?.[0];
     const category = req.body.category;
 
-    if (!file) {
-      return res.status(400).json({ error: "Banner image is required" });
+    if (!desktopFile && !mobileFile) {
+      return res.status(400).json({ error: "At least one banner image (desktop or mobile) is required" });
     }
 
     if (!category) {
       return res.status(400).json({ error: "Category is required" });
     }
 
-    // Upload to Cloudinary
-    const cloudinaryUrl = await uploadToCloudinary(file.path, "banners");
+    let desktopImage = "";
+    if (desktopFile) {
+      desktopImage = await uploadToCloudinary(desktopFile.path, "banners");
+    }
+
+    let mobileImage = "";
+    if (mobileFile) {
+      mobileImage = await uploadToCloudinary(mobileFile.path, "banners");
+    }
 
     const newHeader = new PostHeader({
-      banner: cloudinaryUrl,
+      desktopImage,
+      mobileImage,
       category,
     });
 

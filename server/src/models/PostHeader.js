@@ -2,7 +2,8 @@ const mongoose = require("mongoose");
 
 const PostHeaderSchema = new mongoose.Schema(
   {
-    banner: { type: String, required: true },
+    desktopImage: String,
+    mobileImage: String,
     category: { type: String, required: true },
   },
   { timestamps: true }
