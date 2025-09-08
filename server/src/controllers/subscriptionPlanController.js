@@ -250,68 +250,68 @@ exports.verifySubscriptionPayment = async (req, res) => {
 
 // -----------------------------
 // Admin: Manually Subscribe User
+// Admin: Manually Subscribe User
 exports.manualSubscribeUser = async (req, res) => {
-  try {
-    const { username, title } = req.body;
+  try {
+    const { userEmail, title } = req.body;
 
-    // Validate input
-    if (!username || !title) {
-      return res.status(400).json({
-        success: false,
-        message: "Username and Plan Title are required",
-      });
-    }
+    // Validate input
+    if (!userEmail || !title) {
+      return res.status(400).json({
+        success: false,
+        message: "User email and Plan Title are required",
+      });
+    }
 
-    // Fetch plan by title
-    const plan = await SubscriptionPlan.findOne({ title });
-    if (!plan) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Subscription plan not found" });
-    }
+    // Fetch plan by title
+    const plan = await SubscriptionPlan.findOne({ title });
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Subscription plan not found" });
+    }
 
-    // Fetch user by username
-    const user = await ClientUser.findOne({ name: username });
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
+    // Fetch user by email
+    const user = await ClientUser.findOne({ email: userEmail });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
-    // Calculate expiry date from today
-    const now = new Date();
-    const expiryDate = new Date(
-      now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000
-    );
+    // Calculate expiry date from today
+    const now = new Date();
+    const expiryDate = new Date(
+      now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000
+    );
 
-    // Update user
-    user.isSubscribed = true;
-    user.subscriptionPlan = plan._id;
-    user.subscriptionExpiresAt = expiryDate;
-    user.title = plan.title;
-    await user.save();
-    
-    // ✅ NEW: Send confirmation email for manual subscription
-    await sendSubscriptionEmail(
-      user.email,
-      user.name,
-      plan.title,
-      plan.price,
-      user.subscriptionExpiresAt
-    );
+    // Update user
+    user.isSubscribed = true;
+    user.subscriptionPlan = plan._id;
+    user.subscriptionExpiresAt = expiryDate;
+    user.title = plan.title;
+    await user.save();
+    
+    // ✅ NEW: Send confirmation email for manual subscription
+    await sendSubscriptionEmail(
+      user.email,
+      user.name,
+      plan.title,
+      plan.price,
+      user.subscriptionExpiresAt
+    );
 
 
-    res.status(200).json({
-      success: true,
-      message: "User subscribed successfully",
-      user,
-    });
-  } catch (err) {
-    console.error("Manual subscription failed:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
+    res.status(200).json({
+      success: true,
+      message: "User subscribed successfully",
+      user,
+    });
+  } catch (err) {
+    console.error("Manual subscription failed:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
 };
-
 // -----------------------------
 // Admin: Get Subscribed Users
 exports.getSubscribedUsers = async (req, res) => {
