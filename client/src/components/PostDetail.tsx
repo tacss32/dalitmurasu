@@ -528,7 +528,7 @@ export default function PostDetail() {
       {suggestions && suggestions.length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            More from this category 📚
+            
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
             {suggestions.map((post) => (
