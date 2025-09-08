@@ -1,11 +1,50 @@
-import  { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+// import { toast } from "react-toastify";
+
+// Define interface for user details
+interface UserDetails {
+  isSubscribed: boolean;
+  subscriptionExpiresAt: string | null;
+}
+
+const API = import.meta.env.VITE_API;
 
 export default function Subscribe() {
   const navigate = useNavigate();
   const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const  handleShareClick = () => {
+  useEffect(() => {
+    fetchUserSubscriptionStatus();
+  }, []);
+
+  const fetchUserSubscriptionStatus = async () => {
+    try {
+      const token = localStorage.getItem("clientToken");
+      if (!token) {
+        setIsSubscribed(false);
+        setLoading(false);
+        return;
+      }
+
+      const res = await axios.get<{ success: boolean; data: UserDetails }>(
+        `${API}api/client-users/profile`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setIsSubscribed(res.data.data.isSubscribed);
+    } catch (err) {
+      console.error(err);
+      setIsSubscribed(false); // Assume not subscribed on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleShareClick = () => {
     if (navigator.share) {
       navigator
         .share({
@@ -34,6 +73,19 @@ export default function Subscribe() {
     navigate("/subscriptions"); // Navigate to the user-facing subscription plans page
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center border-2 border-highlight-1 rounded-lg relative">
+        <button
+          className="bg-highlight-1 hover:bg-black text-white px-4 py-2 transition-colors duration-150 ease-in-out rounded-l-md animate-pulse"
+          disabled
+        >
+          Loading...
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center border-2 border-highlight-1 rounded-lg relative">
       {/* Share message display */}
@@ -44,11 +96,11 @@ export default function Subscribe() {
       )}
 
       <button
-        type="button" // Changed type from "submit" to "button"
-        onClick={handleSubscribeClick} // Added onClick handler
-        className="bg-highlight-1 hover:bg-black text-white px-4 py-2 transition-colors duration-150 ease-in-out rounded-l-md" // Added rounded-l-md for styling
+        type="button"
+        onClick={handleSubscribeClick}
+        className="bg-highlight-1 hover:bg-black text-white px-4 py-2 transition-colors duration-150 ease-in-out rounded-l-md"
       >
-        Subscribe
+        {isSubscribed ? "Upgrade" : "Subscribe"}
       </button>
 
       {/* Make the parent of the SVG (or the SVG itself if you can position it) relative */}
