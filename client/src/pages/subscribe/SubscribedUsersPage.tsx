@@ -18,6 +18,11 @@ interface SubscribedUser {
 
 const SubscribedUsersPage: React.FC = () => {
   const [users, setUsers] = useState<SubscribedUser[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<SubscribedUser[]>([]);
+  const [filterTitle, setFilterTitle] = useState("");
+  const [filterExpiryDateFrom, setFilterExpiryDateFrom] = useState("");
+  const [filterExpiryDateTo, setFilterExpiryDateTo] = useState("");
+  const [availableTitles, setAvailableTitles] = useState<string[]>([]);
   const API_BASE_URL = import.meta.env.VITE_API;
 
   useEffect(() => {
@@ -36,7 +41,9 @@ const SubscribedUsersPage: React.FC = () => {
         });
 
         if (response.data.success) {
-          setUsers(response.data.users);
+          const fetchedUsers: SubscribedUser[] = response.data.users;
+          setUsers(fetchedUsers);
+          setFilteredUsers(fetchedUsers);
           toast.success("Subscribed users fetched successfully!");
         } else {
           toast.error(response.data.message || "Failed to fetch subscribed users.");
@@ -54,16 +61,96 @@ const SubscribedUsersPage: React.FC = () => {
     fetchSubscribedUsers();
   }, [API_BASE_URL]);
 
+  useEffect(() => {
+    if (users.length > 0) {
+      const titles = users
+        .map(user => user.title)
+        .filter((title, index, self): title is string => title !== null && self.indexOf(title) === index);
+      setAvailableTitles(titles);
+    }
+  }, [users]);
+
+  useEffect(() => {
+    const applyFilters = () => {
+      let tempUsers = [...users];
+
+      if (filterTitle) {
+        tempUsers = tempUsers.filter(user => user.title === filterTitle);
+      }
+
+      // Filter by expiry date range
+      if (filterExpiryDateFrom && filterExpiryDateTo) {
+        const fromDate = parseISO(filterExpiryDateFrom);
+        const toDate = parseISO(filterExpiryDateTo);
+
+        tempUsers = tempUsers.filter(user => {
+          if (!user.subscriptionExpiresAt) return false;
+          const expiryDate = parseISO(user.subscriptionExpiresAt);
+          return expiryDate >= fromDate && expiryDate <= toDate;
+        });
+      } else if (filterExpiryDateFrom) {
+        const fromDate = parseISO(filterExpiryDateFrom);
+        tempUsers = tempUsers.filter(user => {
+          if (!user.subscriptionExpiresAt) return false;
+          return parseISO(user.subscriptionExpiresAt) >= fromDate;
+        });
+      } else if (filterExpiryDateTo) {
+        const toDate = parseISO(filterExpiryDateTo);
+        tempUsers = tempUsers.filter(user => {
+          if (!user.subscriptionExpiresAt) return false;
+          return parseISO(user.subscriptionExpiresAt) <= toDate;
+        });
+      }
+
+      setFilteredUsers(tempUsers);
+    };
+
+    applyFilters();
+  }, [users, filterTitle, filterExpiryDateFrom, filterExpiryDateTo]);
+
   return (
     <div className="container mx-auto p-6 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Subscribed Users</h1>
-      {users.length === 0 ? (
+
+      {/* Filter Inputs */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <select
+          value={filterTitle}
+          onChange={(e) => setFilterTitle(e.target.value)}
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-1"
+        >
+          <option value="">All Plans</option>
+          {availableTitles.map(title => (
+            <option key={title} value={title}>
+              {title}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="date"
+          placeholder="Expiry Date (From)"
+          value={filterExpiryDateFrom}
+          onChange={(e) => setFilterExpiryDateFrom(e.target.value)}
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-1"
+        />
+
+        <input
+          type="date"
+          placeholder="Expiry Date (To)"
+          value={filterExpiryDateTo}
+          onChange={(e) => setFilterExpiryDateTo(e.target.value)}
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-1"
+        />
+      </div>
+
+      {filteredUsers.length === 0 ? (
         <div className="bg-white p-6 rounded-lg shadow-md text-center">
-          <p className="text-gray-600">No users are currently subscribed.</p>
+          <p className="text-gray-600">No users match your search criteria.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <div key={user._id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
               <div className="flex items-center mb-4">
                 <MdAccountCircle className="text-4xl text-yellow-500 mr-4" />
@@ -85,7 +172,6 @@ const SubscribedUsersPage: React.FC = () => {
                   <MdCreditCard className="mr-2 text-yellow-500" />
                   <span>Plan: <span className="font-medium">{user.title || "N/A"}</span></span>
                 </li>
-                {/* --- FIX APPLIED HERE --- */}
                 {user.subscriptionStartDate && (
                   <li className="flex items-center">
                     <MdCalendarToday className="mr-2 text-yellow-500" />
