@@ -398,19 +398,22 @@ export default function PostDetail() {
   const imageUrls = post.images;
 
   return (
+  
     <div className="max-w-4xl mx-auto p-4 flex flex-col gap-6">
       {/* --- Header Section --- */}
+      
       <div className="flex flex-col gap-3 py-6 border-b-4 border-highlight-1 relative">
+        
         <div className="flex items-center gap-2 text-sm">
+          
           {/* Back button */}
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-highlight-1 hover:text-highlight-1/80 transition"
+            className=" h-10 w-17 flex items-center gap-1 text-white  bg-highlight-1 hover:bg-highlight-1/80 transition  rounded-lg"
           >
-            <ArrowLeft size={18} />
-            <span className="hidden sm:inline">Back</span>
+            <ArrowLeft size={25} />
+            <span className="hidden sm:inline">back</span>
           </button>
-
           <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
             {new Date(post.date).toLocaleDateString()}
           </span>
@@ -437,7 +440,7 @@ export default function PostDetail() {
         {/* Share Button */}
         <button
           onClick={handleShare}
-          className="absolute top-6 right-0 group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2"
+          className="absolute top-6 right-0 group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2  "
         >
           <Share2 size={18} />
           <span className="hidden sm:inline">Share</span>

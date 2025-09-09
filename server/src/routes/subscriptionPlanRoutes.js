@@ -19,8 +19,16 @@ router.post("/verify-payment", authForSubscription, controller.verifySubscriptio
 // List subscribed users
 router.get("/subscribed-users", subscriptionPlanController.getSubscribedUsers); 
 
+// User: Get their subscription status
+router.get("/user-status", authForSubscription, controller.getUserSubscriptionStatus);
+
+
 // subscribe users manually
 router.post("/subscribe-user", subscriptionPlanController.manualSubscribeUser);
+
+// Admin: Unsubscribe a user
+router.put("/unsubscribe-user/:id", subscriptionPlanController.unsubscribeUser);
+
 
 // Dashboard: Get count of users per subscription plan
 router.get("/subscription-dashboard", subscriptionPlanController.getSubscriptionDashboard);

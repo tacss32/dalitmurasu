@@ -14,7 +14,7 @@ interface SubscriptionPlan {
 
 interface UserSubscription {
   _id: string;
-  planId: SubscriptionPlan; // Or just the string ID if your API returns that
+  planId: SubscriptionPlan;
   userId: string;
   startDate: string;
   endDate: string;
@@ -40,38 +40,30 @@ export default function UserSubscriptionPlans() {
       try {
         const token = localStorage.getItem("clientToken");
 
-        // Fetch subscription plans
+        // Fetch all subscription plans
         const plansResponse = await axios.get<SubscriptionPlan[]>(
           `${API_BASE_URL}api/subscriptions`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
+          { headers: { 'Content-Type': 'application/json' } }
         );
         setPlans(plansResponse.data);
 
-        // Fetch user's current subscription if they are logged in
-        if (token) {
-          try {
-            const userSubResponse = await axios.get(
-              `${API_BASE_URL}api/subscriptions/user-status`, // Assumed new API endpoint
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-            // The API should return the active subscription or null/undefined
-            setUserSubscription(userSubResponse.data.subscription);
-          } catch (userSubError) {
-            console.error("Error fetching user subscription status:", userSubError);
-            // It's fine if this fails; it just means the user isn't subscribed
-            setUserSubscription(null);
-          }
-        }
+       // Fetch user's current subscription if they are logged in
+if (token) {
+  try {
+    const userSubResponse = await axios.get(
+      `${API_BASE_URL}api/subscriptions/user-status`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setUserSubscription(userSubResponse.data.subscription || null);
+  } catch (err) {
+    console.error("Error fetching user subscription status:", err);
+    setUserSubscription(null);
+  }
+}
+
+
       } catch (err) {
-        console.error('Error fetching data:', err);
+        console.error('Error fetching plans:', err);
         if (axios.isAxiosError(err)) {
           setError(err.response?.data?.error || 'Failed to load plans. Please try again.');
         } else {
@@ -87,15 +79,8 @@ export default function UserSubscriptionPlans() {
 
   const handleSubscribe = async (plan: SubscriptionPlan) => {
     const token = localStorage.getItem("clientToken");
-
     if (!token) {
       alert("Please login to subscribe.");
-      return;
-    }
-
-    // Check if the user is already subscribed to this plan
-    if (userSubscription && userSubscription.planId._id === plan._id) {
-      alert("You are already subscribed to this plan.");
       return;
     }
 
@@ -103,11 +88,7 @@ export default function UserSubscriptionPlans() {
       const createOrderResponse = await axios.post(
         `${API_BASE_URL}api/subscriptions/create-order`,
         { planId: plan._id },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const { razorpayOrderId, amount, currency, userId } = createOrderResponse.data;
@@ -130,11 +111,7 @@ export default function UserSubscriptionPlans() {
                 userId,
                 planId: plan._id,
               },
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
+              { headers: { Authorization: `Bearer ${token}` } }
             );
 
             if (verifyResponse.data.success) {
@@ -152,9 +129,7 @@ export default function UserSubscriptionPlans() {
           name: "Dalit Murasu User",
           email: "",
         },
-        theme: {
-          color: "#cb1e19",
-        },
+        theme: { color: "#cb1e19" },
       });
 
       razorpay.open();
@@ -197,43 +172,49 @@ export default function UserSubscriptionPlans() {
       <h2 className="text-4xl font-extrabold text-gray-900 mb-10 text-center">Choose Your Subscription Plan</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
-        {plans.map((plan) => (
-          <div
-            key={plan._id}
-            className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between p-6 border border-gray-200"
-          >
-            <div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-3 text-center">{plan.title}</h3>
-              <p className="text-center text-gray-600 mb-4">{plan.description || 'No description provided.'}</p>
-              <div className="text-center mb-6">
-                <span className="text-5xl font-extrabold text-red-600">₹{plan.price.toFixed(2)}</span>
-                <span className="text-xl text-gray-500"> / {plan.durationInDays} days</span>
-              </div>
-              <ul className="space-y-3 text-gray-700 mb-6">
-                <li className="flex items-center">
-                  <MdCheckCircle className="text-green-500 mr-2 text-xl" /> Access to Premium Content
-                </li>
-                <li className="flex items-center">
-                  <MdStar className="text-blue-500 mr-2 text-xl" /> Ad-Free Experience
-                </li>
-                <li className="flex items-center">
-                  <MdAccessTime className="text-purple-500 mr-2 text-xl" /> Unlimited Reading
-                </li>
-              </ul>
-            </div>
-            {/* Conditional button rendering logic */}
-            <button
-              onClick={() => handleSubscribe(plan)}
-              disabled={userSubscription?.planId._id === plan._id}
-              className={`w-full py-3 rounded-lg text-white font-semibold transition duration-300 ease-in-out ${
-                userSubscription?.planId._id === plan._id ? 'bg-gray-400 cursor-not-allowed' : 'hover:opacity-90'
-              }`}
-              style={{ backgroundColor: userSubscription?.planId._id === plan._id ? '' : '#cb1e19' }}
+        {plans.map((plan) => {
+          const isCurrentPlan = userSubscription?.planId?._id === plan._id;
+          // const hasSubscription = !!userSubscription;
+
+          return (
+            <div
+              key={plan._id}
+              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between p-6 border border-gray-200"
             >
-              {userSubscription?.planId._id === plan._id ? 'Subscribed' : 'Subscribe Now'}
-            </button>
-          </div>
-        ))}
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-3 text-center">{plan.title}</h3>
+                <p className="text-center text-gray-600 mb-4">{plan.description || 'No description provided.'}</p>
+                <div className="text-center mb-6">
+                  <span className="text-5xl font-extrabold text-red-600">₹{plan.price.toFixed(2)}</span>
+                  <span className="text-xl text-gray-500"> / {plan.durationInDays} days</span>
+                </div>
+                <ul className="space-y-3 text-gray-700 mb-6">
+                  <li className="flex items-center"><MdCheckCircle className="text-green-500 mr-2 text-xl" /> Access to Premium Content</li>
+                  <li className="flex items-center"><MdStar className="text-blue-500 mr-2 text-xl" /> Ad-Free Experience</li>
+                  <li className="flex items-center"><MdAccessTime className="text-purple-500 mr-2 text-xl" /> Unlimited Reading</li>
+                </ul>
+              </div>
+
+           <button
+  onClick={() => handleSubscribe(plan)}
+  disabled={isCurrentPlan}
+  className={`w-full py-3 rounded-lg text-white font-semibold transition duration-300 ease-in-out
+    ${isCurrentPlan 
+      ? "bg-[#cb1e19] opacity-60 cursor-not-allowed" // subscribed → transparent red
+      : "bg-[#cb1e19] hover:opacity-90"}             // others → normal red
+  `}
+>
+  {isCurrentPlan
+    ? "Subscribed"                 
+    : userSubscription              
+      ? "Upgrade"                   
+      : "Subscribe Now"}            
+</button>
+
+
+            </div>
+          );
+        })}
       </div>
     </div>
   );

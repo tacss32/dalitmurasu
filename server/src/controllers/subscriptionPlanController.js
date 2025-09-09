@@ -391,4 +391,69 @@ exports.getSubscriptionDashboard = async (req, res) => {
       message: "Failed to fetch dashboard data",
     });
   }
+}; 
+
+// Admin: Unsubscribe User
+exports.unsubscribeUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the user and update their subscription status
+    const user = await ClientUser.findByIdAndUpdate(
+      id,
+      {
+        isSubscribed: false,
+        subscriptionPlan: null,
+        subscriptionExpiresAt: null,
+        title: null,
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User unsubscribed successfully.",
+      user,
+    });
+  } catch (err) {
+    console.error("Unsubscribe user failed:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
+};
+
+// -----------------------------
+// User: Get Current User Subscription Status
+exports.getUserSubscriptionStatus = async (req, res) => {
+  try {
+    const user = await ClientUser.findById(req.user._id)
+      .populate("subscriptionPlan", "title price durationInDays");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (!user.isSubscribed || !user.subscriptionPlan) {
+      return res.status(200).json({ success: true, subscription: null });
+    }
+
+    res.status(200).json({
+      success: true,
+      subscription: {
+        _id: user._id,
+        planId: user.subscriptionPlan, // populated object with title etc
+        startDate: user.updatedAt,
+        endDate: user.subscriptionExpiresAt,
+        isActive: user.isSubscribed,
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching user subscription status:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch status" });
+  }
 };

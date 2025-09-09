@@ -1,8 +1,8 @@
 // client\src\pages\premium_articles\PremiumArticleDetail.tsx
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Share2, Bookmark, BookmarkCheck } from "lucide-react";
+import { Share2, ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
 
 const API_BASE_URL = import.meta.env.VITE_API;
@@ -32,10 +32,10 @@ interface IPremiumPost {
 }
 
 // Define the bookmark type to handle populated and unpopulated states
-type BookmarkData = {
-  _id: string;
-  postId: IPremiumPost | null; // This type is crucial to handle null
-};
+// type BookmarkData = {
+//   _id: string;
+//   postId: IPremiumPost | null; // This type is crucial to handle null
+// };
 
 // Helper function to truncate text to exactly 150 words
 const truncateTo150Words = (text: string | undefined): string => {
@@ -61,10 +61,11 @@ export default function PremiumArticleDetail() {
     const [isUserCurrentlySubscribed, setIsUserCurrentlySubscribed] = useState<boolean>(false);
     const [showSubscriptionPopup, setShowSubscriptionPopup] = useState<boolean>(false);
     const [showLoginPopup, setShowLoginPopup] = useState<boolean>(false);
-    const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
-    const [bookmarkId, setBookmarkId] = useState<string | null>(null); // New state to store bookmark's ID
+//     const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+//     const [bookmarkId, setBookmarkId] = useState<string | null>(null); // New state to store bookmark's ID
+    const navigate = useNavigate();
 
-    const userId = localStorage.getItem("userId");
+//     const userId = localStorage.getItem("userId");
     const clientToken = localStorage.getItem("clientToken");
 
     // Fetch article details and check subscription status
@@ -132,31 +133,31 @@ export default function PremiumArticleDetail() {
     }, [id, clientToken]);
 
     // Fetch bookmark status for the current user and post
-    useEffect(() => {
-        const fetchBookmarkStatus = async () => {
-            if (!userId || !id) return;
-            try {
-                const response = await axios.get(`${API_BASE_URL}api/bookmarks/${userId}`);
-                const bookmarks = response.data;
-                
-                // Filter out any bookmarks where postId is null
-                const validBookmarks = bookmarks.filter((b: BookmarkData) => b.postId !== null);
-                
-                const foundBookmark = validBookmarks.find((b: BookmarkData) => (b.postId as IPremiumPost)._id === id);
+//     useEffect(() => {
+//         const fetchBookmarkStatus = async () => {
+//             if (!userId || !id) return;
+//             try {
+//                 const response = await axios.get(`${API_BASE_URL}api/bookmarks/${userId}`);
+//                 const bookmarks = response.data;
+//                 
+//                 // Filter out any bookmarks where postId is null
+//                 const validBookmarks = bookmarks.filter((b: BookmarkData) => b.postId !== null);
+//                 
+//                 const foundBookmark = validBookmarks.find((b: BookmarkData) => (b.postId as IPremiumPost)._id === id);
 
-                if (foundBookmark) {
-                  setIsBookmarked(true);
-                  setBookmarkId(foundBookmark._id);
-                } else {
-                  setIsBookmarked(false);
-                  setBookmarkId(null);
-                }
-            } catch (err) {
-                console.error("Failed to fetch bookmark status:", err);
-            }
-        };
-        fetchBookmarkStatus();
-    }, [userId, id]);
+//                 if (foundBookmark) {
+//                   setIsBookmarked(true);
+//                   setBookmarkId(foundBookmark._id);
+//                 } else {
+//                   setIsBookmarked(false);
+//                   setBookmarkId(null);
+//                 }
+//             } catch (err) {
+//                 console.error("Failed to fetch bookmark status:", err);
+//             }
+//         };
+//         fetchBookmarkStatus();
+//     }, [userId, id]);
 
     const handleShare = async () => {
         if (!article) return;
@@ -181,69 +182,69 @@ export default function PremiumArticleDetail() {
         }
     };
 
-    const handleBookmark = async () => {
-        if (!userId || !article) {
-            toast.error("Please log in to bookmark articles.");
-            return;
-        }
-        if (isBookmarked) {
-            handleRemoveBookmark();
-            return;
-        }
-        const payload = {
-            userId,
-            postId: article._id,
-            postType: "PremiumPost",
-        };
-        try {
-            const res = await axios.post(`${API_BASE_URL}api/bookmarks`, payload, {
-                headers: {
-                    Authorization: `Bearer ${clientToken}`,
-                },
-            });
-            setIsBookmarked(true);
-            setBookmarkId(res.data.bookmark._id); // Save the new bookmark ID
-            toast.success("Article bookmarked successfully!");
-        } catch (error: any) {
-            // Handle the 409 Conflict error specifically
-            if (error.response?.status === 409) {
-                setIsBookmarked(true); // Update state to reflect existing bookmark
-                toast.info("Article is already bookmarked.");
-                // Re-fetch the bookmark status to get the correct bookmarkId
-                fetchBookmarkStatus();
-            } else {
-                toast.error(error.response?.data?.error || "Error bookmarking article.");
-            }
-        }
-    };
+//     const handleBookmark = async () => {
+//         if (!userId || !article) {
+//             toast.error("Please log in to bookmark articles.");
+//             return;
+//         }
+//         if (isBookmarked) {
+//             handleRemoveBookmark();
+//             return;
+//         }
+//         const payload = {
+//             userId,
+//             postId: article._id,
+//             postType: "PremiumPost",
+//         };
+//         try {
+//             const res = await axios.post(`${API_BASE_URL}api/bookmarks`, payload, {
+//                 headers: {
+//                     Authorization: `Bearer ${clientToken}`,
+//                 },
+//             });
+//             setIsBookmarked(true);
+//             setBookmarkId(res.data.bookmark._id); // Save the new bookmark ID
+//             toast.success("Article bookmarked successfully!");
+//         } catch (error: any) {
+//             // Handle the 409 Conflict error specifically
+//             if (error.response?.status === 409) {
+//                 setIsBookmarked(true); // Update state to reflect existing bookmark
+//                 toast.info("Article is already bookmarked.");
+//                 // Re-fetch the bookmark status to get the correct bookmarkId
+//                 fetchBookmarkStatus();
+//             } else {
+//                 toast.error(error.response?.data?.error || "Error bookmarking article.");
+//             }
+//         }
+//     };
 
-    const handleRemoveBookmark = async () => {
-        if (!userId || !bookmarkId) {
-          // If bookmarkId is not set, we need to find it first
-          const bookmarksRes = await axios.get(`${API_BASE_URL}api/bookmarks/${userId}`);
-          const foundBookmark = bookmarksRes.data.find((b: BookmarkData) => b.postId?._id === id);
-          if (foundBookmark) {
-            setBookmarkId(foundBookmark._id);
-          } else {
-            toast.error("Bookmark not found.");
-            setIsBookmarked(false);
-            return;
-          }
-        }
+//     const handleRemoveBookmark = async () => {
+//         if (!userId || !bookmarkId) {
+//           // If bookmarkId is not set, we need to find it first
+//           const bookmarksRes = await axios.get(`${API_BASE_URL}api/bookmarks/${userId}`);
+//           const foundBookmark = bookmarksRes.data.find((b: BookmarkData) => b.postId?._id === id);
+//           if (foundBookmark) {
+//             setBookmarkId(foundBookmark._id);
+//           } else {
+//             toast.error("Bookmark not found.");
+//             setIsBookmarked(false);
+//             return;
+//           }
+//         }
 
-        try {
-            await axios.delete(`${API_BASE_URL}api/bookmarks/${bookmarkId}`, {
-                headers: {
-                    Authorization: `Bearer ${clientToken}`,
-                },
-            });
-            setIsBookmarked(false);
-            setBookmarkId(null);
-            toast.success("Bookmark removed successfully!");
-        } catch (error: any) {
-            toast.error("Failed to remove bookmark.");
-        }
-    };
+//         try {
+//             await axios.delete(`${API_BASE_URL}api/bookmarks/${bookmarkId}`, {
+//                 headers: {
+//                     Authorization: `Bearer ${clientToken}`,
+//                 },
+//             });
+//             setIsBookmarked(false);
+//             setBookmarkId(null);
+//             toast.success("Bookmark removed successfully!");
+//         } catch (error: any) {
+//             toast.error("Failed to remove bookmark.");
+//         }
+//     };
 
     if (loading) {
         return (
@@ -311,6 +312,14 @@ export default function PremiumArticleDetail() {
             <div className="max-w-4xl mx-auto p-4 flex flex-col gap-6">
                 <div className="flex flex-col gap-3 py-6 border-b-4 border-red-500 relative">
                     <div className="flex items-center gap-2 text-sm text-gray-700">
+    {/* Back button */}
+          <button
+            onClick={() => navigate(-1)}
+            className=" h-10 w-17 flex items-center gap-1 text-white  bg-highlight-1 hover:bg-highlight-1/80 transition  rounded-lg"
+          >
+            <ArrowLeft size={25} />
+            <span className="hidden sm:inline">back</span>
+          </button>
                         <span className="bg-highlight-1 text-white px-3 py-1 rounded-full">
                             {new Date(article.date).toLocaleDateString()}
                         </span>
@@ -348,12 +357,12 @@ export default function PremiumArticleDetail() {
                             </span>
                         </button>
 
-                        <button
+{/*                         <button
                             onClick={isBookmarked ? handleRemoveBookmark : handleBookmark}
                             className="group bg-highlight-1 text-white hover:bg-yellow-700 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center justify-center"
                         >
                             {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
-                        </button>
+                        </button> */}
                     </div>
                 </div>
 
@@ -475,6 +484,6 @@ export default function PremiumArticleDetail() {
     );
 }
 
-function fetchBookmarkStatus() {
-    throw new Error('Function not implemented.');
-}
+// function fetchBookmarkStatus() {
+//     throw new Error('Function not implemented.');
+// }
