@@ -31,6 +31,13 @@ export default function Books() {
   const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // 👇 NEW: State for temporary notifications
+  const [notification, setNotification] = useState<{ message: string; visible: boolean }>({
+    message: "",
+    visible: false,
+  });
+
+
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) {
@@ -48,6 +55,7 @@ export default function Books() {
       .finally(() => setLoadingBooks(false));
   }, []);
 
+
   const addToCart = async (bookToAdd: Book) => {
     if (!userId) {
       alert("Please log in to add items to the cart.");
@@ -64,10 +72,27 @@ export default function Books() {
         quantity: 1,
       });
       console.log("Add to cart response:", response.data);
-      alert(`${bookToAdd.name} added to cart!`);
+
+      // 👇 NEW: Display a temporary success notification
+      setNotification({
+        message: `${bookToAdd.name} added to cart!`,
+        visible: true,
+      });
+      setTimeout(() => {
+        setNotification({ message: "", visible: false });
+      }, 3000); // Hide after 3 seconds
+
     } catch (err: any) {
       console.error("Failed to add to cart:", err);
-      alert(err.response?.data?.error || "Failed to add item to cart.");
+      // 👇 NEW: Display a temporary error notification
+      setNotification({
+        message: err.response?.data?.error || "Failed to add item to cart.",
+        visible: true,
+      });
+      setTimeout(() => {
+        setNotification({ message: "", visible: false });
+      }, 3000);
+
     } finally {
       setAddingToCartStates((prev) => {
         const newState = new Map(prev);
@@ -91,6 +116,14 @@ export default function Books() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 font-sans">
+
+      {/* 👇 NEW: Temporary Notification Component */}
+      {notification.visible && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-highlight-1 text-white font-bold py-3 px-6 rounded-lg shadow-xl z-50 transition-opacity duration-500 ease-in-out">
+          {notification.message}
+        </div>
+      )}
+
       <h1 className="text-4xl font-extrabold mb-8 text-gray-800 text-center">
         Our Books Collection
       </h1>
@@ -106,36 +139,37 @@ export default function Books() {
           {books.map((book) => (
             <div
               key={book._id}
-              className="border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300  flex flex-col cursor-pointer"
-              onClick={() => handleShowDescription(book)} // Moved onClick here
+              className="border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer"
+              onClick={() => handleShowDescription(book)}
             >
-              <img
-                src={book.imageUrl}
-                alt={book.name}
-                className="w-full h-auto object-contain mb-5 rounded-lg border border-gray-100"
-                onError={(e) => {
-                  e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
-                }}
-              />
-              {/* Removed onClick handler from h2 */}
-              <h2 className="text-2xl font-bold text-gray-900 mb-2 truncate">
-                {book.name}
-              </h2>
-              <p className="text-gray-600 text-md mb-1">by {book.author}</p>
-              <p className="text-gray-600 text-sm mb-3">
-                Category: {book.category}
-              </p>
-              <div className="flex items-baseline mb-4">
-                <span className="text-red-500 line-through text-lg mr-2">
-                  ₹{book.actualPrice.toFixed(2)}
-                </span>
-                <span className="text-green-700 font-extrabold text-xl">
-                  ₹{book.sellingPrice.toFixed(2)}
-                </span>
+              <div className="flex-grow flex flex-col">
+                <img
+                  src={book.imageUrl}
+                  alt={book.name}
+                  className="w-full h-60 object-contain mb-5 rounded-lg border border-gray-100"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
+                  }}
+                />
+                <h2 className="text-2xl font-bold text-gray-900 mb-2 truncate">
+                  {book.name}
+                </h2>
+                <p className="text-gray-600 text-md mb-1">by {book.author}</p>
+                <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-red-500 line-through text-lg mr-2">
+                    ₹{book.actualPrice.toFixed(2)}
+                  </span>
+                  <span className="text-green-700 font-extrabold text-xl">
+                    ₹{book.sellingPrice.toFixed(2)}
+                  </span>
+                </div>
               </div>
+
+              {/* 👇 Button pinned at bottom */}
               <button
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevents the card's onClick from firing
+                  e.stopPropagation();
                   addToCart(book);
                 }}
                 className="bg-red-600 hover:bg-black text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto"
@@ -144,6 +178,7 @@ export default function Books() {
                 {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}
               </button>
             </div>
+
           ))}
         </div>
       )}
@@ -151,7 +186,7 @@ export default function Books() {
       {/* NEW: Description Popup Modal */}
       {showDescriptionPopup && selectedBook && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-           <div className="bg-background-to rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-background-to rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-end items-center mb-4">
               <button
                 onClick={handleClosePopup}
