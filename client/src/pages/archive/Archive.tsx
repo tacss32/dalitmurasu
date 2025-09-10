@@ -209,16 +209,18 @@ export default function Archive() {
     };
     
     // Function to handle cancellation
-    const handleCancelRequest = () => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-            abortControllerRef.current = null;
-        }
-        setLoadingPdf(false);
-        setActivePdf(null);
-        setViewMessage(null);
-        setShowSubscriptionPopup(false);
-    };
+const handleCancelRequest = () => {
+    if (abortControllerRef.current) {
+        // This line cancels the ongoing Axios request.
+        abortControllerRef.current.abort();
+        // Clear the ref so we don't try to abort it again.
+        abortControllerRef.current = null;
+    }
+    setLoadingPdf(false); // Hide the loading spinner
+    setActivePdf(null); // Ensure no PDF is active
+    setViewMessage(null); // Clear any messages
+    setShowSubscriptionPopup(false); // Close any subscription popups
+};
 
     const handleCardClick = async (item: ArchiveItem) => {
         setLoadingPdf(true);
@@ -425,20 +427,21 @@ export default function Archive() {
 
             {/* Conditional loading and error messages */}
             {loadingPdf && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-                    <div className="relative flex flex-col items-center p-6 bg-white rounded-lg shadow-xl text-center">
-                        <button
-                            onClick={handleCancelRequest}
-                            className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
-                            aria-label="Cancel loading PDF"
-                        >
-                            <MdClose className="text-2xl" />
-                        </button>
-                        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
-                        <p className="mt-4 text-gray-700">Loading PDF...</p>
-                    </div>
-                </div>
-            )}
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
+        <div className="relative flex flex-col items-center p-6 bg-white rounded-lg shadow-xl text-center">
+            {/* The Close Button */}
+            <button
+                onClick={handleCancelRequest}
+                className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
+                aria-label="Cancel loading PDF"
+            >
+                <MdClose className="text-2xl" />
+            </button>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
+            <p className="mt-4 text-gray-700">Loading PDF...</p>
+        </div>
+    </div>
+)}
 
             {viewMessage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
