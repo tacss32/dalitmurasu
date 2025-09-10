@@ -209,30 +209,26 @@ export default function Archive() {
     };
     
     // Function to handle cancellation
-const handleCancelRequest = () => {
-    if (abortControllerRef.current) {
-        // This line cancels the ongoing Axios request.
-        abortControllerRef.current.abort();
-        // Clear the ref so we don't try to abort it again.
-        abortControllerRef.current = null;
-    }
-    setLoadingPdf(false); // Hide the loading spinner
-    setActivePdf(null); // Ensure no PDF is active
-    setViewMessage(null); // Clear any messages
-    setShowSubscriptionPopup(false); // Close any subscription popups
-};
+     const handleCancelRequest = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setLoadingPdf(false);
+        setActivePdf(null);
+        setViewMessage(null);
+        setShowSubscriptionPopup(false);
+    };
 
     const handleCardClick = async (item: ArchiveItem) => {
         setLoadingPdf(true);
         setViewMessage(null);
         setActivePdf(null);
-        setShowSubscriptionPopup(false); // Close any existing popup
+        setShowSubscriptionPopup(false);
 
-        // IMPORTANT: Use 'clientToken' as stored by ClientLogin.tsx
         const token = localStorage.getItem('clientToken');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // Create a new AbortController for the request
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
@@ -242,16 +238,11 @@ const handleCancelRequest = () => {
                 setActivePdf(res.data);
             }
         } catch (err: any) {
-            console.error('Error fetching PDF with access:', err);
-            if (axios.isCancel(err)) {
-                console.log('Request canceled:', err.message);
-                return; // Do nothing if it's a cancellation error
-            }
+            if (axios.isCancel(err)) { return; }
             if (err?.response) {
                 if (err.response.status === 401) {
                     setViewMessage("Login required to view this PDF.");
                 } else if (err.response.status === 403) {
-                    // This is where we trigger the subscription popup
                     setShowSubscriptionPopup(true);
                 } else {
                     setViewMessage("An error occurred while fetching the PDF.");
@@ -271,47 +262,31 @@ const handleCancelRequest = () => {
 
     const handleYearSelect = (y: number) => {
         setSelectedYear(y);
-        setSelectedMonth(null); // Reset month selection when a new year is chosen
+        setSelectedMonth(null);
     };
 
     const handleMonthSelect = (m: number) => {
         setSelectedMonth(m);
     };
 
-    // Instantiate the zoom plugin
     const zoomPluginInstance = zoomPlugin();
 
-    // customize various aspects of the viewer's layout, including the toolbar.
+    // The PDF Viewer toolbar is now without the Close button.
     const defaultLayoutPluginInstance = defaultLayoutPlugin({
-
         renderToolbar: (Toolbar) => (
-            <>
-                <Toolbar>
-                    {/* The Toolbar component receives a render function as its child,
-                    which provides access to various slots and components. */}
-                    {(props) => {
-                        // Destructure the `ZoomIn` and `ZoomOut` components from the props.
-                        const { ZoomIn, ZoomOut } = props;
-                        return (
-                            <div className="flex justify-center items-center p-4 border-b border-gray-200 rounded-t-lg">
-
-                                <div className="flex gap-2 items-center">
-                                    {/* Render the ZoomOut and ZoomIn components */}
-                                    <ZoomOut />
-                                    <ZoomIn />
-                                    <button
-                                        onClick={handleClosePdfViewer}
-                                        className="p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600 absolute right-4"
-                                        aria-label="Close PDF viewer"
-                                    >
-                                        <MdClose className="text-2xl" />
-                                    </button>
-                                </div>
+            <Toolbar>
+                {(props) => {
+                    const { ZoomIn, ZoomOut } = props;
+                    return (
+                        <div className="flex justify-center items-center p-4 border-b border-gray-200">
+                            <div className="flex gap-2 items-center">
+                                <ZoomOut />
+                                <ZoomIn />
                             </div>
-                        );
-                    }}
-                </Toolbar>
-            </>
+                        </div>
+                    );
+                }}
+            </Toolbar>
         ),
     });
 
@@ -347,121 +322,76 @@ const handleCancelRequest = () => {
             <Header text="தலித் முரசு களஞ்சியம் " urlPath="Archive" />
 
             <div className="flex px-4 mt-2 gap-4">
-                {/* Left Sidebar - Year & Month Navigation */}
+                {/* --- (Sidebar and Main Content JSX remains the same) --- */}
                 <aside className="flex flex-row gap-4 shrink-0">
-                    {/* Years Column */}
                     <div className="w-24">
                         <h3 className="font-bold mb-2">Years</h3>
                         {yearSummaries.length > 0 ? (
                             <ul className="mb-4 text-2xl">
                                 {yearSummaries.map((y) => (
-                                    <li
-                                        key={y.year}
-                                        onClick={() => handleYearSelect(y.year)}
-                                        className={`cursor-pointer font-medium transition-colors duration-150 py-1 ${
-                                            selectedYear === y.year
-                                                ? "text-blue-600 underline"
-                                                : "text-gray-800 hover:text-blue-500"
-                                            }`}
-                                    >
+                                    <li key={y.year} onClick={() => handleYearSelect(y.year)} className={`cursor-pointer font-medium transition-colors duration-150 py-1 ${selectedYear === y.year ? "text-blue-600 underline" : "text-gray-800 hover:text-blue-500"}`}>
                                         {y.year}
                                     </li>
                                 ))}
                             </ul>
-                        ) : (
-                            <p className="text-sm text-gray-500">No years found.</p>
-                        )}
+                        ) : (<p className="text-sm text-gray-500">No years found.</p>)}
                     </div>
-
-                    {/* Months Column */}
                     <div className="flex-1 border-l pl-4">
                         <h3 className="font-bold mb-2">Months</h3>
                         {selectedYear && archiveMap[selectedYear] ? (
                             <ul>
-                                {Object.keys(archiveMap[selectedYear])
-                                    .map(Number)
-                                    .sort((a, b) => b - a)
-                                    .map((m) => (
-                                        <li
-                                            key={m}
-                                            onClick={() => handleMonthSelect(m)}
-                                            className={`cursor-pointer py-1 border-b hover:text-blue-600 ${
-                                                selectedMonth === m ? "text-blue-600 font-semibold underline" : ""
-                                                }`}
-                                        >
-                                            {getMonthName(m)} <span className="ml-1 text-sm text-gray-500">({archiveMap[selectedYear][m]?.length || 0})</span>
-                                        </li>
-                                    ))}
+                                {Object.keys(archiveMap[selectedYear]).map(Number).sort((a, b) => b - a).map((m) => (
+                                    <li key={m} onClick={() => handleMonthSelect(m)} className={`cursor-pointer py-1 border-b hover:text-blue-600 ${selectedMonth === m ? "text-blue-600 font-semibold underline" : ""}`}>
+                                        {getMonthName(m)} <span className="ml-1 text-sm text-gray-500">({archiveMap[selectedYear][m]?.length || 0})</span>
+                                    </li>
+                                ))}
                             </ul>
-                        ) : (
-                            <p className="text-sm text-gray-500">Select a year.</p>
-                        )}
+                        ) : (<p className="text-sm text-gray-500">Select a year.</p>)}
                     </div>
                 </aside>
-
-                {/* Main content area for selected month's PDFs */}
                 <main className="flex-1 pl-4 border-l border-gray-200">
                     {selectedYear && selectedMonth ? (
                         <>
                             <h2 className="text-2xl font-bold mb-4">
                                 {getMonthName(selectedMonth)} {selectedYear} Archives
                             </h2>
-
                             {getItemsForMonth(selectedYear, selectedMonth).length > 0 ? (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                                     {getItemsForMonth(selectedYear, selectedMonth).map((item) => (
                                         <PdfCard key={item._id} item={item} onClick={handleCardClick} className="aspect-[2/3]" />
                                     ))}
                                 </div>
-                            ) : (
-                                <p className="text-center text-gray-600">
-                                    No Archive PDFs found for {getMonthName(selectedMonth)} {selectedYear}.
-                                </p>
-                            )}
+                            ) : (<p className="text-center text-gray-600">No Archive PDFs found for {getMonthName(selectedMonth)} {selectedYear}.</p>)}
                         </>
-                    ) : (
-                        <p className="p-4 text-center text-gray-600">Please select a year and a month from the sidebar to view archives.</p>
-                    )}
+                    ) : (<p className="p-4 text-center text-gray-600">Please select a year and a month from the sidebar to view archives.</p>)}
                 </main>
             </div>
-
-            {/* Conditional loading and error messages */}
+            {/* The unified modal with a close button */}
             {loadingPdf && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-        <div className="relative flex flex-col items-center p-6 bg-white rounded-lg shadow-xl text-center">
-            {/* The Close Button */}
-            <button
-                onClick={handleCancelRequest}
-                className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
-                aria-label="Cancel loading PDF"
-            >
-                <MdClose className="text-2xl" />
-            </button>
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
-            <p className="mt-4 text-gray-700">Loading PDF...</p>
-        </div>
-    </div>
-)}
-
-            {viewMessage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-                    <div className="relative p-6 bg-white rounded-lg shadow-xl text-center">
-                        <p className="text-lg font-semibold text-gray-800 mb-4">{viewMessage}</p>
+                    <div className="relative flex flex-col items-center p-6 bg-white rounded-lg shadow-xl text-center">
                         <button
-                            onClick={() => setViewMessage(null)}
-                            className="p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
-                            aria-label="Close message"
+                            onClick={handleCancelRequest}
+                            className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
+                            aria-label="Cancel loading PDF"
                         >
                             <MdClose className="text-2xl" />
                         </button>
+                        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
+                        <p className="mt-4 text-gray-700">Loading PDF...</p>
                     </div>
                 </div>
             )}
-
-            {/* PDF Viewer Modal */}
             {activePdf && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-                    <div className="relative w-full max-w-5xl h-screen bg-white rounded-none shadow-xl overflow-hidden flex flex-col">
+                    <div className="relative w-full max-w-5xl h-screen bg-white shadow-xl overflow-hidden flex flex-col">
+                        <button
+                            onClick={handleClosePdfViewer}
+                            className="absolute top-2 right-2 z-20 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+                            aria-label="Close PDF viewer"
+                        >
+                            <MdClose className="text-2xl" />
+                        </button>
                         <div className="flex-grow w-full overflow-auto">
                             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
                                 {activePdf.pdfUrl ? (
@@ -479,12 +409,23 @@ const handleCancelRequest = () => {
                     </div>
                 </div>
             )}
-
-            {/* Free View Limit Exceeded Subscription Popup */}
+            {viewMessage && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
+                    <div className="relative p-6 bg-white rounded-lg shadow-xl text-center">
+                        <p className="text-lg font-semibold text-gray-800 mb-4">{viewMessage}</p>
+                        <button
+                            onClick={() => setViewMessage(null)}
+                            className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
+                            aria-label="Close message"
+                        >
+                            <MdClose className="text-2xl" />
+                        </button>
+                    </div>
+                </div>
+            )}
             {showSubscriptionPopup && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
                     <div className="w-11/12 max-w-md p-6 bg-white rounded-lg shadow-xl md:w-3/4">
-
                         <h2 className="text-2xl font-bold text-gray-900">Free View Limit Exceeded</h2>
                         <p className="mt-4 text-gray-700">
                             You've read your free preview of this PDF. To continue reading and unlock unlimited access to all PDF, please subscribe.
