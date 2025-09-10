@@ -237,11 +237,12 @@
 // client\src\components\PostDetail.tsx
 
 // client\src\components\PostDetail.tsx
-
 import { useEffect, useState } from "react";
-import { Share2, ArrowLeft } from "lucide-react"; // ⬅️ Added ArrowLeft
+import { Share2, ArrowLeft,Bookmark, BookmarkCheck  } from "lucide-react"; // ⬅️ Added ArrowLeft
 import { useParams, useNavigate } from "react-router-dom"; // ⬅️ Added useNavigate
 import Card from "./Card";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const SERVER_URL = import.meta.env.VITE_API;
 
@@ -265,6 +266,12 @@ type Category = {
   };
 };
 
+// Define the bookmark type to handle populated and unpopulated states
+type BookmarkData = {
+  _id: string;
+  postId: Post | string; // It could be a populated Post object or just a string ID
+};
+
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate(); // ✅ Hook for back button
@@ -276,6 +283,11 @@ export default function PostDetail() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [shareMessageTimeoutId, setShareMessageTimeoutId] = useState<number | null>(null);
+    const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkId, setBookmarkId] = useState<string | null>(null);
+
+  const userId = localStorage.getItem("userId");
+  const clientToken = localStorage.getItem("clientToken");
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -323,6 +335,32 @@ export default function PostDetail() {
     };
     fetchPost();
   }, [id]);
+  // Fetch bookmark status for the current user and post
+  useEffect(() => {
+    const fetchBookmarkStatus = async () => {
+      if (!userId || !id) return;
+      try {
+        const response = await axios.get(`${SERVER_URL}api/bookmarks/${userId}`);
+        const bookmarks = response.data;
+        
+        // Filter out null bookmarks first, then check if the current post is among the valid ones
+        const validBookmarks = bookmarks.filter((b: BookmarkData) => b.postId !== null);
+        const foundBookmark = validBookmarks.find((b: BookmarkData) => (b.postId as Post)._id === id);
+
+        if (foundBookmark) {
+          setIsBookmarked(true);
+          setBookmarkId(foundBookmark._id);
+        } else {
+          setIsBookmarked(false);
+          setBookmarkId(null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch bookmark status:", err);
+      }
+    };
+    fetchBookmarkStatus();
+  }, [userId, id]);
+
 
   useEffect(() => {
     return () => {
@@ -373,6 +411,59 @@ export default function PostDetail() {
       }
     }
   };
+  
+    const handleBookmark = async () => {
+    if (!userId || !post) {
+      toast.error("Please log in to bookmark posts.");
+      return;
+    }
+    if (isBookmarked) {
+      handleRemoveBookmark();
+      return;
+    }
+    const payload = {
+      userId,
+      postId: post._id,
+      postType: "UniversalPost",
+    };
+    try {
+      const res = await axios.post(`${SERVER_URL}api/bookmarks`, payload, {
+        headers: {
+          Authorization: `Bearer ${clientToken}`,
+        },
+      });
+      setIsBookmarked(true);
+      setBookmarkId(res.data.bookmark._id); // Save the new bookmark ID
+      toast.success("Post bookmarked successfully!");
+    } catch (error: any) {
+      // Handle the 409 Conflict error specifically
+      if (error.response?.status === 409) {
+        setIsBookmarked(true); // Update state to reflect existing bookmark
+        toast.info("This post is already bookmarked.");
+        // Optionally, refetch the bookmark status to get the bookmarkId
+        fetchBookmarkStatus();
+      } else {
+        toast.error(error.response?.data?.error || "Error bookmarking post.");
+      }
+    }
+  };
+
+  const handleRemoveBookmark = async () => {
+    if (!userId || !bookmarkId) return; // Use the stored bookmarkId
+
+    try {
+      await axios.delete(`${SERVER_URL}api/bookmarks/${bookmarkId}`, {
+        headers: {
+          Authorization: `Bearer ${clientToken}`,
+        },
+      });
+      setIsBookmarked(false);
+      setBookmarkId(null);
+      toast.success("Bookmark removed successfully!");
+    } catch (error: any) {
+      toast.error("Failed to remove bookmark.");
+    }
+  };
 
   if (loading) {
     return (
@@ -437,21 +528,24 @@ export default function PostDetail() {
           {post.author}
         </p>
 
-        {/* Share Button */}
-        <button
-          onClick={handleShare}
-          className="absolute top-6 right-0 group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2  "
-        >
-          <Share2 size={18} />
-          <span className="hidden sm:inline">Share</span>
-        </button>
-
-        {shareMessage && (
-          <div className="absolute top-full right-0 mt-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-md shadow-lg whitespace-nowrap z-20">
-            {shareMessage}
-          </div>
-        )}
-      </div>
+ {/* Share and Bookmark Buttons Container */}
+        <div className="absolute top-6 right-0 flex items-center gap-2">
+          <button
+            onClick={handleShare}
+            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2"
+          >
+            <Share2 size={18} />
+            <span className="hidden sm:inline">Share</span>
+          </button>
+          
+          <button
+            onClick={handleBookmark}
+            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center justify-center"
+          >
+            {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+          </button>
+        </div>
+      </div>
 
       {/* --- Image Carousel --- */}
       {imageUrls.length > 0 && (
@@ -544,4 +638,8 @@ export default function PostDetail() {
       )}
     </div>
   );
+}
+
+function fetchBookmarkStatus() {
+  throw new Error("Function not implemented.");
 }
