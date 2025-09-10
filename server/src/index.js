@@ -100,7 +100,7 @@ connectDB()
     // ✅ Fix path: serve from src/uploads/
     app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-    // ------------------------------------------------------------------------
+    // -----------------------------------------------------------------------
     // API Routes
     // ------------------------------------------------------------------------
     app.use("/api/bookmarks", bookmarkRoutes); 

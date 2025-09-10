@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 /**
- * @description Mongoose schema for a unified bookmark.
+ * @description Mongoose schema for a unified bookmark
  * This model represents a user's bookmark of any type of post.
  */
 const bookmarkSchema = new Schema({

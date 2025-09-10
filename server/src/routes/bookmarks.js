@@ -3,7 +3,7 @@ const router = express.Router();
 const bookmarkController = require("../controllers/bookmarkController");
 
 /**
- * @description Routes for handling bookmarking functionality.
+ * @description Routes for handling bookmarking functionality
  */
 
 // Route to add a new bookmark for either a universal or premium post

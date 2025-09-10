@@ -1,5 +1,5 @@
 const Bookmark = require("../models/bookmark");
-const UniversalPost = require("../models/UniversalPost"); // Assuming you have these models
+const UniversalPost = require("../models/UniversalPost"); // Assuming you have these model
 const PremiumPost = require("../models/PremiumPost"); 
 
 // Controller to add a new bookmark
