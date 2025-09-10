@@ -1,3 +1,4 @@
+// client\src\components\navbar\Tags.tsx
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
@@ -11,9 +12,13 @@ interface Category {
   order?: number;
 }
 
+interface TagsProps {
+  isMobileView?: boolean;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API;
 
-export default function Tags() {
+export default function Tags({ isMobileView = false }: TagsProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -69,37 +74,51 @@ export default function Tags() {
     fetchCategories();
   }, []);
 
+  const allCategories = categories;
   const mainCategories = categories.slice(0, 4);
   const dropdownCategories = categories.slice(4);
 
+  // Determine which list to render based on the view
+  const categoriesToRender = isMobileView ? allCategories : mainCategories;
+  
   return (
-    <div className="relative flex justify-center items-center max-w-full scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    // Conditionally apply classes to the main container
+    <div className={`
+        relative flex justify-center items-center max-w-full scrollbar-hide
+        ${isMobileView ? "flex-col gap-2" : "gap-3"}
+      `}>
       {loadingCategories ? (
         <span className="text-gray-600 text-sm animate-pulse">
           Loading categories...
         </span>
       ) : (
-        <div className="flex items-center gap-3 py-2 min-w-max">
-          
-          {mainCategories.map((cat) => {
+        // Conditionally apply classes to the inner container
+        <div className={`flex items-center py-2 min-w-max 
+          ${isMobileView ? "flex-col gap-2 items-stretch" : "gap-3"}`
+        }>
+          {categoriesToRender.map((cat) => {
             const isActive = location.pathname === normalize(cat.name.en);
             return (
               <Link
                 key={cat._id}
                 to={normalize(cat.name.en)}
-                className={`px-3 py-1 rounded-md text-lg font-semibold transition-colors whitespace-nowrap ${
-                  isActive
+                className={`px-3 py-1 rounded-md text-lg font-semibold transition-colors whitespace-nowrap
+                  ${isActive
                     ? "text-highlight-1 font-bold"
                     : "text-black hover:text-highlight-1"
-                }`}
+                  }
+                  ${isMobileView ? "w-full text-center" : ""}
+                `}
+                onClick={() => isMobileView && window.scrollTo(0, 0)}
               >
                 {cat.name.ta}
               </Link>
             );
           })}
 
-          {dropdownCategories.length > 0 && (
-            <div className="relative" ref={dropdownRef}>
+          {/* This entire dropdown section will be rendered only if isMobileView is false */}
+          {!isMobileView && dropdownCategories.length > 0 && (
+            <div className={`relative ${isMobileView ? "w-full text-center" : ""}`} ref={dropdownRef}>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="border-2 px-3 py-0.5 rounded-md font-medium text-black hover:text-highlight-1 transition-colors whitespace-nowrap"
@@ -108,7 +127,6 @@ export default function Tags() {
               </button>
               {showDropdown && (
                 <div className="absolute left-0 mt-3 z-50 font-semibold bg-background-from shadow-md rounded-md w-48 max-h-80 overflow-y-auto">
-                 
                   {dropdownCategories.map((cat) => {
                     const isActive =
                       location.pathname === normalize(cat.name.en);
