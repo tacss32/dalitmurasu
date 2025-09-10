@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Card from "../../components/Card";
 import MainBanner from "../../components/MainBanner";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import aboutImage from "/about.png";
 
 // Interface for a News Post, updated to include a 'source' field
@@ -31,19 +31,8 @@ interface BookType {
   category: string;
   description: string;
 }
-
-// Interface for a Category, from AddUniversalPost.tsx
-// type Category = {
-//   _id: string;
-//   name: {
-//     ta: string;
-//     en: string;
-//   };
-// };
-// const categoryInTamil: { [key: string]: string } = {
-//   'Premium Articles': 'முதன்மை கட்டுரைகள்',
-  
-// };
+// Removed from here
+// const translatedCategory = categoryTranslations[post.category] || post.category;
 
 export default function NewsHud() {
   const [pinnedPosts, setPinnedPosts] = useState<PostType[]>([]);
@@ -54,7 +43,6 @@ export default function NewsHud() {
 
   const [showDescriptionPopup, setShowDescriptionPopup] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookType | null>(null);
-  // const [setHomePosts] = useState<PostType[]>([]);
 
   const [addingToCartStates, setAddingToCartStates] = useState<
     Map<string, boolean>
@@ -65,7 +53,20 @@ export default function NewsHud() {
 
   const API_BASE_URL = import.meta.env.VITE_API;
 
-//   const [categories, setCategories] = useState<Category[]>([]);
+  const categoryTranslations: { [key: string]: string } = {
+    'Premium Articles': 'முதன்மைக் கட்டுரைகள்',
+    'Other Articles': 'பிற கட்டுரைகள்',
+    'Interviews': 'பேட்டிகள்',
+    'Periyar speaks': 'பெரியார் பேசுகிறார்',
+    'New': 'புத்துயிர்',
+    'Dalit Network': 'தலித் பின்னகம்',
+    'Babasaheb speaks':'பாபாசாகேப் பேசுகிறார்',
+    'Guidance':'வழிகாட்டல்',
+    'Book Review': 'நூல் திறனாய்வு',
+    'Series': 'தொடர்',
+    'Editorial': 'தலையங்கம்'
+    // Add more translations as needed
+  };
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
@@ -78,49 +79,44 @@ export default function NewsHud() {
     }
   }, []);
 
-const fetchHomeData = async () => {
-  setLoadingPosts(true);
-  try {
-    const [pinnedRes, universalRes] = await Promise.all([
-      axios.get<PostType[]>(`${API_BASE_URL}api/combined-posts/pinned`),
-      axios.get<PostType[]>(`${API_BASE_URL}api/universal-posts/home`),
-      // NEW: Fetch home premium posts
-      axios.get<PostType[]>(`${API_BASE_URL}api/premium-posts/home`),
-    ]);
+  const fetchHomeData = async () => {
+    setLoadingPosts(true);
+    try {
+      const [pinnedRes, universalRes] = await Promise.all([
+        axios.get<PostType[]>(`${API_BASE_URL}api/combined-posts/pinned`),
+        axios.get<PostType[]>(`${API_BASE_URL}api/universal-posts/home`),
+        axios.get<PostType[]>(`${API_BASE_URL}api/premium-posts/home`),
+      ]);
 
-    const limitedPinnedPosts = pinnedRes.data.slice(0, 3);
-    setPinnedPosts(limitedPinnedPosts);
+      const limitedPinnedPosts = pinnedRes.data.slice(0, 3);
+      setPinnedPosts(limitedPinnedPosts);
 
-    const pinnedIds = new Set(limitedPinnedPosts.map((post) => post._id));
-    const filteredUniversalPosts = universalRes.data.filter(
-      (post) => !pinnedIds.has(post._id)
-    );
+      const pinnedIds = new Set(limitedPinnedPosts.map((post) => post._id));
+      const filteredUniversalPosts = universalRes.data.filter(
+        (post) => !pinnedIds.has(post._id)
+      );
 
-    setUniversalPosts(filteredUniversalPosts);
-    // NEW: Set the home posts state
-    // setHomePosts(homePostsRes.data);
-  } catch (err) {
-    console.error("Failed to fetch posts:", err);
-  } finally {
-    setLoadingPosts(false);
-  }
+      setUniversalPosts(filteredUniversalPosts);
+    } catch (err) {
+      console.error("Failed to fetch posts:", err);
+    } finally {
+      setLoadingPosts(false);
+    }
 
-  setLoadingBooks(true);
-  try {
-    const booksRes = await axios.get<BookType[]>(
-      `${API_BASE_URL}api/books/home`
-    );
-    setHomeBooks(booksRes.data);
-  } catch (err) {
-    console.error("Failed to fetch featured books:", err);
-  } finally {
-    setLoadingBooks(false);
-  }
-};
+    setLoadingBooks(true);
+    try {
+      const booksRes = await axios.get<BookType[]>(
+        `${API_BASE_URL}api/books/home`
+      );
+      setHomeBooks(booksRes.data);
+    } catch (err) {
+      console.error("Failed to fetch featured books:", err);
+    } finally {
+      setLoadingBooks(false);
+    }
+  };
   const fetchCategories = async () => {
     try {
-//       const categoriesRes = await axios.get<Category[]>(`${API_BASE_URL}api/categories?available=true`);
-//       setCategories(categoriesRes.data);
     } catch (err) {
       console.error("Error fetching categories:", err);
     }
@@ -131,13 +127,6 @@ const fetchHomeData = async () => {
     fetchHomeData();
     fetchCategories();
   }, []);
-
-//   const getTamilCategoryName = (englishCategoryName: string) => {
-//     const category = categories.find(
-//       (cat) => cat.name.en === englishCategoryName
-//     );
-//     return category?.name.ta || englishCategoryName; // Fallback to English if not found
-//   };
 
   const addToCart = async (bookToAdd: BookType) => {
     if (!userId) {
@@ -178,22 +167,16 @@ const fetchHomeData = async () => {
     setSelectedBook(null);
   };
 
-  // Create a combined list of posts for the top section.
-  // This list includes all pinned posts (up to 3) and fills the rest with universal posts, up to a total of 15.
   const combinedPosts = [
     ...pinnedPosts,
     ...universalPosts.slice(0, 15 - pinnedPosts.length),
   ];
 
-  // The total number of posts to display in the main grid, based on the combined list.
   const postsToShow = combinedPosts.slice(0, 15);
 
-  // Determine the number of posts in the first section (3x2 grid)
   const firstSectionPosts = postsToShow.slice(0, 6);
-console.log(firstSectionPosts)
-  // The remaining posts will be displayed in the next section.
+  console.log(firstSectionPosts)
   const remainingSectionPosts = postsToShow.slice(6);
-
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -202,7 +185,7 @@ console.log(firstSectionPosts)
       <div className="container flex flex-col gap-5">
         <NewsLetter />
 
-        {/* Section 1: Top 6 posts (from the combined list) */}
+        {/* Section 1: Top 6 posts */}
         {loadingPosts ? (
           <div className="flex justify-center items-center min-h-screen text-highlight-1">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
@@ -210,7 +193,8 @@ console.log(firstSectionPosts)
         ) : firstSectionPosts.length > 0 && (
           <>
             <h2 className="text-3xl font-bold mb-4 text-gray-800 text-center"></h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
+            {/* Desktop/Tablet view */}
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
               {firstSectionPosts.map((post) => (
                 <Card
                   key={post._id}
@@ -231,11 +215,35 @@ console.log(firstSectionPosts)
 
                 />
               ))}
-
             </div>
+            {/* Mobile/Tablet List view */}
+           <div className=" md:hidden flex flex-col gap-3">
+  {firstSectionPosts.map((post) => (
+    <Link 
+      key={post._id}
+      to={`/${post.source === "UniversalPost"
+        ? "universal"
+        : post.source === "PremiumPost"
+        ? "premium-articles"
+        : "posts"}/${post._id}`}
+    >
+      <div className="w-full flex flex-col gap-2 justify-between bg-white/80 hover:bg-white/50 duration-150 transition-colors ease-in-out p-2 rounded shadow-lg">
+        <h2 className="text-xl font-bold">
+          {post.title}
+        </h2>
+        <p className="text-sm text-gray-500">
+          {new Date(post.date || post.createdAt).toLocaleDateString()}
+        </p>
+        <p className="text-sm text-gray-500">
+          {categoryTranslations[post.category] || post.category}
+        </p>
+      </div>
+    </Link>
+  ))}
+</div>
           </>
         )}
-      
+      
         {/* About Us section */}
         <div className="max-w-6xl mx-auto px-4 py-12">
           <center>
@@ -331,34 +339,6 @@ console.log(firstSectionPosts)
             ))}
           </div>
         )}
-{/* <h2 className="text-3xl font-bold mt-10 mb-4 text-gray-800 text-center">
-  
-</h2>
-{loadingPosts ? (
-  <div className="flex justify-center items-center min-h-screen text-highlight-1">
-    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
-  </div>
-) : homePosts.length > 0 ? (
-  <div className="grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
-    {homePosts.map((post) => (
-      <Card
-        key={post._id}
-        title={post.title}
-        subtitle={post.subtitle}
-        image={post?.images?.[0]}
-        date={post.date || post.createdAt}
-        author={post.author}
-        id={post._id}
-        category={getTamilCategoryName(post.category)}
-        source="premium-articles" // Use the correct source
-      />
-    ))}
-  </div>
-) : (
-  <p className="text-center text-lg text-gray-600">
-    No featured articles available at the moment.
-  </p>
-)} */}
 
         {/* Section 4: Remaining Universal Posts */}
         <h2 className="text-3xl font-bold mb-4 text-gray-800 text-center"></h2>
@@ -371,33 +351,41 @@ console.log(firstSectionPosts)
             No more news available at the moment.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
-            {remainingSectionPosts.map((post) => (
-              <Card
-                key={post._id}
-                title={post.title}
-                image={post?.images?.[0]}
-                date={post.createdAt}
-                author={post.author}
-                subtitle={post.subtitle}
-                id={post._id}
-                category={post.category}
-              />
-            ))}
-{/* {homePosts.map((post) => (
-      <Card
-        key={post._id}
-        title={post.title}
-        subtitle={post.subtitle}
-        image={post?.images?.[0]}
-        date={post.date || post.createdAt}
-        author={post.author}
-        id={post._id}
-        category={post.category}
-        source="premium-articles" // Use the correct source
-      />
-    ))} */}
-          </div>
+          <>
+            {/* Desktop/Tablet view */}
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
+              {remainingSectionPosts.map((post) => (
+                <Card
+                  key={post._id}
+                  title={post.title}
+                  image={post?.images?.[0]}
+                  date={post.createdAt}
+                  author={post.author}
+                  subtitle={post.subtitle}
+                  id={post._id}
+                  category={post.category}
+                />
+              ))}
+            </div>
+            {/* Mobile/Tablet List view */}
+            <div className="block md:hidden  flex-col gap-3">
+              {remainingSectionPosts.map((post) => (
+                <Link to={`/posts/${post._id}`} key={post._id}>
+                  <div className="w-full flex flex-col gap-2 justify-between bg-white/80 hover:bg-white/50 duration-150 transition-colors ease-in-out p-2 rounded shadow-lg">
+                    <h2 className="text-xl font-bold">
+                      {post.title}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {new Date(post.date || post.createdAt).toLocaleDateString()}
+                    </p>
+<p className="text-sm text-gray-500">
+          {categoryTranslations[post.category] || post.category}
+        </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -413,10 +401,8 @@ console.log(firstSectionPosts)
                 &times;
               </button>
             </div>
-            {/* The main content area with a two-column layout, image on the left */}
             <div className="flex flex-col md:flex-row gap-8">
-              {/* Left column for the image */}
-              <div className="w-full md:w-1/2 flex justify-center items-start p-4  rounded-lg">
+              <div className="w-full md:w-1/2 flex justify-center items-start p-4  rounded-lg">
                 <img
                   src={selectedBook.imageUrl}
                   alt={selectedBook.name}
@@ -426,7 +412,6 @@ console.log(firstSectionPosts)
                   }}
                 />
               </div>
-              {/* Right column for text content */}
               <div className="w-full md:w-1/2 flex flex-col">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
                   {selectedBook.name}
