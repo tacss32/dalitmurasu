@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
  
 // Define the type for entries fetched from the PostTitle collection
@@ -12,7 +11,7 @@ interface PostTitleEntry {
 }
  
 export default function TitleBar() {
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
   const navigate = useNavigate(); // ⭐ ADDED
   const SERVER_URL = import.meta.env.VITE_API;
  
@@ -81,7 +80,7 @@ export default function TitleBar() {
       <nav className="w-full flex justify-center px-4">
         <div className="flex items-center gap-3 w-full max-w-4xl overflow-hidden rounded-md text-black px-3 py-1">
           <h1 className="font-bold text-highlight-1 flex-shrink-0 px-3">
-            #{t("new_feeds")}
+            #{("புதிய செய்திகள்")}
           </h1>
  
           <div className="flex-1 min-w-0 overflow-hidden border-x-2 border-highlight-1">

@@ -31,14 +31,14 @@ export default function ClientLogin() {
       localStorage.setItem("clientToken", tokenFromUrl);
       localStorage.setItem("userId", uidFromUrl); // <-- Store userId from Google login
       // Clear query params & go home
-      navigate("/home", { replace: true });
+      navigate("/", { replace: true });
       return;
     } else if (tokenFromUrl && !uidFromUrl) {
       // Handle cases where token is present but uid is not (shouldn't happen with current backend)
       console.warn("Token received from Google login, but userId (uid) is missing.");
       localStorage.setItem("clientToken", tokenFromUrl); // Still store the token
       // You might want to navigate to a generic logged-in state or show an error
-      navigate("/home", { replace: true }); // Or adjust as needed
+      navigate("/", { replace: true }); // Or adjust as needed
       return;
     }
 
@@ -61,7 +61,7 @@ export default function ClientLogin() {
           if (res.data.user && res.data.user._id) {
             localStorage.setItem("userId", res.data.user._id); // Ensure userId is set on re-validation
           }
-          navigate("/home", { replace: true });
+          navigate("/", { replace: true });
         } else {
           localStorage.removeItem("clientToken");
           localStorage.removeItem("userId"); // Also remove userId on invalid token
@@ -89,7 +89,7 @@ export default function ClientLogin() {
       });
       localStorage.setItem("clientToken", res.data.token);
       localStorage.setItem("userId", res.data.userId);
-      navigate("/home");
+      navigate("/");
     } catch (err: any) {
       alert(err?.response?.data?.message || "Login failed");
     }
@@ -101,7 +101,7 @@ export default function ClientLogin() {
 
   // NEW: Handler for back to home
   const handleBackToHome = () => {
-    navigate("/home");
+    navigate("/");
   };
 
   if (verifying) {
