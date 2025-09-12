@@ -1,6 +1,6 @@
 // client\src\components\navbar\Tags.tsx
 import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+
 import { Link, useLocation } from "react-router-dom";
 
 interface Category {
@@ -19,7 +19,7 @@ interface TagsProps {
 const API_BASE_URL = import.meta.env.VITE_API;
 
 export default function Tags({ isMobileView = false }: TagsProps) {
-  const { t } = useTranslation();
+
   const location = useLocation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -123,7 +123,7 @@ export default function Tags({ isMobileView = false }: TagsProps) {
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="border-2 px-3 py-0.5 rounded-md font-medium text-black hover:text-highlight-1 transition-colors whitespace-nowrap"
               >
-                {t("more")}
+                {("மேலும்")}
               </button>
               {showDropdown && (
                 <div className="absolute left-0 mt-3 z-50 font-semibold bg-background-from shadow-md rounded-md w-48 max-h-80 overflow-y-auto">

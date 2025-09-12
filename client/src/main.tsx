@@ -2,7 +2,6 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./index.css";
-import "./i18n";
 import { ThemeProvider } from "./components/theme-context";
 
 // Client Views
@@ -18,9 +17,6 @@ import Contact from "./pages/contact/Contact";
 import NewsHud from "./pages/home/NewsHud";
 import Notifications from "./pages/notifications/Notifications";
 import RecentPosts from "./pages/recent_posts/RecentPosts";
-import Preferences from "./pages/settings/Preferences";
-import Profile from "./pages/settings/Profile"; // Existing Profile under /settings/account
-import Settings from "./pages/settings/Settings";
 import BabasahebSpeaks from "./pages/speakers/BabasahebSpeaks";
 import PeriyarSpeaks from "./pages/speakers/PeriyarSpeaks";
 import CartPage from "./pages/cart/CartPages";
@@ -90,7 +86,7 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <ThemeProvider>
         <Routes>
-          <Route path="/" element={<Navigate to="/home" replace />} />
+          
 
           {/* Auth */}
           <Route path="/login" element={<ClientLogin />} />
@@ -100,7 +96,10 @@ createRoot(document.getElementById("root")!).render(
 
           {/* Client Layout */}
           <Route element={<Layout />}>
-            <Route path="/home" element={<NewsHud />} />
+            <Route path="/" element={<NewsHud />} />
+
+  {/* Redirect old /home to / */}
+          <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="/subscriptions" element={<UserSubscriptionPlans />} />
             <Route path="/recentposts" element={<RecentPosts />} />
             <Route path="/bluethoughts" element={<GalleryPage />} />
@@ -135,11 +134,7 @@ createRoot(document.getElementById("root")!).render(
             {/* Catch-all Category Route (keep LAST) */}
             <Route path="/:categorySlug" element={<CategoryPosts />} />
 
-            {/* Settings Section */}
-            <Route path="/settings" element={<Settings />}>
-              <Route path="account" element={<Profile />} />
-              <Route path="preferences" element={<Preferences />} />
-            </Route>
+           
 
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/bookmarks" element={<Bookmark/>} />
