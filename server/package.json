@@ -34,8 +34,7 @@
     "vite": "^7.0.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10",
-    "pdfjs-dist": "^2.16.105"
+    "nodemon": "^3.1.10"
   },
   "description": ""
 }
