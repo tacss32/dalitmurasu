@@ -27,7 +27,7 @@ export default function ClientSignup() {
  
     if (tokenFromUrl) {
       localStorage.setItem("clientToken", tokenFromUrl);
-      navigate("/", { replace: true });
+      navigate("/home", { replace: true });
       return;
     }
  
@@ -45,7 +45,7 @@ export default function ClientSignup() {
           { headers: { Authorization: `Bearer ${existingToken}` } }
         );
         if (res.data.isValid) {
-          navigate("/", { replace: true });
+          navigate("/home", { replace: true });
         } else {
           localStorage.removeItem("clientToken");
           setVerifying(false);
@@ -74,7 +74,7 @@ export default function ClientSignup() {
  
       if (res.data.token) {
         localStorage.setItem("clientToken", res.data.token);
-        navigate("/");
+        navigate("/home");
       } else {
         alert("Signup successful! Please log in.");
         navigate("/login");
@@ -98,7 +98,7 @@ export default function ClientSignup() {
   }
  
   const handleBackToHome = () => {
-  navigate("/");
+  navigate("/home");
   };
   return (
     <div className="min-h-screen flex flex-col items-center justify-center space-y-4">

@@ -1,8 +1,8 @@
-
+import { useTranslation } from "react-i18next";
 import { FaFacebook, FaTwitter, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 
 export default function Footer() {
- 
+  const { t } = useTranslation();
 
   const handleCopyEmail = () => {
     const email = "dalitmurasu@gmail.com";
@@ -39,7 +39,7 @@ export default function Footer() {
           {/* Column 2: Copyright & Social Media (Now grouped together) */}
           <div className="flex flex-col items-center mb-4 md:mb-0 text-black">
             <p className="mb-2">
-              ©{new Date().getFullYear()} {("தலித் முரசு")}. All rights reserved.
+              ©{new Date().getFullYear()} {t("dalitmurasu")}. All rights reserved.
             </p>
             <div className="flex space-x-4 text-2xl">
               <a href="https://www.facebook.com/dalitmurasuadmin?rdid=O3FlEPCoVVrE3uAm&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F19DuFLdYay%2F#" target="_blank" rel="noopener noreferrer" className="hover:text-red-700 dark:hover:text-red-100">
