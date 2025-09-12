@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 
-import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
 
 // Import the Zoom plugin and its styles
 import { zoomPlugin } from '@react-pdf-viewer/zoom';
@@ -395,7 +395,7 @@ export default function Archive() {
                             <MdClose className="text-2xl" />
                         </button>
                         <div className="flex-grow w-full overflow-auto">
-                            <Worker workerUrl={workerSrc}>
+                           <Worker workerUrl="https://unpkg.com/pdfjs-dist@4.4.178/build/pdf.worker.min.mjs">
     {activePdf.pdfUrl ? (
         <Viewer
             fileUrl={SERVER_URL + activePdf.pdfUrl}
