@@ -299,11 +299,11 @@ export default function NewsHud() {
             No featured books available at the moment.
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="flex overflow-x-auto lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 no-scrollbar">
             {homeBooks.slice(0, 4).map((book) => (
               <div
                 key={book._id}
-                className="border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer"
+                className="w-64 md:w-full flex-shrink-0 border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer"
                 onClick={() => handleShowDescription(book)}
               >
                 <img

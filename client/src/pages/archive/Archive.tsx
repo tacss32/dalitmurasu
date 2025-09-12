@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import Header from "../../components/Header";
-import axios from "axios"; // Import AxiosError
+import axios from "axios";
 import { MdClose } from 'react-icons/md';
 import { Link } from "react-router-dom";
 
@@ -8,8 +8,6 @@ import { Link } from "react-router-dom";
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import * as pdfjs from 'pdfjs-dist';
-
-
 
 // Import the Zoom plugin and its styles
 import { zoomPlugin } from '@react-pdf-viewer/zoom';
@@ -48,7 +46,9 @@ interface PdfCardProps {
     className?: string;
     onClick: (item: ArchiveItem) => void;
 }
+
 const SERVER_URL = import.meta.env.VITE_API;
+
 const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
     const d = new Date(item.dateISO);
     const dateStr = d.toLocaleDateString("en-US", {
@@ -87,7 +87,6 @@ const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
 // ---------------- Helpers ----------------
 const getMonthName = (monthNumber: number, locale: string = "en-US") => {
     const date = new Date();
-
     date.setDate(1);
     date.setMonth(monthNumber - 1);
     return date.toLocaleString(locale, { month: "long" });
@@ -98,18 +97,12 @@ export default function Archive() {
     const [pdfs, setPdfs] = useState<PdfEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // State for managing the currently selected year and month
     const [selectedYear, setSelectedYear] = useState<number | null>(null);
     const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
-
     const [activePdf, setActivePdf] = useState<PdfEntry | null>(null);
     const [viewMessage, setViewMessage] = useState<string | null>(null);
     const [loadingPdf, setLoadingPdf] = useState(false);
-    // New state for the subscription popup
     const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(false);
-
-    // Ref to store the AbortController for a cancellable request
     const abortControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
@@ -118,7 +111,7 @@ export default function Archive() {
     }, []);
 
     useEffect(() => {
-        if (activePdf || showSubscriptionPopup) { // Add showSubscriptionPopup to modal-open check
+        if (activePdf || showSubscriptionPopup) {
             document.body.classList.add('modal-open');
         } else {
             document.body.classList.remove('modal-open');
@@ -150,22 +143,12 @@ export default function Archive() {
         }
     };
 
-    // Build map: year -> month -> Archive items (pdfs)
     const archiveMap = useMemo(() => {
         const map: Record<number, Record<number, ArchiveItem[]>> = {};
         pdfs.forEach((pdf) => {
-            // --- PROBLEM AREA ---
-            // OLD CODE: This converts the date to the user's local timezone.
-            // const date = new Date(pdf.date || pdf.createdAt);
-            // const y = date.getFullYear();
-            // const mm = date.getMonth() + 1;
-
-            // --- CORRECTED CODE ---
-            // Create a date object from the ISO string.
             const date = new Date(pdf.date || pdf.createdAt);
-            // Use UTC methods to avoid timezone conversion issues.
-            const y = date.getUTCFullYear();      // Use getUTCFullYear()
-            const mm = date.getUTCMonth() + 1;    // Use getUTCMonth() (which is 0-11) and add 1
+            const y = date.getUTCFullYear();
+            const mm = date.getUTCMonth() + 1;
 
             map[y] = map[y] || {};
             map[y][mm] = map[y][mm] || [];
@@ -179,7 +162,7 @@ export default function Archive() {
                 pdf: pdf,
             });
         });
-        // ... rest of the hook remains the same
+
         Object.keys(map).forEach((yStr) => {
             const y = Number(yStr);
             Object.keys(map[y]).forEach((mStr) => {
@@ -190,7 +173,6 @@ export default function Archive() {
         return map;
     }, [pdfs]);
 
-    // Build year summary list with counts per month (for sidebar)
     const yearSummaries = useMemo(() => {
         const years = Object.keys(archiveMap)
             .map(Number)
@@ -206,12 +188,10 @@ export default function Archive() {
         });
     }, [archiveMap]);
 
-    // Helper to get items for a specific month (used in month-detail view)
     const getItemsForMonth = (year: number, month: number) => {
         return archiveMap[year]?.[month] || [];
     };
 
-    // Function to handle cancellation
     const handleCancelRequest = () => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -263,7 +243,7 @@ export default function Archive() {
         setActivePdf(null);
     };
 
-    const handleYearSelect = (y: number) => {
+    const handleYearSelect = (y: number | null) => {
         setSelectedYear(y);
         setSelectedMonth(null);
     };
@@ -273,8 +253,6 @@ export default function Archive() {
     };
 
     const zoomPluginInstance = zoomPlugin();
-
-    // The PDF Viewer toolbar is now without the Close button.
     const defaultLayoutPluginInstance = defaultLayoutPlugin({
         renderToolbar: (Toolbar) => (
             <Toolbar>
@@ -310,7 +288,6 @@ export default function Archive() {
         );
     }
 
-    // Check if there are no archive PDFs at all
     if (pdfs.length === 0) {
         return (
             <div className="flex flex-col gap-5">
@@ -323,10 +300,9 @@ export default function Archive() {
     return (
         <div className="flex flex-col gap-5">
             <Header text="தலித் முரசு களஞ்சியம் " urlPath="Archive" />
-
-            <div className="flex px-4 mt-2 gap-4">
-                {/* --- (Sidebar and Main Content JSX remains the same) --- */}
-                <aside className="flex flex-row gap-4 shrink-0">
+            <div className="flex px-4 mt-2 gap-4 flex-col lg:flex-row">
+                {/* Desktop Sidebar (hidden on mobile/tablet) */}
+                <aside className="lg:flex-row flex-col gap-4 lg:w-1/4 xl:w-1/5 shrink-0 hidden md:flex">
                     <div className="w-24">
                         <h3 className="font-bold mb-2">Years</h3>
                         {yearSummaries.length > 0 ? (
@@ -352,10 +328,66 @@ export default function Archive() {
                         ) : (<p className="text-sm text-gray-500">Select a year.</p>)}
                     </div>
                 </aside>
-                <main className="flex-1 pl-4 border-l border-gray-200">
+
+                {/* Mobile/Tablet View */}
+                <aside className="md:hidden flex flex-col gap-4">
+                    <div className="flex flex-row justify-between items-center mb-4 border-b pb-4">
+                        <h3 className="font-bold text-lg">
+                            {selectedYear ? (
+                                <span onClick={() => handleYearSelect(null)} className="cursor-pointer text-blue-600">
+                                    {selectedYear}
+                                    {selectedMonth && (
+                                        <>
+                                            <span className="text-gray-400 font-normal"> / </span>
+                                            <span onClick={() => setSelectedMonth(null)} className="cursor-pointer text-blue-600">
+                                                {getMonthName(selectedMonth)}
+                                            </span>
+                                        </>
+                                    )}
+                                </span>
+                            ) : (
+                                "Years"
+                            )}
+                        </h3>
+                    </div>
+
+                    {!selectedYear && (
+                        <div className="flex flex-row flex-wrap gap-2 text-center text-sm">
+                            {yearSummaries.length > 0 ? (
+                                yearSummaries.map((y) => (
+                                    <button
+                                        key={y.year}
+                                        onClick={() => handleYearSelect(y.year)}
+                                        className="px-4 py-2 border rounded-full transition-colors duration-150 bg-background-to hover:bg-gray-200"
+                                    >
+                                        {y.year}
+                                    </button>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 w-full">No years found.</p>
+                            )}
+                        </div>
+                    )}
+
+                    {selectedYear && !selectedMonth && (
+                        <div className="flex flex-row flex-wrap gap-2 text-center text-sm">
+                            {Object.keys(archiveMap[selectedYear] || {}).map(Number).sort((a, b) => b - a).map((m) => (
+                                <button
+                                    key={m}
+                                    onClick={() => handleMonthSelect(m)}
+                                    className="px-4 py-2 border rounded-full transition-colors duration-150 bg-background-to hover:bg-gray-200"
+                                >
+                                    {getMonthName(m)}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </aside>
+
+                <main className="flex-1 pl-4 lg:pl-0 lg:border-l lg:border-gray-200">
                     {selectedYear && selectedMonth ? (
                         <>
-                            <h2 className="text-2xl font-bold mb-4">
+                            <h2 className="text-2xl font-bold mb-4 hidden md:block">
                                 {getMonthName(selectedMonth)} {selectedYear} Archives
                             </h2>
                             {getItemsForMonth(selectedYear, selectedMonth).length > 0 ? (
@@ -366,10 +398,11 @@ export default function Archive() {
                                 </div>
                             ) : (<p className="text-center text-gray-600">No Archive PDFs found for {getMonthName(selectedMonth)} {selectedYear}.</p>)}
                         </>
-                    ) : (<p className="p-4 text-center text-gray-600">Please select a year and a month from the sidebar to view archives.</p>)}
+                    ) : (
+                        <p className="p-4 text-center text-gray-600">Please select a year and a month to view archives.</p>
+                    )}
                 </main>
             </div>
-            {/* The unified modal with a close button */}
             {loadingPdf && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
                     <div className="relative flex flex-col items-center p-6 bg-white rounded-lg shadow-xl text-center">
