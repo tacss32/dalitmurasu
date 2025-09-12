@@ -7,9 +7,6 @@ import { Link } from "react-router-dom";
 // Import necessary modules from @react-pdf-viewer
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import * as pdfjs from 'pdfjs-dist';
-
-
 
 // Import the Zoom plugin and its styles
 import { zoomPlugin } from '@react-pdf-viewer/zoom';
@@ -108,7 +105,7 @@ export default function Archive() {
     const [loadingPdf, setLoadingPdf] = useState(false);
     // New state for the subscription popup
     const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(false);
-
+    
     // Ref to store the AbortController for a cancellable request
     const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -210,9 +207,9 @@ export default function Archive() {
     const getItemsForMonth = (year: number, month: number) => {
         return archiveMap[year]?.[month] || [];
     };
-
+    
     // Function to handle cancellation
-    const handleCancelRequest = () => {
+     const handleCancelRequest = () => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
@@ -396,7 +393,7 @@ export default function Archive() {
                             <MdClose className="text-2xl" />
                         </button>
                         <div className="flex-grow w-full overflow-auto">
-                            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`}>
+                            <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
                                 {activePdf.pdfUrl ? (
                                     <Viewer
                                         fileUrl={SERVER_URL + activePdf.pdfUrl}
