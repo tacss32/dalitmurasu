@@ -14,11 +14,12 @@ interface Category {
 
 interface TagsProps {
   isMobileView?: boolean;
+  closeMobileMenu?: () => void;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API;
 
-export default function Tags({ isMobileView = false }: TagsProps) {
+export default function Tags({ isMobileView = false, closeMobileMenu }: TagsProps) {
 
   const location = useLocation();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -96,25 +97,31 @@ export default function Tags({ isMobileView = false }: TagsProps) {
         <div className={`flex items-center py-2 min-w-max 
           ${isMobileView ? "flex-col gap-2 items-stretch" : "gap-3"}`
         }>
-          {categoriesToRender.map((cat) => {
-            const isActive = location.pathname === normalize(cat.name.en);
-            return (
-              <Link
-                key={cat._id}
-                to={normalize(cat.name.en)}
-                className={`px-3 py-1 rounded-md text-lg font-semibold transition-colors whitespace-nowrap
-                  ${isActive
-                    ? "text-highlight-1 font-bold"
-                    : "text-black hover:text-highlight-1"
-                  }
-                  ${isMobileView ? "w-full text-center" : ""}
-                `}
-                onClick={() => isMobileView && window.scrollTo(0, 0)}
-              >
-                {cat.name.ta}
-              </Link>
-            );
-          })}
+           {categoriesToRender.map((cat) => {
+      const isActive = location.pathname === normalize(cat.name.en);
+      return (
+        <Link
+          key={cat._id}
+          to={normalize(cat.name.en)}
+          className={`px-3 py-1 rounded-md text-lg font-semibold transition-colors whitespace-nowrap
+            ${isActive
+              ? "text-highlight-1 font-bold"
+              : "text-black hover:text-highlight-1"
+            }
+            ${isMobileView ? "w-full text-center" : ""}
+          `}
+          // Call the closeMobileMenu function if it exists
+          onClick={() => {
+            if (isMobileView) {
+              window.scrollTo(0, 0);
+              closeMobileMenu?.(); // Use optional chaining to safely call the function
+            }
+          }}
+        >
+          {cat.name.ta}
+        </Link>
+      );
+    })}
 
           {/* This entire dropdown section will be rendered only if isMobileView is false */}
           {!isMobileView && dropdownCategories.length > 0 && (
