@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 // Import necessary modules from @react-pdf-viewer
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
+import * as pdfjs from 'pdfjs-dist';
 
 
 
@@ -395,7 +396,7 @@ export default function Archive() {
                             <MdClose className="text-2xl" />
                         </button>
                         <div className="flex-grow w-full overflow-auto">
-                            <Worker workerUrl="/pdf.worker.min.js">
+                            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`}>
                                 {activePdf.pdfUrl ? (
                                     <Viewer
                                         fileUrl={SERVER_URL + activePdf.pdfUrl}
