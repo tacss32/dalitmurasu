@@ -6,10 +6,23 @@ import Navbar from "../components/navbar/Navbar";
 import SocialMediaScroller from "../components/SocialMediaScroller"; // Import the new component
 import { useState, useEffect } from "react";
 
+ // The empty dependency array ensures this effect runs only once
+
 export default function Layout() {
   const [navbarHeight, setNavbarHeight] = useState(0);
 
   useEffect(() => {
+    const handleContextMenu = (e: { preventDefault: () => void; }) => {
+      e.preventDefault();
+    };
+
+    // Add the event listener to the document
+    document.addEventListener("contextmenu", handleContextMenu);
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
     // ... context menu code remains the same
   }, []);
 

@@ -7,7 +7,10 @@ import ReactCrop, {
 } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { X } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast";
+
+// KEY CHANGE: Import ToastContainer and toast from react-toastify
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // THE KEY CHANGE: Import the RichTextEditor component from its shared location.
 import RichTextEditor from "../../components/RichTextEditor";
@@ -89,14 +92,14 @@ export default function UniversalPosts() {
 
       const url = `${SERVER_URL}api/search?${queryParams.toString()}`;
       const res = await fetch(url);
-      
+
       if (!res.ok) throw new Error("Failed to fetch posts");
-      
+
       const data = await res.json();
       setAllPosts(data.universalPosts || []);
-      
+
       setFilterType('all');
-      
+
     } catch (err: any) {
       console.error("Error fetching posts:", err);
       toast.error(`Error fetching posts: ${err.message}`);
@@ -324,7 +327,8 @@ export default function UniversalPosts() {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <Toaster position="top-center" reverseOrder={false} />
+      {/* KEY CHANGE: Replace Toaster with ToastContainer */}
+      <ToastContainer position="top-center" autoClose={5000} />
       <h1 className="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">
         Universal Posts
       </h1>

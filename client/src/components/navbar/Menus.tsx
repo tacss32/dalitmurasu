@@ -146,7 +146,7 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false }: 
     setCurrentPopupNotification(null);
 
     toast.info("You have been logged out.");
-    navigate("/home");
+    navigate("/");
   };
 
   // Fetch user's cart
