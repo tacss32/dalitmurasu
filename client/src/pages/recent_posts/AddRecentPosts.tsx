@@ -1,8 +1,8 @@
 import { useState } from "react";
-
+import { useTranslation } from "react-i18next";
 
 export default function AddRecentPosts() {
-  // const { t } = useTranslation();
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [subTitle, setSubTitle] = useState("");
   const [content, setContent] = useState("");
@@ -137,7 +137,7 @@ export default function AddRecentPosts() {
               </option>
               {navContext.map((item) => (
                 <option key={item.label} value={item.label}>
-                  {(item.label)}
+                  {t(item.label)}
                 </option>
               ))}
             </select>

@@ -59,148 +59,119 @@ export default function Navbar({ onHeightChange }: NavbarProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ⭐ New useEffect hook to handle body scrolling ⭐
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      // Disable scrolling on the body
-      document.body.classList.add("overflow-hidden");
-    } else {
-      // Re-enable scrolling on the body
-      document.body.classList.remove("overflow-hidden");
-    }
-
-    // Cleanup function to ensure scrolling is re-enabled when the component unmounts
-    return () => {
-      document.body.classList.remove("overflow-hidden");
-    };
-  }, [isMobileMenuOpen]);
-
   const logoSrc = isScrolled ? "/logo.png" : "/logo1.png";
-  const logoHeightClass = isScrolled
-    ? "h-12 sm:h-14 md:h-16 lg:h-18 xl:h-20"
+  const logoHeightClass = isScrolled 
+    ? "h-12 sm:h-14 md:h-16 lg:h-18 xl:h-20" 
     : "h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36";
 
   const isTitleBarVisible = !isScrolled;
 
   return (
-    <div
-      ref={navbarRef}
-      className={`fixed top-0 left-0 w-full z-50 ${TRANSITION_DURATION}
-        ${isScrolled
-          ? "shadow-md bg-background-to/95 backdrop-blur-sm"
-          : "py-1 bg-transparent"
-        }`}
-    >
-      {/* Mobile/Tablet View (Hidden on xl screens) */}
-      <div className="xl:hidden">
-        {/* TitleBar is now the first element */}
-        <div className="flex justify-center items-center py-2 sm:py-3 md:py-4 px-2 sm:px-3 md:px-4">
-          <TitleBar />
-        </div>
-        {/* The main row with logo and icons comes second */}
-        <div className="flex w-full px-2 sm:px-3 md:px-4 xl:px-2 items-center">
-          {/* Logo Container - Responsive sizing */}
-          <div className={`flex-shrink-0 bg-transparent ${TRANSITION_DURATION}`}>
-            <Link to="/" className="block">
-              <img
-                src={logoSrc}
-                alt="logo"
-                className={`${TRANSITION_DURATION} ${logoHeightClass} w-auto`}
-              />
-            </Link>
-          </div>
-          {/* Mobile Navigation Icons */}
-          <div className="flex ml-auto items-center">
-            <Menus isMobileHeader={true} />
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
-              aria-label="Toggle mobile menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-          </div>
-        </div>
+  <div
+    ref={navbarRef}
+    className={`fixed top-0 left-0 w-full z-50 ${TRANSITION_DURATION}
+      ${isScrolled 
+        ? "shadow-md bg-background-to /95 backdrop-blur-sm" 
+        : "py-1 bg-transparent"
+      }`}
+  >
+    {/* NEW: Title bar for mobile/tablet that appears at the very top */}
+    <div className={`xl:hidden w-full ${TRANSITION_DURATION} ${isTitleBarVisible ? "opacity-100" : "opacity-0 h-0 overflow-hidden"}`}>
+      <TitleBar />
+    </div>
+
+    <div className="flex w-full px-2 sm:px-3 md:px-4 xl:px-2 items-center">
+      {/* Logo Container - Responsive sizing */}
+      <div className={`flex-shrink-0 bg-transparent ${TRANSITION_DURATION}`}>
+        <Link to="/" className="block">
+          <img
+            src={logoSrc}
+            alt="logo"
+            className={`${TRANSITION_DURATION} ${logoHeightClass} w-auto`}
+          />
+        </Link>
+      </div>
+
+      {/* Mobile Menu Button & Mobile Menus - hidden on desktop */}
+      <div className="xl:hidden ml-auto flex items-center gap-4">
+        <Menus isMobileHeader={true} />
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
+          aria-label="Toggle mobile menu"
+        >
+          {isMobileMenuOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
+        </button>
       </div>
       
-      {/* ⭐⭐⭐ Desktop View (Visible only on xl screens) ⭐⭐⭐ */}
+      {/* Desktop Main Content Area - Visible only on xl screens */}
       <div className="hidden xl:flex flex-col flex-1 min-w-0">
-        <div className="flex w-full px-2 sm:px-3 md:px-4 xl:px-2 items-center justify-between">
-          <div className={`flex-shrink-0 bg-transparent ${TRANSITION_DURATION}`}>
-            <Link to="/" className="block">
-              <img
-                src={logoSrc}
-                alt="logo"
-                className={`${TRANSITION_DURATION} ${logoHeightClass} w-auto`}
-              />
-            </Link>
+        {/* TitleBar and Subscribe */}
+        <div
+          className={`w-full justify-center px-4 flex ${TRANSITION_DURATION}
+            ${
+              isTitleBarVisible
+                ? "opacity-100 h-auto"
+                : "opacity-0 h-0 overflow-hidden"
+            }`}
+        >
+          <TitleBar />
+          <Subscribe />
+        </div>
+
+        {/* Navigation Menu */}
+        <nav
+          className={`w-full flex justify-between items-center px-4 text-black relative
+            ${isScrolled ? "" : "mt-2"}`}
+        >
+          <div className="flex-1 min-w-0">
+            <Tags />
           </div>
-          <div className="flex flex-col flex-1 min-w-0">
-            <div
-              className={`w-full justify-center flex ${TRANSITION_DURATION}
-                ${isTitleBarVisible ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden"}`}
-            >
-              <TitleBar />
+
+          <div className="flex-shrink-0">
+            <Menus />
+          </div>
+        </nav>
+      </div>
+    </div>
+
+    {/* Mobile/Tablet Fullscreen Menu - Hidden on desktop */}
+    <div
+      className={`xl:hidden ${TRANSITION_DURATION} ${
+        isMobileMenuOpen
+          ? "max-h-screen opacity-100"
+          : "max-h-0 opacity-0 overflow-hidden"
+      } backdrop-blur-sm shadow-lg border-t bg-background-to`}
+    >
+      <div className="px-4 py-6 space-y-6">
+        {/* No TitleBar here, as it's now at the top of the header */}
+        <div className="space-y-4">
+          <div className="pb-4 border-b bg-background-to">
+            <Tags />
+          </div>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex-1">
+              <Menus />
+            </div>
+            <div className="flex-shrink-0">
               <Subscribe />
             </div>
-            <nav
-              className={`w-full flex justify-between items-center relative
-                ${isScrolled ? "" : "mt-2"}`}
-            >
-              <div className="flex-1 min-w-0">
-                <Tags />
-              </div>
-              <div className="flex-shrink-0">
-                <Menus />
-              </div>
-            </nav>
           </div>
         </div>
       </div>
-
-      {/* Mobile/Tablet Menu */}
-      <div
-        className={`xl:hidden fixed inset-y-0 right-0 w-80 md:w-96 transform ${TRANSITION_DURATION}
-          ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
-          backdrop-blur-sm shadow-lg border-l bg-background-to z-50 overflow-y-auto`}
-      >
-        <div className="flex justify-end p-4">
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
-            aria-label="Close mobile menu"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-        <div className="px-4 pb-6 space-y-6">
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-              <div className="flex-1">
-                <Menus isMobileMenu={true} />
-              </div>
-              <div className="flex-shrink-0">
-                <Subscribe />
-              </div>
-            </div>
-            <div className="pb-4 border-b bg-background-to">
-              <Tags isMobileView={true} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="xl:hidden fixed inset-0 top-full bg-black/20 backdrop-blur-sm"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
     </div>
-  );
+    
+    {/* Mobile Menu Overlay */}
+    {isMobileMenuOpen && (
+      <div
+        className="xl:hidden fixed inset-0 top-full bg-black/20 backdrop-blur-sm"
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+    )}
+  </div>
+);
 }
