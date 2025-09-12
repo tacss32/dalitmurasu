@@ -107,7 +107,7 @@ export default function Archive() {
     const [loadingPdf, setLoadingPdf] = useState(false);
     // New state for the subscription popup
     const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(false);
-    
+
     // Ref to store the AbortController for a cancellable request
     const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -209,9 +209,9 @@ export default function Archive() {
     const getItemsForMonth = (year: number, month: number) => {
         return archiveMap[year]?.[month] || [];
     };
-    
+
     // Function to handle cancellation
-     const handleCancelRequest = () => {
+    const handleCancelRequest = () => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
@@ -395,18 +395,18 @@ export default function Archive() {
                             <MdClose className="text-2xl" />
                         </button>
                         <div className="flex-grow w-full overflow-auto">
-                           <Worker workerUrl="https://unpkg.com/pdfjs-dist@4.4.178/build/pdf.worker.min.mjs">
-    {activePdf.pdfUrl ? (
-        <Viewer
-            fileUrl={SERVER_URL + activePdf.pdfUrl}
-            plugins={[defaultLayoutPluginInstance, zoomPluginInstance]}
-        />
-    ) : (
-        <div className="text-center p-6 text-red-600">
-            PDF file not available or corrupted.
-        </div>
-    )}
-</Worker>
+                            <Worker workerUrl="/pdf.worker.min.js">
+                                {activePdf.pdfUrl ? (
+                                    <Viewer
+                                        fileUrl={SERVER_URL + activePdf.pdfUrl}
+                                        plugins={[defaultLayoutPluginInstance, zoomPluginInstance]}
+                                    />
+                                ) : (
+                                    <div className="text-center p-6 text-red-600">
+                                        PDF file not available or corrupted.
+                                    </div>
+                                )}
+                            </Worker>
                         </div>
                     </div>
                 </div>
