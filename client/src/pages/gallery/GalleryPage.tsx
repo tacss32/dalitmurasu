@@ -134,7 +134,7 @@ function GalleryPage() {
               </h2>
  
               {/*
-                KEY CHANGE: This is where we make the grid responsive.
+                KEY CHANGE: This is where we make the grid responsive
                 - grid-cols-2 for mobile
                 - sm:grid-cols-3 for tablet and larger
                 - lg:grid-cols-3 is redundant, but kept for clarity on desktop
