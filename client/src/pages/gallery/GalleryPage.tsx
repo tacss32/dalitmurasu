@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
  
@@ -93,8 +92,7 @@ function GalleryPage() {
  
   if (loading) {
     return (
-       <div className="flex justify-center items-center min-h-screen text-highlight-1"> {/* Changed text-white to text-highlight-1 for consistency */}
-        {/* Simple loading circle */}
+      <div className="flex justify-center items-center min-h-screen text-highlight-1">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
       </div>
     );
@@ -114,10 +112,9 @@ function GalleryPage() {
  
   return (
     <div
-      className="min-h-screen text-highlight-1  "
+      className="min-h-screen text-highlight-1"
       style={{ fontFamily: '"Times New Roman", serif' }}
     >
-      {/* Main title font size reduced */}
       <h1
         className="text-2xl lg:text-4xl font-bold text-center mb-6 px-2"
         style={{ fontFamily: '"Times New Roman", serif' }}
@@ -126,86 +123,57 @@ function GalleryPage() {
       </h1>
  
       {Object.keys(groupedImages).length > 0 ? (
-        <div className="max-w-6xl mx-auto px-30">
+        <div className="max-w-6xl mx-auto px-4">
           {Object.keys(groupedImages).map((monthYear) => (
             <div key={monthYear} className="mb-10">
-              {/* Month heading font size reduced */}
               <h2
-                className="text-xl lg:text-2xl font-bold text-highlight-2 mb-6 px-2"
+                className="text-xl lg:text-2xl font-bold text-highlight-2 mb-6 px-2 ml-25"
                 style={{ fontFamily: '"Times New Roman", serif' }}
               >
                 {monthYear}
               </h2>
  
-             <div className="grid grid-cols-3 gap-2 max-w-4xl mx-auto auto-rows-fr">
+              {/*
+                KEY CHANGE: This is where we make the grid responsive
+                - grid-cols-2 for mobile
+                - sm:grid-cols-3 for tablet and larger
+                - lg:grid-cols-3 is redundant, but kept for clarity on desktop
+                - gap-1 is for mobile, md:gap-2 is for tablets and desktop
+              */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-1 md:gap-2 max-w-4xl mx-auto auto-rows-fr">
                 {groupedImages[monthYear].map((img, index) => {
-                  const getLayoutClass = (idx: number) => {
-                    const pattern = idx % 6;
- 
-                    switch (pattern) {
-                      case 0:
-                        return "col-span-2 row-span-2";
-                      case 4:
-                        return "col-span-2 row-span-2";
-                      default:
-                        return "col-span-1 row-span-1";
-                    }
-                  };
- 
-                  const layoutClass = getLayoutClass(index);
- 
-                  const isLarge =
-                    layoutClass.includes("col-span-2") &&
-                    layoutClass.includes("row-span-2");
-                  const isWide =
-                    layoutClass.includes("col-span-2") &&
-                    !layoutClass.includes("row-span-2");
-                  const isTall =
-                    layoutClass.includes("row-span-2") &&
-                    !layoutClass.includes("col-span-2");
+                  // Calculate the pattern for desktop view only
+                  const pattern = index % 6;
+                  const isLarge = pattern === 0 || pattern === 4;
  
                   return (
                     <div
                       key={img._id}
-                      className={`relative overflow-hidden group bg-gray-200 rounded-lg shadow-md ${layoutClass} ${
-                        isLarge
-                          ? "aspect-square"
-                          : isWide
-                          ? "aspect-[2/1]"
-                          : isTall
-                          ? "aspect-[1/2]"
-                          : "aspect-square"
-                      }`}
+                      className={`relative overflow-hidden group bg-gray-200 rounded-lg shadow-md
+                        /* All images are square on mobile/tablet */
+                        aspect-square
+                        /* Apply the special layout only on large screens */
+                        ${isLarge ? "lg:col-span-2 lg:row-span-2" : "lg:col-span-1 lg:row-span-1"}
+                      `}
                     >
-                     
- 
                       <img
                         src={img.imageUrl}
                         alt={img.title}
                         loading="lazy"
-                        className=" w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 z-10  rounded-lg"
+                        className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 z-10 rounded-lg"
                       />
  
                       <div
                         onClick={() => navigate(`/bluethoughts/${img._id}`)}
                         className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300 z-20 cursor-pointer rounded-lg"
                       >
-                        {/* Image title font size reduced for large images */}
                         <p
-                          className={`text-white text-center px-2 font-medium ${
-                            isLarge ? "text-sm sm:text-base" : "text-xs sm:text-sm"
-                          }`}
+                          className={`text-white text-center px-2 font-medium text-xs sm:text-sm `}
                         >
                           {img.title}
                         </p>
                       </div>
  
-                      {isLarge && (
-                        <div className="absolute top-2 right-2 w-2 h-2 bg-white/30 rounded-full z-30"></div>
-                      )}
-                      {(isWide || isTall) && (
-                        <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-white/20 rounded-full z-30"></div>
-                      )}
                     </div>
                   );
                 })}
