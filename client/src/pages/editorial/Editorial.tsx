@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header";
-import { useNavigate } from "react-router-dom";
+import Card from "../../components/Card"; // <-- Import Card component
 import axios from "axios";
+// import { Link } from "react-router-dom"; // <-- Import Link for PDF cards
 
 // ---------------- Types ----------------
 export type PostType = {
@@ -86,7 +87,7 @@ const makeEditorialItemFromPdf = (pdf: PdfEntry): EditorialItem => ({
     title: pdf.title,
     subtitle: pdf.subtitle,
     image: pdf.imageUrl,
-    dateISO: pdf.date || pdf.date,
+    dateISO: pdf.date,
     isPdf: true,
     pdfUrl: pdf.pdfUrl,
     pdf,
@@ -98,15 +99,45 @@ const getMonthName = (monthNumber: number, locale: string = "en-US") => {
     return date.toLocaleString(locale, { month: "long" });
 };
 
-// ---------------- Component ----------------
+// ---------------- PDF Card Component (for displaying PDF items) ----------------
+const SERVER_URL_STATIC = import.meta.env.VITE_API;
+
+interface PdfItemCardProps {
+    item: EditorialItem;
+}
+const PdfItemCard: React.FC<PdfItemCardProps> = ({ item }) => {
+    const imageUrl = item.image ? `${SERVER_URL_STATIC}${item.image}` : `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
+
+    // Opens PDF in Google Viewer for better cross-device compatibility
+    const viewerUrl = item.pdfUrl ? `https://docs.google.com/viewer?url=${encodeURIComponent(SERVER_URL_STATIC + item.pdfUrl)}&embedded=true` : '#';
+
+    return (
+        <a
+            href={viewerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block border rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-200 ease-in-out bg-white group"
+        >
+            <div className="relative aspect-[4/3] overflow-hidden">
+                <img src={imageUrl} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+            </div>
+            <div className="p-4">
+                <h3 className="text-md font-bold text-gray-800 line-clamp-2">{item.title}</h3>
+                <p className="text-sm text-gray-500 mt-1">{new Date(item.dateISO).toLocaleDateString()}</p>
+                 <span className="text-xs font-semibold text-red-600 mt-2 inline-block">PDF</span>
+            </div>
+        </a>
+    );
+};
+
+// ---------------- Main Component ----------------
 export default function Editorial() {
     const SERVER_URL = import.meta.env.VITE_API;
-    const navigate = useNavigate();
-
+    
     const [chronological, setChronological] = useState<ChronologicalYear[]>([]);
     const [pdfs, setPdfs] = useState<PdfEntry[]>([]);
     const [selectedYear, setSelectedYear] = useState<number | null>(null);
-    const [selectedMonth, setSelectedMonth] = useState<number | null>(null); // New state for mobile
+    const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -117,7 +148,7 @@ export default function Editorial() {
     };
 
     // Fetch data once
-    useEffect(() => {
+   useEffect(() => {
         let mounted = true;
         const load = async () => {
             setLoading(true);
@@ -134,7 +165,9 @@ export default function Editorial() {
                     if (chronRes.success && Array.isArray(chronRes.data)) {
                         const sorted = [...chronRes.data].sort((a, b) => b.year - a.year);
                         setChronological(sorted);
-                        if (sorted.length > 0) setSelectedYear(sorted[0].year);
+                        // if (sorted.length > 0) {
+                        //     setSelectedYear(sorted[0].year); // <--- REMOVE THIS LINE
+                        // }
                     } else {
                         setError("Failed to load chronological data.");
                     }
@@ -231,14 +264,6 @@ export default function Editorial() {
 
     const handleMonthSelect = (m: number) => {
         setSelectedMonth(m);
-        // On mobile, navigate to the specific month's page
-        if (selectedYear) {
-            navigate(`/editorial/${selectedYear}/${m}`);
-        }
-    };
-
-    const handleDesktopMonthNav = (y: number, m: number) => {
-        navigate(`/editorial/${y}/${m}`);
     };
 
     if (loading) {
@@ -261,12 +286,14 @@ export default function Editorial() {
         );
     }
 
+    const itemsToDisplay = (selectedYear && selectedMonth && editorialMap[selectedYear]?.[selectedMonth]) || [];
+
     return (
         <div className="flex flex-col gap-5">
             <Header text="தலையங்கம்" urlPath="Editorial" />
-
             <div className="flex px-4 mt-2 gap-4 flex-col md:flex-row">
-                {/* Desktop Sidebar (hidden on mobile/tablet) */}
+                
+                {/* --- Desktop Sidebar --- */}
                 <aside className="hidden md:flex flex-row gap-4 w-1/4 xl:w-1/5 shrink-0">
                     <div className="w-24 border-r pr-3">
                         <h3 className="font-bold mb-2 text-lg">Years</h3>
@@ -276,7 +303,7 @@ export default function Editorial() {
                                     <li
                                         key={y.year}
                                         onClick={() => handleYearSelect(y.year)}
-                                        className={`cursor-pointer mb-2 font-medium transition-colors duration-150 py-1 text-gray-800 hover:text-blue-500`}
+                                        className={`cursor-pointer mb-2 font-medium transition-colors duration-150 py-1 ${selectedYear === y.year ? "text-blue-600 underline" : "text-gray-800 hover:text-blue-500"}`}
                                     >
                                         {y.year}
                                     </li>
@@ -289,16 +316,14 @@ export default function Editorial() {
                         {selectedYearSummary ? (
                             <ul className="pl-0">
                                 {selectedYearSummary.months.map((m) => (
-                                    <li key={m.month} className="mb-2">
-                                        <button
-                                            onClick={() => handleDesktopMonthNav(selectedYearSummary.year, m.month)}
-                                            className="w-full text-left border-b pb-1 hover:text-blue-600"
-                                        >
-                                            {getMonthName(m.month)}{" "}
-                                            <span className="ml-1 text-sm text-gray-500">
-                                                ({m.count})
-                                            </span>
-                                        </button>
+                                    <li key={m.month}
+                                        onClick={() => handleMonthSelect(m.month)}
+                                        className={`cursor-pointer py-1 border-b hover:text-blue-600 ${selectedMonth === m.month ? "text-blue-600 font-semibold" : ""}`}
+                                    >
+                                        {getMonthName(m.month)}{" "}
+                                        <span className="ml-1 text-sm text-gray-500">
+                                            ({m.count})
+                                        </span>
                                     </li>
                                 ))}
                             </ul>
@@ -306,74 +331,85 @@ export default function Editorial() {
                     </div>
                 </aside>
 
-                {/* Mobile/Tablet View (hidden on desktop) */}
+                {/* --- Mobile/Tablet View --- */}
                 <aside className="md:hidden flex flex-col gap-4 w-full">
                     <div className="flex flex-row justify-between items-center mb-4 border-b pb-4">
                         <h3 className="font-bold text-lg">
-                            {selectedYear ? (
-                                <span onClick={() => handleYearSelect(null)} className="cursor-pointer text-gray-800">
-                                    {selectedYear}
+                           {selectedYear ? (
+                                <>
+                                    <span onClick={() => handleYearSelect(null)} className="cursor-pointer text-blue-600">
+                                        {selectedYear}
+                                    </span>
                                     {selectedMonth && (
                                         <>
                                             <span className="text-gray-400 font-normal"> / </span>
-                                            <span onClick={() => setSelectedMonth(null)} className="cursor-pointer text-gray-800">
+                                            <span
+                                                onClick={(e) => { e.stopPropagation(); setSelectedMonth(null); }}
+                                                className="cursor-pointer text-blue-600"
+                                            >
                                                 {getMonthName(selectedMonth)}
                                             </span>
                                         </>
                                     )}
-                                </span>
-                            ) : (
-                                "Years"
-                            )}
+                                </>
+                            ) : ("Years")}
                         </h3>
                     </div>
-
+                    
                     {!selectedYear && (
                         <div className="flex flex-row flex-wrap gap-2 text-center text-sm">
-                            {yearSummaries.length > 0 ? (
-                                yearSummaries.map((y) => (
-                                    <button
-                                        key={y.year}
-                                        onClick={() => handleYearSelect(y.year)}
-                                        className="px-4 py-2 border rounded-full transition-colors duration-150 bg-background-to hover:bg-gray-200 text-gray-800"
-                                    >
-                                        {y.year}
-                                    </button>
-                                ))
-                            ) : (
-                                <p className="text-sm text-gray-500 w-full">No years found.</p>
-                            )}
+                            {yearSummaries.map((y) => (
+                                <button key={y.year} onClick={() => handleYearSelect(y.year)} className="px-4 py-2 border rounded-full transition-colors duration-150 bg-background-to hover:bg-gray-200 text-gray-800">
+                                    {y.year}
+                                </button>
+                            ))}
                         </div>
                     )}
 
                     {selectedYear && !selectedMonth && (
                         <div className="flex flex-row flex-wrap gap-2 text-center text-sm">
-                            {selectedYearSummary ? (
-                                selectedYearSummary.months.map((m) => (
-                                    <button
-                                        key={m.month}
-                                        onClick={() => handleMonthSelect(m.month)}
-                                        className="px-4 py-2 border rounded-full transition-colors duration-150 bg-background-to hover:bg-gray-200 text-gray-800"
-                                    >
-                                        {getMonthName(m.month)}
-                                    </button>
-                                ))
-                            ) : (
-                                <p className="text-sm text-gray-500 w-full">No months found for this year.</p>
-                            )}
+                            {selectedYearSummary?.months.map((m) => (
+                                <button key={m.month} onClick={() => handleMonthSelect(m.month)} className="px-4 py-2 border rounded-full transition-colors duration-150 bg-background-to hover:bg-gray-200 text-gray-800">
+                                    {getMonthName(m.month)}
+                                </button>
+                            ))}
                         </div>
                     )}
                 </aside>
 
+                {/* --- Main Content Area --- */}
                 <main className="flex-1 pl-4 md:pl-0">
-                    <h2 className="text-2xl font-bold mb-4 hidden md:block">
-                        {/* {selectedYear ? `${selectedYear} Editorials` : "Select a Year"} */}
-                    </h2>
-                    {selectedYear && selectedYearSummary && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {/* The logic to display items for the selected month will go here.
-                                The current logic redirects, so this block is a placeholder.
-                            */}
+                    {selectedYear && selectedMonth ? (
+                        <>
+                            <h2 className="text-2xl font-bold mb-4">
+                                {getMonthName(selectedMonth)} {selectedYear}
+                            </h2>
+                            {itemsToDisplay.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {itemsToDisplay.map((item) =>
+                                        item.isPdf ? (
+                                            <PdfItemCard key={item._id} item={item} />
+                                        ) : (
+                                            item.article && <Card
+                                                key={item._id}
+                                                id={item.article._id}
+                                                title={item.article.title}
+                                                subtitle={item.article.subtitle}
+                                                author={item.article.author}
+                                                category={item.article.category}
+                                                date={item.article.date}
+                                                image={item.article.images?.[0]}
+                                            />
+                                        )
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-600">No editorials found for {getMonthName(selectedMonth)} {selectedYear}.</p>
+                            )}
+                        </>
+                    ) : (
+                        <div className="hidden md:flex items-center justify-center h-full">
+                            <p className="p-4 text-center text-gray-500">Please select a month to view editorials.</p>
                         </div>
                     )}
                 </main>
