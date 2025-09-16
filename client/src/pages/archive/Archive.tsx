@@ -330,26 +330,38 @@ export default function Archive() {
                 </aside>
 
                 {/* Mobile/Tablet View */}
-                <aside className="md:hidden flex flex-col gap-4">
-                    <div className="flex flex-row justify-between items-center mb-4 border-b pb-4">
-                        <h3 className="font-bold text-lg">
-                            {selectedYear ? (
-                                <span onClick={() => handleYearSelect(null)} className="cursor-pointer text-blue-600">
-                                    {selectedYear}
-                                    {selectedMonth && (
-                                        <>
-                                            <span className="text-gray-400 font-normal"> / </span>
-                                            <span onClick={() => setSelectedMonth(null)} className="cursor-pointer text-blue-600">
-                                                {getMonthName(selectedMonth)}
-                                            </span>
-                                        </>
-                                    )}
-                                </span>
-                            ) : (
-                                "Years"
-                            )}
-                        </h3>
-                    </div>
+               
+
+<aside className="md:hidden flex flex-col gap-4">
+    <div className="flex flex-row justify-between items-center mb-4 border-b pb-4">
+        <h3 className="font-bold text-lg">
+            {selectedYear ? (
+                <>
+                    {/* Year Link */}
+                    <span onClick={() => handleYearSelect(null)} className="cursor-pointer text-blue-600">
+                        {selectedYear}
+                    </span>
+                    {selectedMonth && (
+                        <>
+                            <span className="text-gray-400 font-normal"> / </span>
+                            {/* Month Link (FIXED) */}
+                            <span 
+                                onClick={(e) => {
+                                    e.stopPropagation(); // Prevents the click from bubbling to the parent span
+                                    setSelectedMonth(null);
+                                }} 
+                                className="cursor-pointer text-blue-600"
+                            >
+                                {getMonthName(selectedMonth)}
+                            </span>
+                        </>
+                    )}
+                </>
+            ) : (
+                "Years"
+            )}
+        </h3>
+    </div>
 
                     {!selectedYear && (
                         <div className="flex flex-row flex-wrap gap-2 text-center text-sm">
