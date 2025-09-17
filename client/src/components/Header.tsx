@@ -1,3 +1,4 @@
+// client\src\components\Header.tsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -51,7 +52,6 @@ export default function Header({
 
   useEffect(() => {
     const fetchBanner = async () => {
-      // Don't fetch if we don't have a category identifier
       const bannerCategory = urlPath ? urlPath : categorySlug;
       if (!bannerCategory) return;
 
@@ -66,7 +66,7 @@ export default function Header({
             mobileImage: data.mobileImage,
           });
         } else {
-          setBannerData(null); // Reset if no banner is found
+          setBannerData(null);
           console.log("No banner found for this category or missing image URL:", data);
         }
       } catch (err) {
@@ -78,8 +78,11 @@ export default function Header({
     fetchBanner();
   }, [categorySlug, urlPath]);
 
-  const currentCategory = categorySlug
-    ? categories.find((cat) => normalize(cat.name.en) === categorySlug)
+  // FIX: Normalize the categorySlug before comparing
+  const normalizedCategorySlug = categorySlug ? normalize(categorySlug) : null;
+
+  const currentCategory = normalizedCategorySlug
+    ? categories.find((cat) => normalize(cat.name.en) === normalizedCategorySlug)
     : null;
 
   let headerText = "தலித் முரசு";
@@ -94,30 +97,21 @@ export default function Header({
     }
   }
 
-  // Use the mobile image as a fallback for the desktop image and vice versa
   const desktopSrc = bannerData?.desktopImage || bannerData?.mobileImage;
   const mobileSrc = bannerData?.mobileImage || bannerData?.desktopImage;
   const fallbackSrc = "/headerImg.jpg";
 
   return (
     <div className="relative w-full">
-      {/* Banner Image using <picture> for responsiveness */}
       <picture>
-        {/* Mobile source: shown on screens smaller than 768px */}
         {mobileSrc && <source media="(max-width: 767px)" srcSet={mobileSrc} />}
-        
-        {/* Desktop source: shown on screens 768px and wider */}
         {desktopSrc && <source media="(min-width: 768px)" srcSet={desktopSrc} />}
-
-        {/* Fallback image if no banner is found or for browsers that don't support <picture> */}
         <img
           src={desktopSrc || fallbackSrc}
           alt="Header Banner"
           className="w-full h-auto rounded-lg object-cover"
         />
       </picture>
-
-
       <h1 className="text-lg md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
         <span>{headerText}</span>
       </h1>

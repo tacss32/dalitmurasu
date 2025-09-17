@@ -235,11 +235,10 @@
 //   );
 // }
 // client\src\components\PostDetail.tsx
-
 // client\src\components\PostDetail.tsx
 import { useEffect, useState } from "react";
-import { Share2, ArrowLeft,Bookmark, BookmarkCheck  } from "lucide-react"; // ⬅️ Added ArrowLeft
-import { useParams, useNavigate } from "react-router-dom"; // ⬅️ Added useNavigate
+import { Share2, ArrowLeft, Bookmark, BookmarkCheck } from "lucide-react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import Card from "./Card";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -268,8 +267,8 @@ type Category = {
 
 // Define the bookmark type to handle populated and unpopulated states
 type BookmarkData = {
-  _id: string;
-  postId: Post | string; // It could be a populated Post object or just a string ID
+  _id: string;
+  postId: Post | string; // It could be a populated Post object or just a string ID
 };
 
 export default function PostDetail() {
@@ -283,11 +282,32 @@ export default function PostDetail() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [shareMessageTimeoutId, setShareMessageTimeoutId] = useState<number | null>(null);
-    const [isBookmarked, setIsBookmarked] = useState(false);
-  const [bookmarkId, setBookmarkId] = useState<string | null>(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkId, setBookmarkId] = useState<string | null>(null);
 
-  const userId = localStorage.getItem("userId");
-  const clientToken = localStorage.getItem("clientToken");
+  const userId = localStorage.getItem("userId");
+  const clientToken = localStorage.getItem("clientToken");
+
+  const fetchBookmarkStatus = async () => {
+    if (!userId || !id) return;
+    try {
+      const response = await axios.get(`${SERVER_URL}api/bookmarks/${userId}`);
+      const bookmarks = response.data;
+
+      const validBookmarks = bookmarks.filter((b: BookmarkData) => b.postId !== null);
+      const foundBookmark = validBookmarks.find((b: BookmarkData) => (b.postId as Post)._id === id);
+
+      if (foundBookmark) {
+        setIsBookmarked(true);
+        setBookmarkId(foundBookmark._id);
+      } else {
+        setIsBookmarked(false);
+        setBookmarkId(null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch bookmark status:", err);
+    }
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -335,32 +355,10 @@ export default function PostDetail() {
     };
     fetchPost();
   }, [id]);
-  // Fetch bookmark status for the current user and post
-  useEffect(() => {
-    const fetchBookmarkStatus = async () => {
-      if (!userId || !id) return;
-      try {
-        const response = await axios.get(`${SERVER_URL}api/bookmarks/${userId}`);
-        const bookmarks = response.data;
-        
-        // Filter out null bookmarks first, then check if the current post is among the valid ones
-        const validBookmarks = bookmarks.filter((b: BookmarkData) => b.postId !== null);
-        const foundBookmark = validBookmarks.find((b: BookmarkData) => (b.postId as Post)._id === id);
 
-        if (foundBookmark) {
-          setIsBookmarked(true);
-          setBookmarkId(foundBookmark._id);
-        } else {
-          setIsBookmarked(false);
-          setBookmarkId(null);
-        }
-      } catch (err) {
-        console.error("Failed to fetch bookmark status:", err);
-      }
-    };
-    fetchBookmarkStatus();
-  }, [userId, id]);
-
+  useEffect(() => {
+    fetchBookmarkStatus();
+  }, [userId, id]);
 
   useEffect(() => {
     return () => {
@@ -411,59 +409,57 @@ export default function PostDetail() {
       }
     }
   };
-  
-    const handleBookmark = async () => {
-    if (!userId || !post) {
-      toast.error("Please log in to bookmark posts.");
-      return;
-    }
-    if (isBookmarked) {
-      handleRemoveBookmark();
-      return;
-    }
-    const payload = {
-      userId,
-      postId: post._id,
-      postType: "UniversalPost",
-    };
-    try {
-      const res = await axios.post(`${SERVER_URL}api/bookmarks`, payload, {
-        headers: {
-          Authorization: `Bearer ${clientToken}`,
-        },
-      });
-      setIsBookmarked(true);
-      setBookmarkId(res.data.bookmark._id); // Save the new bookmark ID
-      toast.success("Post bookmarked successfully!");
-    } catch (error: any) {
-      // Handle the 409 Conflict error specifically
-      if (error.response?.status === 409) {
-        setIsBookmarked(true); // Update state to reflect existing bookmark
-        toast.info("This post is already bookmarked.");
-        // Optionally, refetch the bookmark status to get the bookmarkId
-        fetchBookmarkStatus();
-      } else {
-        toast.error(error.response?.data?.error || "Error bookmarking post.");
-      }
-    }
-  };
 
-  const handleRemoveBookmark = async () => {
-    if (!userId || !bookmarkId) return; // Use the stored bookmarkId
+  const handleBookmark = async () => {
+    if (!userId || !post) {
+      toast.error("Please log in to bookmark posts.");
+      return;
+    }
+    if (isBookmarked) {
+      handleRemoveBookmark();
+      return;
+    }
+    const payload = {
+      userId,
+      postId: post._id,
+      postType: "UniversalPost",
+    };
+    try {
+      const res = await axios.post(`${SERVER_URL}api/bookmarks`, payload, {
+        headers: {
+          Authorization: `Bearer ${clientToken}`,
+        },
+      });
+      setIsBookmarked(true);
+      setBookmarkId(res.data.bookmark._id);
+      toast.success("Post bookmarked successfully!");
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        setIsBookmarked(true);
+        toast.info("This post is already bookmarked.");
+        fetchBookmarkStatus();
+      } else {
+        toast.error(error.response?.data?.error || "Error bookmarking post.");
+      }
+    }
+  };
 
-    try {
-      await axios.delete(`${SERVER_URL}api/bookmarks/${bookmarkId}`, {
-        headers: {
-          Authorization: `Bearer ${clientToken}`,
-        },
-      });
-      setIsBookmarked(false);
-      setBookmarkId(null);
-      toast.success("Bookmark removed successfully!");
-    } catch (error: any) {
-      toast.error("Failed to remove bookmark.");
-    }
-  };
+  const handleRemoveBookmark = async () => {
+    if (!userId || !bookmarkId) return;
+
+    try {
+      await axios.delete(`${SERVER_URL}api/bookmarks/${bookmarkId}`, {
+        headers: {
+          Authorization: `Bearer ${clientToken}`,
+        },
+      });
+      setIsBookmarked(false);
+      setBookmarkId(null);
+      toast.success("Bookmark removed successfully!");
+    } catch (error: any) {
+      toast.error("Failed to remove bookmark.");
+    }
+  };
 
   if (loading) {
     return (
@@ -489,18 +485,14 @@ export default function PostDetail() {
   const imageUrls = post.images;
 
   return (
-  
     <div className="max-w-4xl mx-auto p-4 flex flex-col gap-6">
       {/* --- Header Section --- */}
-      
       <div className="flex flex-col gap-3 py-6 border-b-4 border-highlight-1 relative">
-        
         <div className="flex items-center gap-2 text-sm">
-          
           {/* Back button */}
           <button
             onClick={() => navigate(-1)}
-            className=" h-10 w-17 flex items-center gap-1 text-white  bg-highlight-1 hover:bg-highlight-1/80 transition  rounded-lg"
+            className="h-10 w-17 flex items-center gap-1 text-white bg-highlight-1 hover:bg-highlight-1/80 transition rounded-lg"
           >
             <ArrowLeft size={25} />
             <span className="hidden sm:inline">back</span>
@@ -509,18 +501,20 @@ export default function PostDetail() {
             {new Date(post.date).toLocaleDateString()}
           </span>
           <span className="text-2xl">•</span>
-          <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
+          {/* Updated category link */}
+          <Link
+            to={`/${post.category}`}
+            className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200"
+          >
             {getTamilCategoryName(post.category)}
-          </span>
+          </Link>
         </div>
-
         <h1 className="text-4xl font-bold text-gray-900 leading-tight">
           {post.title}
         </h1>
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight ">
+        <h1 className="text-2xl font-bold text-gray-900 leading-tight">
           {post.subtitle}
         </h1>
-
         <p className="text-xl text-gray-600 flex items-center gap-2">
           <span className="w-7 h-7 bg-highlight-1 rounded-full flex items-center justify-center text-white font-semibold text-sm">
             {post.author.charAt(0).toUpperCase()}
@@ -528,24 +522,23 @@ export default function PostDetail() {
           {post.author}
         </p>
 
- {/* Share and Bookmark Buttons Container */}
-        <div className="absolute top-6 right-0 flex items-center gap-2">
-          <button
-            onClick={handleShare}
-            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2"
-          >
-            <Share2 size={18} />
-            <span className="hidden sm:inline">Share</span>
-          </button>
-          
-          <button
-            onClick={handleBookmark}
-            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center justify-center"
-          >
-            {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
-          </button>
-        </div>
-      </div>
+        {/* Share and Bookmark Buttons Container */}
+        <div className="absolute top-6 right-0 flex items-center gap-2">
+          <button
+            onClick={handleShare}
+            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2"
+          >
+            <Share2 size={18} />
+            <span className="hidden sm:inline">Share</span>
+          </button>
+          <button
+            onClick={handleBookmark}
+            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center justify-center"
+          >
+            {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+          </button>
+        </div>
+      </div>
 
       {/* --- Image Carousel --- */}
       {imageUrls.length > 0 && (
@@ -620,7 +613,8 @@ export default function PostDetail() {
       {suggestions && suggestions.length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4"></h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
+          {/* Desktop Grid View */}
+          <div className="hidden md:grid grid-cols-1 md:grid-cols-3 w-full mx-auto gap-10">
             {suggestions.map((post) => (
               <Card
                 key={post._id}
@@ -634,12 +628,40 @@ export default function PostDetail() {
               />
             ))}
           </div>
+          {/* Mobile/Tablet List View */}
+          <div className="md:hidden flex flex-col gap-3">
+            {suggestions.map((post) => (
+              <Link to={`/posts/${post._id}`} key={post._id}>
+                <div className="w-full flex gap-4 p-2 rounded shadow-lg bg-background-to hover:bg-white/50 duration-150 transition-colors ease-in-out">
+                  {/* Image Section */}
+                  {post?.images?.[0] && (
+                    <div className="flex-shrink-0 w-24 h-24">
+                      <img
+                        src={post.images[0]}
+                        alt={post.title}
+                        className="w-full h-full object-cover rounded"
+                      />
+                    </div>
+                  )}
+
+                  {/* Text Section */}
+                  <div className="flex flex-col justify-center">
+                    <h2 className="text-lg font-bold">
+                      {post.title}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {new Date(post.date || post.createdAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {getTamilCategoryName(post.category)}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
-}
-
-function fetchBookmarkStatus() {
-  throw new Error("Function not implemented.");
 }
