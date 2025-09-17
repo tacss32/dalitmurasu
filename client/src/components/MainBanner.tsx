@@ -1,3 +1,4 @@
+
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -61,7 +62,7 @@ export default function MainBanner() {
     const fetchBannerCategories = async () => {
       try {
         setLoadingCategories(true);
-        // Using the /api/categories/banner endpoint to get only 'isInBanner: true' categories
+        // Using the /api/categories?banner=true endpoint to get only 'isInBanner: true' categories
         const res = await axios.get<Category[]>(
           `${API_BASE}api/categories?banner=true`
         );
@@ -77,7 +78,7 @@ export default function MainBanner() {
     };
 
     fetchBannerCategories();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   // Effect for automatic banner sliding
   useEffect(() => {
@@ -88,14 +89,13 @@ export default function MainBanner() {
 
       return () => clearInterval(intervalId); // Cleanup on unmount or banners change
     }
-  }, [banners]); // Dependency on banners ensures interval resets if banners change
+  }, [banners]);
 
   // Determine overall loading state
   const isLoading = loadingBanners || loadingCategories;
 
   if (isLoading) {
     return (
-      // Simple placeholder with a fixed aspect ratio or min-height for loading
       <div
         className="relative w-full overflow-hidden rounded-xl shadow-lg bg-gray-200 flex items-center justify-center animate-pulse"
         style={{ minHeight: "450px" }}
@@ -167,11 +167,11 @@ export default function MainBanner() {
                 : "opacity-0 absolute top-0 left-0"
             }`}
           >
-            <source media="(max-width: 750px)" srcSet={banner.mobileImage} />
+            <source media="(max-width: 768px)" srcSet={banner.mobileImage} />
             <img
               src={banner.desktopImage}
               alt={`Banner ${index + 1}`}
-              className="w-full h-[750px] object-center"
+              className="w-full h-[450px] md:h-[750px] object-cover object-center"
             />
           </picture>
         ))}
@@ -182,7 +182,6 @@ export default function MainBanner() {
       <div className="absolute bottom-32 right-6 md:bottom-10 md:right-10 flex flex-col space-y-4 z-20">
         {/* Render buttons based on fetched banner categories */}
         {[...bannerCategories].reverse().map((cat) => (
-
           <button
             key={cat._id}
             onClick={() =>
