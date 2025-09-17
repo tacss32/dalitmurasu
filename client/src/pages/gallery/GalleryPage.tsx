@@ -141,7 +141,7 @@ function GalleryPage() {
 
                             {/*
                 KEY CHANGE: This is where we make the grid responsive
-                - grid-cols-2 for mobile
+                - grid-cols-2 for mobil
                 - sm:grid-cols-3 for tablet and larger
                 - lg:grid-cols-3 is redundant, but kept for clarity on desktop
                 - gap-1 is for mobile, md:gap-2 is for tablets and desktop
