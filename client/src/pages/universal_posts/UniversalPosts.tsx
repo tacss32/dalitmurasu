@@ -684,7 +684,7 @@ export default function UniversalPosts() {
                   <span className="text-sm">Show as Recent</span>
                 </label>
 
-                <label className="flex items-center gap-2">
+                {/* <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={editPost.isPinned ?? false}
@@ -693,7 +693,7 @@ export default function UniversalPosts() {
                     }
                   />
                   <span className="text-sm">Pinned Post</span>
-                </label>
+                </label> */}
               </div>
 
               <div className="flex justify-end gap-3 mt-4">
