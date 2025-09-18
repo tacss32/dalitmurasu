@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Share2 } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { ArrowLeft, Share2 } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 
 const SERVER_URL = import.meta.env.VITE_API;
 
@@ -17,6 +17,7 @@ export default function GalleryDetail() {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate(); // ✅ Hook for back button
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -102,6 +103,14 @@ export default function GalleryDetail() {
       {/* --- Header Section --- */}
       <div className="flex flex-col gap-3 py-6 border-b-4 border-highlight-1 relative">
         <div className="flex items-center gap-2 text-sm">
+           {/* Back button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200"
+          >
+            <ArrowLeft size={25} />
+            <span className="hidden sm:inline"></span>
+          </button>
           <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
             {new Date(post.createdAt).toLocaleDateString()}
           </span>
