@@ -1,6 +1,6 @@
 const PremiumPost = require("../models/PremiumPost");
 const UniversalPost = require("../models/UniversalPost");
-const PdfUpload = require("../models/PdfUpload");
+// const PdfUpload = require("../models/PdfUpload");
 const PinnedPost = require("../models/PinnedPost"); // New collection to track pinned posts
 
 // ------------------------
@@ -8,16 +8,16 @@ const PinnedPost = require("../models/PinnedPost"); // New collection to track p
 // ------------------------
 exports.getAllPosts = async (req, res) => {
   try {
-    const [premium, universal, pdfs] = await Promise.all([
+    const [premium, universal] = await Promise.all([
       PremiumPost.find().lean(),
       UniversalPost.find().lean(),
-      PdfUpload.find().lean(),
+      // PdfUpload.find().lean(),
     ]);
 
     const allPosts = [
       ...premium.map(p => ({ ...p, source: "PremiumPost" })),
       ...universal.map(p => ({ ...p, source: "UniversalPost" })),
-      ...pdfs.map(p => ({ ...p, source: "PdfUpload" })),
+      // ...pdfs.map(p => ({ ...p, source: "PdfUpload" })),
     ];
 
     res.json(allPosts);
@@ -85,9 +85,7 @@ exports.getPinnedPosts = async (req, res) => {
         post = await PremiumPost.findById(pin.postId).lean();
       } else if (pin.source === "UniversalPost") {
         post = await UniversalPost.findById(pin.postId).lean();
-      } else if (pin.source === "PdfUpload") {
-        post = await PdfUpload.findById(pin.postId).lean();
-      }
+      } 
 
       if (post) {
         posts.push({ ...post, source: pin.source });
