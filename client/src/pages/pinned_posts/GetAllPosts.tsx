@@ -1,5 +1,6 @@
+// client/src/pages/pinned_posts/GetAllPosts.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 
 interface Post {
@@ -8,7 +9,7 @@ interface Post {
   content?: string;
   fileName?: string;
   images?: string[];
-  source: "PremiumPost" | "UniversalPost" | "PdfUpload";
+  source: "PremiumPost" | "UniversalPost";
   createdAt?: string;
 }
 
@@ -20,6 +21,10 @@ const GetAllPosts: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedSource, setSelectedSource] = useState<string>("All");
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
 
   const fetchPosts = async () => {
     try {
@@ -97,6 +102,35 @@ const GetAllPosts: React.FC = () => {
     });
   };
 
+  const getImageUrl = (imagePath?: string) => {
+    if (!imagePath) return "https://via.placeholder.com/400x250?text=No+Image";
+    if (imagePath.startsWith("http")) {
+      return imagePath;
+    }
+    return `${API_BASE_URL}/${imagePath.replace(/^\/+/, "")}`;
+  };
+
+  const filteredPosts = useMemo(() => {
+  return allPosts.filter((post) => {
+    // REMOVED: The redundant check for post.source === "PdfUpload"
+    
+    const postDate = post.createdAt ? new Date(post.createdAt) : null;
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+
+    const titleMatch = post.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const sourceMatch =
+      selectedSource === "All" || post.source === selectedSource;
+    const dateMatch =
+      (!from || (postDate && postDate >= from)) &&
+      (!to || (postDate && postDate <= to));
+
+    return titleMatch && sourceMatch && dateMatch;
+  });
+}, [allPosts, searchTerm, selectedSource, fromDate, toDate]);
+
   if (loading) return <div className="p-6 text-gray-700">Loading...</div>;
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
@@ -105,53 +139,72 @@ const GetAllPosts: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">
         All Posts
       </h1>
-      {allPosts.length === 0 ? (
-        <p className="text-center text-gray-500">No posts available.</p>
+
+      <div className="flex flex-col md:flex-row items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
+        <input
+          type="text"
+          placeholder="Search by title..."
+          className="w-full md:flex-1 p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <select
+          value={selectedSource}
+          onChange={(e) => setSelectedSource(e.target.value)}
+          className="w-full md:w-1/4 p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        >
+          <option value="All">All Sources</option>
+          <option value="PremiumPost">Premium Posts</option>
+          <option value="UniversalPost">Universal Posts</option>
+        </select>
+        <div className="flex items-center space-x-2 w-full md:w-auto">
+          <label htmlFor="fromDate" className="text-sm font-medium text-gray-700">From:</label>
+          <input
+            id="fromDate"
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div className="flex items-center space-x-2 w-full md:w-auto">
+          <label htmlFor="toDate" className="text-sm font-medium text-gray-700">To:</label>
+          <input
+            id="toDate"
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      {filteredPosts.length === 0 ? (
+        <p className="text-center text-gray-500">No posts available with the selected filters.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {allPosts.map((post) => {
+          {filteredPosts.map((post) => {
             const pinned = isPinned(post._id);
-            
-         const getImageUrl = (imagePath?: string) => {
-  if (!imagePath) return "https://via.placeholder.com/400x250?text=No+Image";
-  
-  // Cloudinary or external images
-  if (imagePath.startsWith("http")) {
-    return imagePath;
-  }
-
-  // Local images
-  return `${API_BASE_URL}/${imagePath.replace(/^\/+/, "")}`;
-};
-
-const displayImageUrl =
-  post.source !== "PdfUpload" && post.images && post.images.length > 0
-    ? getImageUrl(post.images[0])
-    : "https://via.placeholder.com/400x250?text=No+Image";
+            const displayImageUrl =
+              post.images && post.images.length > 0
+                ? getImageUrl(post.images[0])
+                : "https://via.placeholder.com/400x250?text=No+Image";
 
             return (
               <div
                 key={post._id}
                 className="bg-white rounded-xl shadow-md p-4 flex flex-col"
               >
-                {post.source === "PdfUpload" ? (
-                  <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center mb-3">
-                    <p className="text-gray-500 text-center p-4">
-                      PDF: {post.fileName}
-                    </p>
-                  </div>
-                ) : (
-                  <img
-                    src={displayImageUrl}
-                    alt={post.title}
-                    className="rounded-lg h-48 object-cover mb-3 w-full"
-                  />
-                )}
+                <img
+                  src={displayImageUrl}
+                  alt={post.title}
+                  className="rounded-lg h-48 object-cover mb-3 w-full"
+                />
                 <h2 className="text-lg font-semibold">{post.title}</h2>
                 <p className="text-xs text-gray-400 mb-1">
                   Posted on {formatDate(post.createdAt || "")}
                 </p>
-                {post.source !== "PdfUpload" && post.content && (
+                {post.content && (
                   <div
                     className="line-clamp-3 text-sm mt-1"
                     dangerouslySetInnerHTML={{ __html: post.content }}
