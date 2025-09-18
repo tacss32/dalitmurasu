@@ -316,22 +316,25 @@ export default function PremiumArticleDetail() {
     {/* Back button */}
           <button
             onClick={() => navigate(-1)}
-            className=" h-10 w-17 flex items-center gap-1 text-white  bg-highlight-1 hover:bg-highlight-1/80 transition  rounded-lg"
+            className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200"
           >
             <ArrowLeft size={25} />
-            <span className="hidden sm:inline">back</span>
+            <span className="hidden sm:inline"></span>
           </button>
-                        <span className="bg-highlight-1 text-white px-3 py-1 rounded-full">
+                        <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200">
                             {new Date(article.date).toLocaleDateString()}
                         </span>
                         <span className="text-2xl text-yellow-600">•</span>
-                        <span className="bg-highlight-1 text-white px-3 py-1 rounded-full">
-                            {categoryInTamil[article.category] || article.category}
-                        </span>
-                    </div>
-                    <h1 className="text-4xl font-bold text-gray-900 leading-tight">
-                        {article.title}
-                    </h1>
+                        <Link
+              to={`/premiumarticles?category=${encodeURIComponent(article.category)}`}
+              className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200 cursor-pointer"
+            >
+              {categoryInTamil[article.category] || article.category}
+            </Link>
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 leading-tight">
+            {article.title}
+          </h1>
                     {article.subtitle && <p className="text-1xl font-bold text-gray-900 leading-tight">{article.subtitle}</p>}
                     <p className="text-xl text-gray-700 flex items-center gap-2">
                         <span className="w-7 h-7 bg-highlight-1 rounded-full flex items-center justify-center text-white font-semibold text-sm">
