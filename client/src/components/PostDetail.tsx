@@ -492,10 +492,10 @@ export default function PostDetail() {
           {/* Back button */}
           <button
             onClick={() => navigate(-1)}
-            className="h-10 w-17 flex items-center gap-1 text-white bg-highlight-1 hover:bg-highlight-1/80 transition rounded-lg"
+            className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200  "
           >
             <ArrowLeft size={25} />
-            <span className="hidden sm:inline">back</span>
+            <span className="hidden sm:inline"></span>
           </button>
           <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
             {new Date(post.date).toLocaleDateString()}
