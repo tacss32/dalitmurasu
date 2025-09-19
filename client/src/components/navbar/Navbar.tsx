@@ -5,6 +5,7 @@ import Tags from "./Tags";
 import TitleBar from "./TitleBar";
 import Menus from "./Menus";
 import Subscribe from "./Subscribe";
+import { FaFacebook, FaInstagram, FaTwitter, FaWhatsapp } from "react-icons/fa";
 
 interface NavbarProps {
   onHeightChange: (height: number) => void;
@@ -182,35 +183,88 @@ export default function Navbar({ onHeightChange }: NavbarProps) {
       </div>
 
       {/* --- MOBILE / TABLET MENU (Now a sibling) --- */}
+      {/* --- MOBILE / TABLET MENU Now a sibling) --- */}
       <div
         ref={mobileMenuRef}
         className={`xl:hidden fixed inset-y-0 right-0 w-80 md:w-96 transform ${TRANSITION_DURATION}
-          ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
-          backdrop-blur-sm shadow-lg border-l bg-background-to z-50 overflow-y-auto`}
+    ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
+    backdrop-blur-sm shadow-lg border-l bg-background-to z-50 overflow-y-auto`}
       >
-        <div className="flex justify-between items-center p-4">
-          <Subscribe />
-          <button
-            onClick={closeMobileMenu}
-            className="text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
-            aria-label="Close mobile menu"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+       {/* Top bar: social icons + close button */}
+<div className="flex justify-between items-center p-4">
+  {/* Social media icons */}
+  <div className="flex space-x-4 text-2xl">
+    <a
+      href="https://www.facebook.com/dalitmurasuadmin?rdid=O3FlEPCoVVrE3uAm&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F19DuFLdYay%2F#"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:text-red-700 dark:hover:text-red-100"
+    >
+      <FaFacebook />
+    </a>
+    <a
+      href="https://x.com/DalitMurasu?t=xF15mBqW1rLbOYfOnMd_0Q&s=08"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:text-red-700 dark:hover:text-red-100"
+    >
+      <FaTwitter />
+    </a>
+    <a
+      href="http://googleusercontent.com/maps.google.com/3"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:text-red-700 dark:hover:text-red-100"
+    >
+      <FaInstagram />
+    </a>
+    <a
+      href="https://wa.me/919444452877"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:text-red-700 dark:hover:text-red-100"
+    >
+      <FaWhatsapp />
+    </a>
+  </div>
+
+  {/* Close button */}
+  <button
+    onClick={closeMobileMenu}
+    className="text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
+    aria-label="Close mobile menu"
+  >
+    <X className="h-6 w-6" />
+  </button>
+</div>
+
+
+        {/* Main content */}
         <div className="px-4 pb-6 space-y-6">
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-              <div className="flex-1">
-                <Menus isMobileMenu={true} closeMobileMenu={closeMobileMenu} />
-              </div>
-            </div>
-            <div className="pb-4 border-b bg-background-to">
-              <Tags isMobileView={true} closeMobileMenu={closeMobileMenu} />
-            </div>
-          </div>
+         <div className="space-y-4">
+  {/* Row for Subscribe (left) and Login (right) */}
+  <div className="flex justify-between items-center gap-4">
+    {/* Subscribe (left) */}
+    <div>
+      <Subscribe />
+    </div>
+
+    {/* Login/Profile (right) */}
+    <div>
+      <Menus isMobileMenu={true} closeMobileMenu={closeMobileMenu} />
+    </div>
+  </div>
+
+  {/* Tags below */}
+  <div className="pb-4 border-b bg-background-to">
+    <Tags isMobileView={true} closeMobileMenu={closeMobileMenu} />
+  </div>
+</div>
+
+
         </div>
       </div>
+
     </>
   );
 }

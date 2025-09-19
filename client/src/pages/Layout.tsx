@@ -3,27 +3,30 @@
 import { Outlet } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/navbar/Navbar";
-import SocialMediaScroller from "../components/SocialMediaScroller"; // Import the new component
+import SocialMediaScroller from "../components/SocialMediaScroller";
 import { useState, useEffect } from "react";
-
- // The empty dependency array ensures this effect runs only once
 
 export default function Layout() {
   const [navbarHeight, setNavbarHeight] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768); // Assuming 768px isyour mobile breakpoint
 
   useEffect(() => {
+    // This effect handles the context menu
     const handleContextMenu = (e: { preventDefault: () => void; }) => {
       e.preventDefault();
     };
-
-    // Add the event listener to the document
     document.addEventListener("contextmenu", handleContextMenu);
 
-    // Clean up the event listener when the component unmounts
+    // This effect handles the screen resize
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
+      window.removeEventListener("resize", handleResize);
     };
-    // ... context menu code remains the same
   }, []);
 
   return (
@@ -35,7 +38,7 @@ export default function Layout() {
       >
         <Outlet />
       </main>
-      <SocialMediaScroller /> {/* Add the component here */}
+      {!isMobile && <SocialMediaScroller />} {/* Conditionally render the component */}
       <Footer />
     </div>
   );

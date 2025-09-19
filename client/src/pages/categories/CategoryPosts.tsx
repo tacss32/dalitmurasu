@@ -101,16 +101,16 @@ export default function CategoryPosts() {
           </div>
         )}
 
-        {/* Text Section */}
+        {/* Txt Section */}
         <div className="flex flex-col justify-center">
           <h2 className="text-lg font-bold">
             {post.title}
           </h2>
           <p className="text-sm text-gray-500">
-            {new Date(post.date ).toLocaleDateString()}
+            {new Date(post.date ).toLocaleDateString()}   {categoryTranslations[post.category] || post.category}
           </p>
           <p className="text-sm text-gray-500">
-            {categoryTranslations[post.category] || post.category}
+            
           </p>
         </div>
       </div>

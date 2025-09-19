@@ -193,7 +193,7 @@ export default function MainBanner() {
         ))}
       </div>
 
-      {/* Navigation Dots */}
+      {/* Navigaton Dots */}
       {banners.length > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-30">
           {banners.map((_, index) => (

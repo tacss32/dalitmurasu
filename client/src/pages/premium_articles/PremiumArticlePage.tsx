@@ -174,16 +174,16 @@ export default function PremiumArticlePage() {
                         />
                       </div>
                     )}
-                    {/* Text Section */}
+                    {/* Text Secion */}
                     <div className="flex flex-col justify-center">
                       <h2 className="text-lg font-bold text-gray-900">
                         {article.title}
                       </h2>
                       <p className="text-sm text-gray-500">
-                        {new Date(article.date).toLocaleDateString()}
+                        {new Date(article.date).toLocaleDateString()}   {categoryInTamil[article.category] || article.category}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {categoryInTamil[article.category] || article.category}
+                        
                       </p>
                     </div>
                   </div>

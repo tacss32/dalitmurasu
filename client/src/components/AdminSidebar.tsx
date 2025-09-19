@@ -141,7 +141,7 @@ export default function AdminSidebar() {
       mainLink: "/admin/universal",
       subLinks: [
         { label: "Add New", href: "/admin/universal/create", icon: <MdAdd /> },
-        // { label: "Pinned Posts", href: "/admin/pinned-posts", icon: <MdStar /> },
+        // { label: "Pinned Posts", href: "/admin/pinned-post", icon: <MdStar /> },
       ],
     },
     {
@@ -417,6 +417,7 @@ export default function AdminSidebar() {
 
   const handleSearchToggle = () => {
     setIsSearchOpen((prev) => !prev);
+    setIsSidebarOpen(true); 
     if (!isSearchOpen) {
       setTimeout(() => {
         searchInputRef.current?.focus();
@@ -581,6 +582,7 @@ export default function AdminSidebar() {
             <Link
               to={section.mainLink}
               className="flex items-center gap-3 text-lg font-semibold hover:text-yellow-300 transition-colors duration-200 py-2 group"
+               onClick={() => setIsSidebarOpen(true)} 
             >
               {section.icon}
               <span className={`${isSidebarOpen ? "block" : "hidden"}`}>

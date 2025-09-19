@@ -9,8 +9,19 @@ interface Post {
   content?: string;
   fileName?: string;
   images?: string[];
-  source: "PremiumPost" | "UniversalPost";
+  source: "PremiumPost" ;
   createdAt?: string;
+  // KEY CHANGE: Add the category field to the Post interface
+  category?: string;
+}
+
+// KEY CHANGE: Add Category interface for the fetched categories
+interface Category {
+  _id: string;
+  name: {
+    ta: string;
+    en: string;
+  };
 }
 
 const API_BASE_URL = import.meta.env.VITE_API.replace(/\/+$/, "");
@@ -18,11 +29,13 @@ const API_BASE_URL = import.meta.env.VITE_API.replace(/\/+$/, "");
 const GetAllPosts: React.FC = () => {
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [pinnedPosts, setPinnedPosts] = useState<Post[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [selectedSource, setSelectedSource] = useState<string>("All");
+  // REMOVED: selectedSource state, replaced by selectedCategory
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
 
@@ -43,8 +56,20 @@ const GetAllPosts: React.FC = () => {
     }
   };
 
+  // KEY CHANGE: New function to fetch categories from the backend
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/categories?available=true`);
+      setCategories(res.data);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+      // Handle error gracefully, perhaps set an error state
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
+    fetchCategories();
   }, []);
 
   const isPinned = (postId: string) =>
@@ -111,25 +136,29 @@ const GetAllPosts: React.FC = () => {
   };
 
   const filteredPosts = useMemo(() => {
-  return allPosts.filter((post) => {
-    // REMOVED: The redundant check for post.source === "PdfUpload"
-    
-    const postDate = post.createdAt ? new Date(post.createdAt) : null;
-    const from = fromDate ? new Date(fromDate) : null;
-    const to = toDate ? new Date(toDate) : null;
+    return allPosts.filter((post) => {
+      const postDate = post.createdAt ? new Date(post.createdAt) : null;
+      const from = fromDate ? new Date(fromDate) : null;
+      const to = toDate ? new Date(toDate) : null;
 
-    const titleMatch = post.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const sourceMatch =
-      selectedSource === "All" || post.source === selectedSource;
-    const dateMatch =
-      (!from || (postDate && postDate >= from)) &&
-      (!to || (postDate && postDate <= to));
+      const titleMatch = post.title
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
-    return titleMatch && sourceMatch && dateMatch;
-  });
-}, [allPosts, searchTerm, selectedSource, fromDate, toDate]);
+      // KEY CHANGE: New category match logic
+      const categoryMatch =
+        selectedCategory === "All" ||
+        post.source === selectedCategory ||
+        post.category === selectedCategory;
+
+      const dateMatch =
+        (!from || (postDate && postDate >= from)) &&
+        (!to || (postDate && postDate <= to));
+
+      return titleMatch && categoryMatch && dateMatch;
+    });
+    // KEY CHANGE: Add selectedCategory to the dependencies array
+  }, [allPosts, searchTerm, selectedCategory, fromDate, toDate]);
 
   if (loading) return <div className="p-6 text-gray-700">Loading...</div>;
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
@@ -148,14 +177,20 @@ const GetAllPosts: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        {/* KEY CHANGE: Replace the source dropdown with a more comprehensive category dopdown */}
         <select
-          value={selectedSource}
-          onChange={(e) => setSelectedSource(e.target.value)}
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
           className="w-full md:w-1/4 p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         >
-          <option value="All">All Sources</option>
-          <option value="PremiumPost">Premium Posts</option>
-          <option value="UniversalPost">Universal Posts</option>
+          <option value="All">All Categories</option>
+          <option value="PremiumPost">முதன்மைக் கட்டுரைகள்</option>
+          {/* <option value="UniversalPost">Universal Posts</option> */}
+          {categories.map((cat) => (
+            <option key={cat._id} value={cat.name.en}>
+              {cat.name.ta}
+            </option>
+          ))}
         </select>
         <div className="flex items-center space-x-2 w-full md:w-auto">
           <label htmlFor="fromDate" className="text-sm font-medium text-gray-700">From:</label>

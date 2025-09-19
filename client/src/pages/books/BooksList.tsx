@@ -195,7 +195,7 @@ export default function Books() {
                 &times;
               </button>
             </div>
-            {/* The main content area with a two-column layout, image on the left */}
+            {/* The main content area with a two-column lyout, image on the left */}
             <div className="flex flex-col md:flex-row gap-8">
               {/* Left column for the image */}
               <div className="w-full md:w-1/2 flex justify-center items-start p-4 rounded-lg">
