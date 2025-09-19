@@ -522,7 +522,7 @@ export default function PostDetail() {
           {post.author}
         </p>
 
-        {/* Share and Bookmark Buttons Container */}
+        {/* Share and Bookmark Buttos Container */}
         <div className="absolute top-6 right-0 flex items-center gap-2">
           <button
             onClick={handleShare}

@@ -57,7 +57,7 @@ export default function NewsletterImageDisplay(): JSX.Element {
             className="w-full h-auto rounded-md shadow-md border border-gray-600"
             style={{
               aspectRatio: '68 / 13',  // Force layout ratio
-              objectFit: 'cover',      // Fill the area, crop if needed
+              objectFit: 'cover',      // Fill thearea, crop if needed
               maxHeight: '400px'
             }}
           />

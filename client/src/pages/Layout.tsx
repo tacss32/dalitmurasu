@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 
 export default function Layout() {
   const [navbarHeight, setNavbarHeight] = useState(0);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768); // Assuming 768px is your mobile breakpoint
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768); // Assuming 768px isyour mobile breakpoint
 
   useEffect(() => {
     // This effect handles the context menu

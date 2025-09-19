@@ -183,7 +183,7 @@ export default function Navbar({ onHeightChange }: NavbarProps) {
       </div>
 
       {/* --- MOBILE / TABLET MENU (Now a sibling) --- */}
-      {/* --- MOBILE / TABLET MENU (Now a sibling) --- */}
+      {/* --- MOBILE / TABLET MENU Now a sibling) --- */}
       <div
         ref={mobileMenuRef}
         className={`xl:hidden fixed inset-y-0 right-0 w-80 md:w-96 transform ${TRANSITION_DURATION}

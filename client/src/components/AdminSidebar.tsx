@@ -141,7 +141,7 @@ export default function AdminSidebar() {
       mainLink: "/admin/universal",
       subLinks: [
         { label: "Add New", href: "/admin/universal/create", icon: <MdAdd /> },
-        // { label: "Pinned Posts", href: "/admin/pinned-posts", icon: <MdStar /> },
+        // { label: "Pinned Posts", href: "/admin/pinned-post", icon: <MdStar /> },
       ],
     },
     {

@@ -174,7 +174,7 @@ export default function PremiumArticlePage() {
                         />
                       </div>
                     )}
-                    {/* Text Section */}
+                    {/* Text Secion */}
                     <div className="flex flex-col justify-center">
                       <h2 className="text-lg font-bold text-gray-900">
                         {article.title}

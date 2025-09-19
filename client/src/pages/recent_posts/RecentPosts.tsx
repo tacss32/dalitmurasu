@@ -83,7 +83,7 @@ export default function RecentPosts() {
           ))}
         </div>
 
-        {/* Mobile List View */}
+        {/* Mobile List Vew */}
         <div className="block md:hidden  flex-col gap-3">
           {posts.map((post) => (
             <Link to={`/posts/${post._id}`} key={post._id}>

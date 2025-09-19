@@ -78,7 +78,7 @@ export default function Header({
     fetchBanner();
   }, [categorySlug, urlPath]);
 
-  // FIX: Normalize the categorySlug before comparing
+  // FIX: Normalize the categorSlug before comparing
   const normalizedCategorySlug = categorySlug ? normalize(categorySlug) : null;
 
   const currentCategory = normalizedCategorySlug

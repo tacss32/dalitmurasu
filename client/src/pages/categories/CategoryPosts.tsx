@@ -101,7 +101,7 @@ export default function CategoryPosts() {
           </div>
         )}
 
-        {/* Text Section */}
+        {/* Txt Section */}
         <div className="flex flex-col justify-center">
           <h2 className="text-lg font-bold">
             {post.title}

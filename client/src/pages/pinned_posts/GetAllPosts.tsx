@@ -177,7 +177,7 @@ const GetAllPosts: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        {/* KEY CHANGE: Replace the source dropdown with a more comprehensive category dropdown */}
+        {/* KEY CHANGE: Replace the source dropdown with a more comprehensive category dopdown */}
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}

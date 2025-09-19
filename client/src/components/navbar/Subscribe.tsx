@@ -121,7 +121,7 @@ export default function Subscribe() {
             d="M13 4v4c-6.575 1.028 -9.02 6.788 -10 12c-.037 .206 5.384 -5.962 10 -6v4l8 -7l-8 -7z"
           />
         </svg>
-        {/* Tooltip text outside the SVG but within the relative group */}
+        {/* Tooltip text outside the SVG but within the relative roup */}
         <span
           className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block
                      bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap
