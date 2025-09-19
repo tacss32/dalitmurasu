@@ -32,11 +32,13 @@ export default function Books() {
   const navigate = useNavigate();
 
   // 👇 NEW: State for temporary notifications
-  const [notification, setNotification] = useState<{ message: string; visible: boolean }>({
+  const [notification, setNotification] = useState<{
+    message: string;
+    visible: boolean;
+  }>({
     message: "",
     visible: false,
   });
-
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
@@ -54,7 +56,6 @@ export default function Books() {
       .catch((err) => console.error("Failed to fetch books:", err))
       .finally(() => setLoadingBooks(false));
   }, []);
-
 
   const addToCart = async (bookToAdd: Book) => {
     if (!userId) {
@@ -81,7 +82,6 @@ export default function Books() {
       setTimeout(() => {
         setNotification({ message: "", visible: false });
       }, 3000); // Hide after 3 seconds
-
     } catch (err: any) {
       console.error("Failed to add to cart:", err);
       // 👇 NEW: Display a temporary error notification
@@ -92,7 +92,6 @@ export default function Books() {
       setTimeout(() => {
         setNotification({ message: "", visible: false });
       }, 3000);
-
     } finally {
       setAddingToCartStates((prev) => {
         const newState = new Map(prev);
@@ -116,7 +115,6 @@ export default function Books() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 font-sans">
-
       {/* 👇 NEW: Temporary Notification Component */}
       {notification.visible && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-highlight-1 text-white font-bold py-3 px-6 rounded-lg shadow-xl z-50 transition-opacity duration-500 ease-in-out">
@@ -151,34 +149,36 @@ export default function Books() {
                     e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
                   }}
                 />
-                <h2 className="text-2xl font-bold text-gray-900 mb-2 truncate">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 truncate">
                   {book.name}
                 </h2>
-                <p className="text-gray-600 text-md mb-1">by {book.author}</p>
+                <p className="text-gray-600 text-sm md:text-base mb-1">
+                  by {book.author}
+                </p>
                 <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p>
-                <div className="flex items-baseline mb-4">
-                  <span className="text-red-500 line-through text-lg mr-2">
-                    ₹{book.actualPrice.toFixed(2)}
-                  </span>
-                  <span className="text-green-700 font-extrabold text-xl">
-                    ₹{book.sellingPrice.toFixed(2)}
-                  </span>
-                </div>
               </div>
 
-              {/* 👇 Button pinned at bottom */}
+              {/* THIS IS THE MOVED CODE BLOCK */}
+              <div className="flex items-baseline mb-4">
+                <span className="text-red-500 line-through text-lg mr-2">
+                  ₹{book.actualPrice.toFixed(2)}
+                </span>
+                <span className="text-green-700 font-extrabold text-xl">
+                  ₹{book.sellingPrice.toFixed(2)}
+                </span>
+              </div>
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   addToCart(book);
                 }}
-                className="bg-red-600 hover:bg-black text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto"
+                className="bg-red-600 hover:bg-black text-white font-bold py-2 px-4 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto"
                 disabled={addingToCartStates.has(book._id)}
               >
                 {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}
               </button>
             </div>
-
           ))}
         </div>
       )}
@@ -210,10 +210,10 @@ export default function Books() {
               </div>
               {/* Right column for text content */}
               <div className="w-full md:w-1/2 flex flex-col">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-2">
                   {selectedBook.name}
                 </h2>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 mb-4 text-sm md:text-base">
                   by{" "}
                   <span className="font-semibold">{selectedBook.author}</span>
                 </p>
