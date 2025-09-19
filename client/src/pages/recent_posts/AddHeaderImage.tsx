@@ -316,7 +316,7 @@ export default function AddHeaderImage() {
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               <p className="mt-2 text-sm text-gray-500">
-                Recommended aspect ratio: 1:1 (or vertical)
+                Recommended aspect ratio: 4:2 
               </p>
             </div>
 
@@ -327,7 +327,7 @@ export default function AddHeaderImage() {
                     crop={mobileCrop}
                     onChange={(_, percentCrop) => setMobileCrop(percentCrop)}
                     onComplete={(pixelCrop) => setCompletedMobileCrop(pixelCrop)}
-                    aspect={4 / 2}
+                    aspect={4 / 3}
                     minWidth={100}
                     minHeight={100}
                     keepSelection
@@ -335,7 +335,7 @@ export default function AddHeaderImage() {
                     <img
                       ref={mobileImageRef}
                       src={mobileImageUrl}
-                      onLoad={(e) => onImageLoad(e, 4 / 2, setMobileCrop, setCompletedMobileCrop, mobileImageRef)}
+                      onLoad={(e) => onImageLoad(e, 4 / 3, setMobileCrop, setCompletedMobileCrop, mobileImageRef)}
                       alt="Mobile banner to crop"
                       className="max-h-[400px] object-contain w-full"
                     />
