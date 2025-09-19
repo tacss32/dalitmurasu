@@ -102,20 +102,21 @@ export default function Header({
   const fallbackSrc = "/headerImg.jpg";
 
   return (
-    <div className="relative w-full">
-      <picture>
-  {mobileSrc && <source media="(max-width: 767px)" srcSet={mobileSrc} />}
-  {desktopSrc && <source media="(min-width: 768px)" srcSet={desktopSrc} />}
-  <img
-    src={fallbackSrc}  // only true fallback
-    alt="Header Banner"
-    className="w-full h-auto rounded-lg object-cover"
-  />
-</picture>
+    <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+  <picture>
+    {mobileSrc && <source media="(max-width: 767px)" srcSet={mobileSrc} />}
+    {desktopSrc && <source media="(min-width: 768px)" srcSet={desktopSrc} />}
+    <img
+      src={fallbackSrc}
+      alt="Header Banner"
+      className="w-screen h-auto object-cover"
+    />
+  </picture>
 
-      <h1 className="text-lg md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
-        <span>{headerText}</span>
-      </h1>
-    </div>
+  <h1 className="text-lg md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
+    <span>{headerText}</span>
+  </h1>
+</div>
+
   );
 }

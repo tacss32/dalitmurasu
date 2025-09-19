@@ -64,7 +64,7 @@ export default function NewsletterImageDisplay(): JSX.Element {
           {/* Button positioned over the image */}
           <button
             onClick={handleSubscribeClick}
-            className="absolute bottom-4 right-4 bg-red-700 text-white px-4 py-2 rounded-md shadow-lg hover:bg-black transition-colors duration-200"
+            className="absolute bottom-0 right-0 px-2 py-1 text-xs sm:bottom-4 sm:right-4 sm:px-4 sm:py-2 sm:text-base bg-red-700 text-white rounded-md shadow-lg hover:bg-black transition-colors duration-200"
           >
             Subscribe Now!
           </button>

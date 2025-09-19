@@ -180,10 +180,10 @@ export default function PremiumArticlePage() {
                         {article.title}
                       </h2>
                       <p className="text-sm text-gray-500">
-                        {new Date(article.date).toLocaleDateString()}
+                        {new Date(article.date).toLocaleDateString()}   {categoryInTamil[article.category] || article.category}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {categoryInTamil[article.category] || article.category}
+                        
                       </p>
                     </div>
                   </div>
