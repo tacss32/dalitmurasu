@@ -161,11 +161,10 @@ export default function MainBanner() {
         {banners.map((banner, index) => (
           <picture
             key={banner._id}
-            className={`w-full transition-opacity duration-1000 ease-in-out ${
-              index === currentIndex
-                ? "opacity-100"
-                : "opacity-0 absolute top-0 left-0"
-            }`}
+            className={`w-full transition-opacity duration-1000 ease-in-out ${index === currentIndex
+              ? "opacity-100"
+              : "opacity-0 absolute top-0 left-0"
+              }`}
           >
             <source media="(max-width: 768px)" srcSet={banner.mobileImage} />
             <img
@@ -179,7 +178,7 @@ export default function MainBanner() {
 
       <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none"></div>
 
-      <div className="absolute bottom-32 right-6 md:bottom-10 md:right-10 flex flex-col space-y-4 z-20">
+      <div className="absolute bottom-10 right-6 md:bottom-10 md:right-10 flex flex-col space-y-4 z-20">
         {/* Render buttons based on fetched banner categories */}
         {[...bannerCategories].reverse().map((cat) => (
           <button
@@ -187,9 +186,9 @@ export default function MainBanner() {
             onClick={() =>
               navigate(`/${cat.name.en.toLowerCase().replace(/\s/g, "")}`)
             }
-            className="px-4 py-2 md:px-8 lg:px-10 lg:py-4 text-white font-semibold text-lg md:text-2xl rounded-lg bg-highlight-1/85 hover:bg-black/85 transition-colors duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black"
+            className="px-2 py-1 text-sm md:px-8 lg:px-10 lg:py-4 md:text-2xl text-white font-semibold rounded-lg bg-highlight-1/85 hover:bg-black/85 transition-colors duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black"
           >
-            {cat.name.ta} {/* Display Tamil name on the button */}
+            {cat.name.ta}
           </button>
         ))}
       </div>
@@ -201,11 +200,10 @@ export default function MainBanner() {
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentIndex
-                  ? "bg-highlight-1 scale-125"
-                  : "bg-gray-300 hover:bg-highlight-1"
-              }`}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentIndex
+                ? "bg-highlight-1 scale-125"
+                : "bg-gray-300 hover:bg-highlight-1"
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             ></button>
           ))}

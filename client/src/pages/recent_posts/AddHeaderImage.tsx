@@ -327,7 +327,7 @@ export default function AddHeaderImage() {
                     crop={mobileCrop}
                     onChange={(_, percentCrop) => setMobileCrop(percentCrop)}
                     onComplete={(pixelCrop) => setCompletedMobileCrop(pixelCrop)}
-                    aspect={1 / 1}
+                    aspect={4 / 2}
                     minWidth={100}
                     minHeight={100}
                     keepSelection
@@ -335,7 +335,7 @@ export default function AddHeaderImage() {
                     <img
                       ref={mobileImageRef}
                       src={mobileImageUrl}
-                      onLoad={(e) => onImageLoad(e, 1 / 1, setMobileCrop, setCompletedMobileCrop, mobileImageRef)}
+                      onLoad={(e) => onImageLoad(e, 4 / 2, setMobileCrop, setCompletedMobileCrop, mobileImageRef)}
                       alt="Mobile banner to crop"
                       className="max-h-[400px] object-contain w-full"
                     />
