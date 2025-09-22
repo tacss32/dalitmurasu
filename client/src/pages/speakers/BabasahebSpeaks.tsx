@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useLocation } from "react-router-dom";
-//interface
+import { Link, useLocation } from "react-router-dom";
+
 interface Post {
   _id: string;
   title: string;
   content: string | string[];
   headerImage?: string;
   middleImage?: string;
+  images?: string[]; // added in case API uses this
   date: string;
   author: string;
   category: string;
@@ -23,6 +23,7 @@ export default function BabasahebSpeaks() {
     `${name.toLowerCase().replace(/[\s\-\/]+/g, "")}`;
 
   const theme = getTheme(location.pathname);
+
   const fetchPosts = async () => {
     try {
       const res = await fetch(
@@ -68,42 +69,91 @@ export default function BabasahebSpeaks() {
     );
   };
 
+  const getImage = (article: Post) => {
+    return (
+      article.headerImage ||
+      article.middleImage ||
+      article.images?.[0] ||
+      ""
+    );
+  };
+
   return (
-    <div className="flex justify-center p-6 gap-3 h-[700px] overflow-hidden">
-      <img
-        src="102.png"
-        alt="babasaheb"
-        className="w-1/3 h-auto object-contain rounded-lg"
-      />
-      <div className="flex flex-col gap-3 flex-grow">
-        <div className="flex items-center justify-between gap-3 sticky top-0 z-10 border-b-2 border-highlight-1">
-          <h3 className="text-2xl font-bold text-highlight-1">
-            பாபாசாகேப் பேசுகிறார்
-          </h3>
-          <input
-            type="text"
-            placeholder="Search articles..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="p-3 border-l-2 border-highlight-1 w-96 focus:outline-none"
-          />
-        </div>
-        <div className="flex flex-col gap-3 flex-grow overflow-y-auto">
+    <div className="flex flex-col gap-4 p-6">
+      {/* Search Bar */}
+      <div className="flex items-center justify-between gap-3 sticky top-0 z-10 border-b-2 border-highlight-1 bg-background-to backdrop-blur">
+        <h3 className="text-2xl font-bold text-highlight-1">
+          பாபாசாகேப் பேசுகிறார்
+        </h3>
+        <input
+          type="text"
+          placeholder="Search articles..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="p-3 border-l-2 border-highlight-1 w-full md:w-96 focus:outline-none"
+        />
+      </div>
+
+      {/* Desktop View */}
+      <div className="hidden md:flex gap-4">
+        <div className="flex flex-col gap-2 flex-grow overflow-y-auto h-[700px]">
           {filteredArticles.length > 0 ? (
             filteredArticles.map((article) => (
               <Link to={`/posts/${article._id}`} key={article._id}>
-                <div className="w-full flex flex-col gap-2 justify-between bg-white/80 hover:bg-white/50 duration-150 transition-colors ease-in-out p-2 rounded shadow-lg">
-                  <h2 className="text-xl font-bold">
+                <div className="w-full flex flex-col gap-2 bg-white/80 hover:bg-white/50 transition-colors duration-150 p-3 rounded shadow-lg">
+                  <h2 className="text-lg font-semibold text-gray-800">
                     {highlightMatch(article.title, search)}
                   </h2>
-                  <p className="text-sm text-gray-500">{new Date(article.date).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(article.date).toLocaleDateString()}
+                  </p>
                 </div>
               </Link>
             ))
           ) : (
-            <p className="text-gray-500">No articles found.</p>
+            <p className="text-gray-500 text-center py-8">
+              No articles found.
+            </p>
           )}
         </div>
+        <img
+          src="102.png"
+          alt="Babasaheb"
+          className="w-1/3 h-auto object-contain rounded-lg"
+        />
+      </div>
+
+      {/* Mobile View */}
+      <div className="md:hidden flex flex-col gap-3">
+        {filteredArticles.length > 0 ? (
+          filteredArticles.map((article) => (
+            <Link to={`/posts/${article._id}`} key={article._id}>
+              <div className="w-full flex gap-4 p-2 rounded shadow-lg bg-background-to hover:bg-white/50 transition-colors duration-150">
+                {/* Image */}
+                {getImage(article) && (
+                  <div className="flex-shrink-0 w-24 h-24">
+                    <img
+                      src={getImage(article)}
+                      alt={article.title}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  </div>
+                )}
+                {/* Text */}
+                <div className="flex flex-col justify-center">
+                  <h2 className="text-lg font-bold">
+                    {highlightMatch(article.title, search)}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {new Date(article.date).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <p className="text-gray-500 text-center py-8">No articles found.</p>
+        )}
       </div>
     </div>
   );

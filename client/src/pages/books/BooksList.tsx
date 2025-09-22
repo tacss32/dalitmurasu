@@ -149,21 +149,21 @@ export default function Books() {
                     e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
                   }}
                 />
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 truncate">
+                <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
                   {book.name}
                 </h2>
                 <p className="text-gray-600 text-sm md:text-base mb-1">
                   by {book.author}
                 </p>
-                <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p>
+                {/* <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p> */}
               </div>
 
               {/* THIS IS THE MOVED CODE BLOCK */}
               <div className="flex items-baseline mb-4">
-                <span className="text-red-500 line-through text-lg mr-2">
+                <span className="text-red-500 line-through text-sm lg:text-lg mr-2">
                   ₹{book.actualPrice.toFixed(2)}
                 </span>
-                <span className="text-green-700 font-extrabold text-xl">
+                <span className="text-green-700 font-extrabold  text-sm lg:text-lg mr-2">
                   ₹{book.sellingPrice.toFixed(2)}
                 </span>
               </div>
@@ -173,7 +173,7 @@ export default function Books() {
                   e.stopPropagation();
                   addToCart(book);
                 }}
-                className="bg-red-600 hover:bg-black text-white font-bold py-2 px-4 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto"
+                className="bg-red-600 hover:bg-black text-white font-bold py-0 px-3 md:py-2 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-28"
                 disabled={addingToCartStates.has(book._id)}
               >
                 {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}
@@ -186,8 +186,10 @@ export default function Books() {
       {/* NEW: Description Popup Modal */}
       {showDescriptionPopup && selectedBook && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-          <div className="bg-background-to rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-end items-center mb-4">
+          <div className="bg-background-to rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] flex flex-col relative">
+
+            {/* The close button container. It is absolutely positioned */}
+            <div className="flex justify-end sticky top-0 bg-background-to z-20">
               <button
                 onClick={handleClosePopup}
                 className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -195,8 +197,9 @@ export default function Books() {
                 &times;
               </button>
             </div>
-            {/* The main content area with a two-column lyout, image on the left */}
-            <div className="flex flex-col md:flex-row gap-8">
+
+            {/* The main content area that will scroll */}
+            <div className="flex-grow flex flex-col md:flex-row gap-8 overflow-y-auto">
               {/* Left column for the image */}
               <div className="w-full md:w-1/2 flex justify-center items-start p-4 rounded-lg">
                 <img
@@ -218,14 +221,14 @@ export default function Books() {
                   <span className="font-semibold">{selectedBook.author}</span>
                 </p>
                 <div className="flex items-baseline mb-4">
-                  <span className="text-red-500 line-through text-lg mr-2">
+                  <span className="text-red-500 line-through text-base md:text-lg mr-2">
                     ₹{selectedBook.actualPrice.toFixed(2)}
                   </span>
-                  <span className="text-green-700 font-extrabold text-2xl">
+                  <span className="text-green-700 font-extrabold text-xl md:text-2xl">
                     ₹{selectedBook.sellingPrice.toFixed(2)}
                   </span>
                 </div>
-                <div className="flex-grow overflow-y-auto pr-2 mb-4">
+                <div className="flex-grow pr-2 mb-4">
                   <p className="text-gray-800 whitespace-pre-wrap">
                     {selectedBook.description}
                   </p>

@@ -163,7 +163,7 @@ export default function PremiumArticlePage() {
                   to={`/premium-articles/${article._id}`}
                   key={article._id}
                 >
-                  <div className="w-full flex gap-4 p-2 rounded shadow-lg bg-white/80 hover:bg-white/50 duration-150 transition-colors ease-in-out">
+                  <div className="w-full flex gap-4 p-2 rounded shadow-lg bg-background-to hover:bg-white/50 duration-150 transition-colors ease-in-out">
                     {/* Image Section */}
                     {article?.images?.[0] && (
                       <div className="flex-shrink-0 w-24 h-24">
