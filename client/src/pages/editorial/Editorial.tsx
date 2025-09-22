@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header";
-import Card from "../../components/Card"; // <-- Import Card component
+import Card from "../../components/Card";
 import axios from "axios";
-// import { Link } from "react-router-dom"; // <-- Import Link for PDF cards
+import { Link } from "react-router-dom"; // <-- Import Link
 
 // ---------------- Types ----------------
 export type PostType = {
@@ -12,6 +12,7 @@ export type PostType = {
     content?: string;
     images?: string[];
     date: string; // ISO
+    createdAt?: string;
     author: string;
     category: string; // expecting 'Editorial', etc.
 };
@@ -99,6 +100,15 @@ const getMonthName = (monthNumber: number, locale: string = "en-US") => {
     return date.toLocaleString(locale, { month: "long" });
 };
 
+// Placeholder for category translations
+const categoryTranslations: Record<string, string> = {
+    // Add your translations here, e.g.:
+    editorial: "தலையங்கம்",
+    thalaiyangam: "தலையங்கம்",
+    "special-reports": "சிறப்பு அறிக்கைகள்",
+    // etc.
+};
+
 // ---------------- PDF Card Component (for displaying PDF items) ----------------
 const SERVER_URL_STATIC = import.meta.env.VITE_API;
 
@@ -124,7 +134,7 @@ const PdfItemCard: React.FC<PdfItemCardProps> = ({ item }) => {
             <div className="p-4">
                 <h3 className="text-md font-bold text-gray-800 line-clamp-2">{item.title}</h3>
                 <p className="text-sm text-gray-500 mt-1">{new Date(item.dateISO).toLocaleDateString()}</p>
-                 <span className="text-xs font-semibold text-red-600 mt-2 inline-block">PDF</span>
+                <span className="text-xs font-semibold text-red-600 mt-2 inline-block">PDF</span>
             </div>
         </a>
     );
@@ -133,7 +143,7 @@ const PdfItemCard: React.FC<PdfItemCardProps> = ({ item }) => {
 // ---------------- Main Component ----------------
 export default function Editorial() {
     const SERVER_URL = import.meta.env.VITE_API;
-    
+
     const [chronological, setChronological] = useState<ChronologicalYear[]>([]);
     const [pdfs, setPdfs] = useState<PdfEntry[]>([]);
     const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -148,7 +158,7 @@ export default function Editorial() {
     };
 
     // Fetch data once
-   useEffect(() => {
+    useEffect(() => {
         let mounted = true;
         const load = async () => {
             setLoading(true);
@@ -165,9 +175,6 @@ export default function Editorial() {
                     if (chronRes.success && Array.isArray(chronRes.data)) {
                         const sorted = [...chronRes.data].sort((a, b) => b.year - a.year);
                         setChronological(sorted);
-                        // if (sorted.length > 0) {
-                        //     setSelectedYear(sorted[0].year); // <--- REMOVE THIS LINE
-                        // }
                     } else {
                         setError("Failed to load chronological data.");
                     }
@@ -378,40 +385,84 @@ export default function Editorial() {
                 </aside>
 
                 {/* --- Main Content Area --- */}
-                <main className="flex-1 pl-4 md:pl-0">
-                    {selectedYear && selectedMonth ? (
-                        <>
-                            <h2 className="text-2xl font-bold mb-4">
-                                {getMonthName(selectedMonth)} {selectedYear}
-                            </h2>
-                            {itemsToDisplay.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {itemsToDisplay.map((item) =>
-                                        item.isPdf ? (
-                                            <PdfItemCard key={item._id} item={item} />
-                                        ) : (
-                                            item.article && <Card
-                                                key={item._id}
-                                                id={item.article._id}
-                                                title={item.article.title}
-                                                subtitle={item.article.subtitle}
-                                                author={item.article.author}
-                                                category={item.article.category}
-                                                date={item.article.date}
-                                                image={item.article.images?.[0]}
-                                            />
-                                        )
-                                    )}
-                                </div>
-                            ) : (
-                                <p className="text-center text-gray-600">No editorials found for {getMonthName(selectedMonth)} {selectedYear}.</p>
-                            )}
-                        </>
-                    ) : (
-                        <div className="hidden md:flex items-center justify-center h-full">
-                            <p className="p-4 text-center text-gray-500">Please select a month to view editorials.</p>
-                        </div>
-                    )}
+                <main className="flex-1 md:pl-0">
+                    {/* The existing code for desktop grid view */}
+                    <div className="hidden md:block">
+                        {selectedYear && selectedMonth ? (
+                            <>
+                                <h2 className="text-2xl font-bold mb-4">
+                                    {getMonthName(selectedMonth)} {selectedYear}
+                                </h2>
+                                {itemsToDisplay.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {itemsToDisplay.map((item) =>
+                                            item.isPdf ? (
+                                                <PdfItemCard key={item._id} item={item} />
+                                            ) : (
+                                                item.article && <Card
+                                                    key={item._id}
+                                                    id={item.article._id}
+                                                    title={item.article.title}
+                                                    subtitle={item.article.subtitle}
+                                                    author={item.article.author}
+                                                    category={item.article.category}
+                                                    date={item.article.date}
+                                                    image={item.article.images?.[0]}
+                                                />
+                                            )
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-center text-gray-600">No editorials found for {getMonthName(selectedMonth)} {selectedYear}.</p>
+                                )}
+                            </>
+                        ) : (
+                            <div className="flex items-center justify-center h-full">
+                                <p className="p-4 text-center text-gray-500">Please select a month to view editorials.</p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* --- Mobile/Tablet List view (New) --- */}
+                    <div className="md:hidden flex flex-col gap-3">
+                        {selectedYear && selectedMonth && itemsToDisplay.length > 0 ? (
+                            itemsToDisplay.map((item) => (
+                                <Link to={`/posts/${item.isPdf ? 'pdf' : item.article?._id}`} key={item._id}>
+                                    <div className="w-full flex gap-4 p-2 rounded shadow-lg bg-background-to hover:bg-white/50 duration-150 transition-colors ease-in-out">
+                                        {/* Image Section */}
+                                        {(item.image || item.article?.images?.[0]) && (
+                                            <div className="flex-shrink-0 w-24 h-24">
+                                                <img
+                                                    src={item.isPdf ? `${SERVER_URL_STATIC}${item.image}` : item.article?.images?.[0]}
+                                                    alt={item.title}
+                                                    className="w-full h-full object-cover rounded"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Text Section */}
+                                        <div className="flex flex-col justify-center">
+                                            <h2 className="text-lg font-bold">
+                                                {item.title}
+                                            </h2>
+                                            <p className="text-sm text-gray-500">
+                                                {new Date(item.dateISO).toLocaleDateString()}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                {categoryTranslations[item.article?.category.toLowerCase() || ''] || item.article?.category || 'Editorial'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))
+                        ) : (
+                            <p className="text-center text-gray-600 mt-4">
+                                {selectedYear && selectedMonth
+                                    ? `No editorials found for ${getMonthName(selectedMonth)} ${selectedYear}.`
+                                    : 'Please select a year and month to view editorials.'}
+                            </p>
+                        )}
+                    </div>
                 </main>
             </div>
         </div>

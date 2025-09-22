@@ -352,32 +352,34 @@ export default function AdminSidebar() {
     };
   }, [navigate, API_BASE_URL, fetchNewOrders, fetchCategories]);
   // NEW: Effect for mouse events
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      // Check if cursor is within 20px of the left edge
-      if (e.clientX < 20) {
-        setIsSidebarOpen(true);
-      }
-    };
+// NEW: Effect for mouse events
+  useEffect(() => {
+    const sidebarElement = document.querySelector("aside");
 
-    const handleMouseLeave = () => {
-      setIsSidebarOpen(false);
-    };
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientX < 20) {
+        setIsSidebarOpen(true);
+      }
+    };
 
-    const sidebarElement = document.querySelector("aside");
-    if (sidebarElement) {
-      sidebarElement.addEventListener("mouseleave", handleMouseLeave);
-    }
+    const handleMouseLeave = () => {
+      setIsSidebarOpen(false);
+      setIsSearchOpen(false);
+    };
 
-    document.addEventListener("mousemove", handleMouseMove);
+    if (sidebarElement) {
+      sidebarElement.addEventListener("mouseleave", handleMouseLeave);
+    }
 
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      if (sidebarElement) {
-        sidebarElement.removeEventListener("mouseleave", handleMouseLeave);
-      }
-    };
-  }, []);
+    document.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      if (sidebarElement) {
+        sidebarElement.removeEventListener("mouseleave", handleMouseLeave);
+      }
+    };
+  }, []); // No dependencies are needed for this to work correctly.
 
   const handleLogout = () => {
     localStorage.removeItem("token");
