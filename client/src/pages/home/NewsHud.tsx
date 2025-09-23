@@ -296,29 +296,29 @@ export default function NewsHud() {
         </h2>
         {loadingBooks ? (
           <div className="flex justify-center items-center min-h-screen text-highlight-1">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-highlight-2 "></div>
           </div>
         ) : homeBooks.length === 0 ? (
           <p className="text-center text-lg text-gray-600">
             No featured books available at the moment.
           </p>
         ) : (
-          <div className="flex overflow-x-auto lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 no-scrollbar">
+          <div className="flex overflow-x-auto lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 no-scrollbar ">
             {homeBooks.slice(0, 4).map((book) => (
               <div
                 key={book._id}
-                className="w-64 md:w-full flex-shrink-0 border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer"
+                className="w-40 sm:w-48 md:w-full flex-shrink-0 border border-gray-200 rounded-xl p-3 md:p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer mb-4"
                 onClick={() => handleShowDescription(book)}
               >
                 <img
                   src={book.imageUrl}
                   alt={book.name}
-                  className="w-full h-auto object-contain mb-5 rounded-lg border border-gray-100"
+                  className="w-full h-auto object-contain mb-3 md:mb-5 rounded-lg border border-gray-100"
                   onError={(e) => {
                     e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
                   }}
                 />
-                <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                <h2 className="text-sm md:text-xl font-bold text-gray-900 mb-2">
   {book.name}
 </h2>
                 <div className="flex items-baseline mb-4">
