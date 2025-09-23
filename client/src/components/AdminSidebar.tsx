@@ -31,8 +31,8 @@ interface CustomCategory {
   _id: string;
   name: { en: string; ta: string };
   isAvailable: boolean;
-  isInBanner: boolean;
-  setHeader: boolean;
+  isInBanner: false;
+  setHeader: false;
 }
 
 // NEW: Hardcoded categories to be added to the dropdown
@@ -59,20 +59,16 @@ export default function AdminSidebar() {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
-  // IMPORTANT: Changed to use category name for search. Can also be changed to use _id if your backend expects that.
   const [searchCategory, setSearchCategory] = useState("");
   const [searchFromDate, setSearchFromDate] = useState("");
   const [searchToDate, setSearchToDate] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchIconsContainerRef = useRef<HTMLDivElement>(null);
+  const searchFormRef = useRef<HTMLFormElement>(null); // NEW: Reference to the search form itself
 
   const [newOrdersCount, setNewOrdersCount] = useState(0);
-
-  // NEW: State for categories
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
-
-  // NEW: State for sidebar visibility
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navSections = [
@@ -141,7 +137,6 @@ export default function AdminSidebar() {
       mainLink: "/admin/universal",
       subLinks: [
         { label: "Add New", href: "/admin/universal/create", icon: <MdAdd /> },
-        // { label: "Pinned Posts", href: "/admin/pinned-post", icon: <MdStar /> },
       ],
     },
     {
@@ -162,9 +157,7 @@ export default function AdminSidebar() {
       title: "Books",
       icon: <MdArticle className="text-xl" />,
       mainLink: "/admin/books",
-      subLinks: [
-        // { label: "Add New", href: "/admin/books/create", icon: <MdAdd /> },
-      ],
+      subLinks: [],
     },
     {
       title: "PDF Uploads",
@@ -273,7 +266,6 @@ export default function AdminSidebar() {
     }
   };
 
-  // Function to fetch new orders for notification
   const fetchNewOrders = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -313,7 +305,6 @@ export default function AdminSidebar() {
     }
   }, [API_BASE_URL]);
 
-  // NEW: Function to fetch all available categories
   const fetchCategories = useCallback(async () => {
     setLoadingCategories(true);
     try {
@@ -321,13 +312,11 @@ export default function AdminSidebar() {
         `${API_BASE_URL}api/categories`
       );
       const fetchedCategories = response.data.filter((cat) => cat.isAvailable);
-
-      // Combine fetched categories with hardcoded ones
       const allCategories = [...fetchedCategories, ...customCategories];
       setCategories(allCategories);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
-      setCategories(customCategories); // Fallback to just custom categories on error
+      setCategories(customCategories);
     } finally {
       setLoadingCategories(false);
     }
@@ -335,51 +324,88 @@ export default function AdminSidebar() {
 
   useEffect(() => {
     performTokenVerification();
-    fetchNewOrders(); // Initial fetch
-    fetchCategories(); // NEW: Initial fetch for categories
+    fetchNewOrders();
+    fetchCategories();
 
     const tokenVerificationInterval = setInterval(() => {
       performTokenVerification();
-    }, 5 * 60 * 1000); // Verify token every 5 minutes
+    }, 5 * 60 * 1000);
 
     const notificationInterval = setInterval(() => {
-      fetchNewOrders(); // Fetch new orders every 30 seconds
-    }, 30 * 1000); // 30 seconds
+      fetchNewOrders();
+    }, 30 * 1000);
 
     return () => {
       clearInterval(tokenVerificationInterval);
       clearInterval(notificationInterval);
     };
   }, [navigate, API_BASE_URL, fetchNewOrders, fetchCategories]);
-  // NEW: Effect for mouse events
-// NEW: Effect for mouse events
-  useEffect(() => {
-    const sidebarElement = document.querySelector("aside");
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (e.clientX < 20) {
-        setIsSidebarOpen(true);
-      }
-    };
+  // REVISED: Mouse event logic
+  // REVISED: Mouse event logic
+useEffect(() => {
+  const handleMouseMove = (e: MouseEvent) => {
+    if (e.clientX < 20) {
+      setIsSidebarOpen(true);
+    }
+  };
 
-    const handleMouseLeave = () => {
-      setIsSidebarOpen(false);
-      setIsSearchOpen(false);
-    };
+  const handleMouseLeaveSidebar = () => {
+    // Scenario 2: If the search keyword is empty, close the search form AND the sidebar.
+    if (!searchKeyword) {
+      setIsSearchOpen(false);
+      setIsSidebarOpen(false);
+    }
+    // Scenario 1: If there's a keyword, the sidebar and search form stay open.
+  };
 
-    if (sidebarElement) {
-      sidebarElement.addEventListener("mouseleave", handleMouseLeave);
-    }
+  const sidebarElement = document.querySelector("aside");
+  if (sidebarElement) {
+    sidebarElement.addEventListener("mouseleave", handleMouseLeaveSidebar);
+  }
 
-    document.addEventListener("mousemove", handleMouseMove);
+  document.addEventListener("mousemove", handleMouseMove);
 
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      if (sidebarElement) {
-        sidebarElement.removeEventListener("mouseleave", handleMouseLeave);
-      }
-    };
-  }, []); // No dependencies are needed for this to work correctly.
+  return () => {
+    document.removeEventListener("mousemove", handleMouseMove);
+    if (sidebarElement) {
+      sidebarElement.removeEventListener("mouseleave", handleMouseLeaveSidebar);
+    }
+  };
+}, [searchKeyword]); // Dependency on searchKeyword is crucial here
+
+// REVISED: Click outside logic
+// REVISED: Click outside logic
+useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      handleSearchToggle();
+    }
+    if (e.key === "Escape" && isSearchOpen) {
+      setIsSearchOpen(false);
+    }
+  };
+  window.addEventListener("keydown", handleKeyDown);
+
+  const handleClickOutside = (event: MouseEvent) => {
+    const sidebarElement = document.querySelector("aside");
+
+    // The core change is here:
+    // When a click happens outside the sidebar, clear the search keyword state.
+    if (sidebarElement && !sidebarElement.contains(event.target as Node)) {
+      setIsSidebarOpen(false);
+      setIsSearchOpen(false);
+      setSearchKeyword(""); // This line clears the typed letters.
+    }
+  };
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [isSearchOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -387,10 +413,8 @@ export default function AdminSidebar() {
     navigate("/auth/login", { replace: true });
   };
 
-  // --- Search Functionality ---
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-
     setIsSearchOpen(false);
     toast.info("Initiating search...");
 
@@ -419,7 +443,7 @@ export default function AdminSidebar() {
 
   const handleSearchToggle = () => {
     setIsSearchOpen((prev) => !prev);
-    setIsSidebarOpen(true); 
+    setIsSidebarOpen(true);
     if (!isSearchOpen) {
       setTimeout(() => {
         searchInputRef.current?.focus();
@@ -427,48 +451,16 @@ export default function AdminSidebar() {
     }
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        handleSearchToggle();
-      }
-      if (e.key === "Escape" && isSearchOpen) {
-        setIsSearchOpen(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchIconsContainerRef.current &&
-        !searchIconsContainerRef.current.contains(event.target as Node)
-      ) {
-        setIsSearchOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isSearchOpen, handleSearchToggle]);
-
-  // --- End Search Functionality ---
-
   return (
     <aside
-      className={`bg-gray-900 text-white p-6 flex flex-col h-screen fixed inset-y-0 left-0 z-10 transition-all duration-300 ${
-        isSidebarOpen ? "w-80 overflow-y-auto" : "w-16 overflow-hidden"
-      }`}
+      className={`bg-gray-900 text-white p-6 flex flex-col h-screen fixed inset-y-0 left-0 z-10 transition-all duration-300 ${isSidebarOpen ? "w-80 overflow-y-auto" : "w-16 overflow-hidden"
+        }`}
     >
       <div className="flex items-center justify-between gap-2 mb-4 border-b border-gray-700 pb-4 ">
         <Link
           to={"/admin/dashboard"}
-          className={`flex items-center gap-2 ${
-            isSidebarOpen ? "block" : "hidden"
-          }`}
+          className={`flex items-center gap-2 ${isSidebarOpen ? "block" : "hidden"
+            }`}
         >
           <h2 className="text-2xl font-extrabold text-yellow-400">
             Admin Panel
@@ -523,6 +515,7 @@ export default function AdminSidebar() {
             <form
               onSubmit={handleSearch}
               className="absolute top-full right-0 mt-2 w-60 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-30 p-4 flex flex-col gap-2"
+              ref={searchFormRef}
             >
               <input
                 type="text"
@@ -532,7 +525,6 @@ export default function AdminSidebar() {
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
               />
-              {/* NEW: Replaced category input with a select dropdown */}
               <select
                 className="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 value={searchCategory}
@@ -584,7 +576,7 @@ export default function AdminSidebar() {
             <Link
               to={section.mainLink}
               className="flex items-center gap-3 text-lg font-semibold hover:text-yellow-300 transition-colors duration-200 py-2 group"
-               onClick={() => setIsSidebarOpen(true)} 
+              onClick={() => setIsSidebarOpen(true)}
             >
               {section.icon}
               <span className={`${isSidebarOpen ? "block" : "hidden"}`}>
