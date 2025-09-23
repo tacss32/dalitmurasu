@@ -72,11 +72,10 @@ const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
                     e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
                 }}
             />
-            <h3
-                className="text-2xl font-bold text-gray-900 mb-2 truncate"
-            >
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+            
                 {item.title}
-            </h3>
+            </h2>
             <p className="text-gray-600 text-md mb-1">
                 {dateStr}
             </p>
