@@ -431,7 +431,8 @@ export default function Archive() {
             )}
             {activePdf && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-                    <div className="relative w-full max-w-5xl h-screen bg-white shadow-xl overflow-hidden flex flex-col">
+                   <div className="relative w-full max-w-5xl h-screen bg-white shadow-xl overflow-hidden flex flex-col pt-safe-top pb-safe-bottom">
+
                         <button
                             onClick={handleClosePdfViewer}
                             className="absolute top-2 right-2 z-20 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
