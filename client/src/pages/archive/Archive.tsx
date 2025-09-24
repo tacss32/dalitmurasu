@@ -72,8 +72,7 @@ const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
                     e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
                 }}
             />
-                  <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
-            
+            <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
                 {item.title}
             </h2>
             <p className="text-gray-600 text-md mb-1">
@@ -329,38 +328,36 @@ export default function Archive() {
                 </aside>
 
                 {/* Mobile/Tablet View */}
-               
-
-<aside className="md:hidden flex flex-col gap-4">
-    <div className="flex flex-row justify-between items-center mb-4 border-b pb-4">
-        <h3 className="font-bold text-lg">
-            {selectedYear ? (
-                <>
-                    {/* Year Link */}
-                    <span onClick={() => handleYearSelect(null)} className="cursor-pointer text-blue-600">
-                        {selectedYear}
-                    </span>
-                    {selectedMonth && (
-                        <>
-                            <span className="text-gray-400 font-normal"> / </span>
-                            {/* Month Link (FIXED) */}
-                            <span 
-                                onClick={(e) => {
-                                    e.stopPropagation(); // Prevents the click from bubbling to the parent span
-                                    setSelectedMonth(null);
-                                }} 
-                                className="cursor-pointer text-blue-600"
-                            >
-                                {getMonthName(selectedMonth)}
-                            </span>
-                        </>
-                    )}
-                </>
-            ) : (
-                "Years"
-            )}
-        </h3>
-    </div>
+                <aside className="md:hidden flex flex-col gap-4">
+                    <div className="flex flex-row justify-between items-center mb-4 border-b pb-4">
+                        <h3 className="font-bold text-lg">
+                            {selectedYear ? (
+                                <>
+                                    {/* Year Link */}
+                                    <span onClick={() => handleYearSelect(null)} className="cursor-pointer text-blue-600">
+                                        {selectedYear}
+                                    </span>
+                                    {selectedMonth && (
+                                        <>
+                                            <span className="text-gray-400 font-normal"> / </span>
+                                            {/* Month Link (FIXED) */}
+                                            <span
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevents the click from bubbling to the parent span
+                                                    setSelectedMonth(null);
+                                                }}
+                                                className="cursor-pointer text-blue-600"
+                                            >
+                                                {getMonthName(selectedMonth)}
+                                            </span>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                "Years"
+                            )}
+                        </h3>
+                    </div>
 
                     {!selectedYear && (
                         <div className="flex flex-row flex-wrap gap-2 text-center text-sm">
@@ -430,8 +427,8 @@ export default function Archive() {
                 </div>
             )}
             {activePdf && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-                    <div className="relative w-full max-w-5xl h-screen bg-white shadow-xl overflow-hidden flex flex-col">
+                <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30">
+                    <div className="relative w-full h-full max-w-5xl bg-white shadow-xl flex flex-col md:h-[90vh] md:w-11/12 md:rounded-lg">
                         <button
                             onClick={handleClosePdfViewer}
                             className="absolute top-2 right-2 z-20 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
