@@ -256,39 +256,48 @@ export default function NewsHud() {
         )}
 
         {/* About Us section */}
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <center>
-            <h2 className="text-3xl font-bold mb-10 text-center text-gray-800">
-              About us
-            </h2>
-          </center>
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-            <div className="w-full md:w-1/2">
-              <img
-                src={aboutImage}
-                alt="About"
-                className="rounded-lg shadow-lg w-full object-cover"
-              />
-            </div>
-            <div className="w-full md:w-2/2 text-justify">
-              <p className="text-gray-700 font-semibold leading-relaxed mb-4">
-                சாதிக்கு எதிரான உரையாடல்கள் வெகு மக்கள் படிக்கும் வணிக ஏடுகளில் இடம் பெறாததால் அத்தகைய உரையாடல்களை நிகழ்த்துகின்றவர்களுக்கு - சாதி சார்பற்ற, கட்சி மற்றும் அமைப்பு சார்பற்ற ஓர் இதழைத் தொடங்க வேண்டும் என்ற விழைவின் உந்துதலால் உருவாக்கப்பட்டதே ‘தலித் முரசு’ (பிப்ரவரி 13,1997) இதழ்.
-              </p>
-              <p className="text-gray-700 font-semibold leading-relaxed mb-6">
-                டாக்டர் அம்பேத்கர், பெரியார் கொள்கைகள் குறித்து தனித்தனியாக விவாதிக்கப்பட்டு வந்த காலகட்டத்தில், அவ்விரு சிந்தனைகளையும் இணைத்து விவாதிக்க வேண்டும் என்கிற முதல் முயற்சியை ‘தலித் முரசு’ முன்னெடுத்தது. அம்முயற்சிக்கு எதிரான கண்டனங்களையும் அவதூறுகளையும் எருவாக்கி, இன்று 28 ஆம் ஆண்டில் ‘தலித் முரசு’ இணைய இதழாகப் பரிணாமம் பெற்றிருக்கிறது.
-              </p>
-              <center>
-                {" "}
-                <button
-                  onClick={() => navigate("/about")}
-                  className="bg-red-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
-                >
-                  Read More
-                </button>{" "}
-              </center>
-            </div>
-          </div>
-        </div>
+        <div className="max-w-6xl mx-auto px-4 py-12">
+  <style>
+        {`
+          @media (max-width: 767px) {
+    .word-spacing-mobile {
+        word-spacing: -0.2em;
+    }
+}
+        `}
+      </style>
+          <center>
+            <h2 className="text-3xl font-bold mb-10 text-center text-gray-800">
+              About us
+            </h2>
+          </center>
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+            <div className="w-full md:w-1/2">
+              <img
+                src={aboutImage}
+                alt="About"
+                className="rounded-lg shadow-lg w-full object-cover"
+              />
+            </div>
+            <div className="w-full md:w-2/2 text-justify">
+              <p className="text-gray-700 font-semibold leading-relaxed mb-4 word-spacing-mobile" >
+                சாதிக்கு எதிரான உரையாடல்கள் வெகு மக்கள் படிக்கும் வணிக ஏடுகளில் இடம் பெறாததால் அத்தகைய உரையாடல்களை நிகழ்த்துகின்றவர்களுக்கு - சாதி சார்பற்ற, கட்சி மற்றும் அமைப்பு சார்பற்ற ஓர் இதழைத் தொடங்க வேண்டும் என்ற விழைவின் உந்துதலால் உருவாக்கப்பட்டதே ‘தலித் முரசு’ (பிப்ரவரி 13,1997) இதழ்.
+              </p>
+              <p className="text-gray-700 font-semibold leading-relaxed mb-4 word-spacing-mobile">
+                டாக்டர் அம்பேத்கர், பெரியார் கொள்கைகள் குறித்து தனித்தனியாக விவாதிக்கப்பட்டு வந்த காலகட்டத்தில், அவ்விரு சிந்தனைகளையும் இணைத்து விவாதிக்க வேண்டும் என்கிற முதல் முயற்சியை ‘தலித் முரசு’ முன்னெடுத்தது. அம்முயற்சிக்கு எதிரான கண்டனங்களையும் அவதூறுகளையும் எருவாக்கி, இன்று 28 ஆம் ஆண்டில் ‘தலித் முரசு’ இணைய இதழாகப் பரிணாமம் பெற்றிருக்கிறது.
+              </p>
+              <center>
+                {" "}
+                <button
+                  onClick={() => navigate("/about")}
+                  className="bg-red-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
+                >
+                  Read More
+                </button>{" "}
+              </center>
+            </div>
+          </div>
+        </div>
 
         {/* Section 3: Featured Books */}
         <h2 className="text-3xl font-bold mt-10 mb-4 text-gray-800 text-center">
