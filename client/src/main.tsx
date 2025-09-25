@@ -79,6 +79,7 @@ import OrderDashboard from './pages/orders/OrderDashboard';
 import AdminPremiumUsers from "./pages/premium_articles/AdminPremiumUsers"  ;
 import PremiumArticlePage from './pages/premium_articles/PremiumArticlePage';
 import PremiumArticleDetail from './pages/premium_articles/PremiumArticleDetail';
+import MyOrders from "./pages/myorders";
 
 
 createRoot(document.getElementById("root")!).render(
@@ -130,6 +131,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/posts/:id" element={<PostDetail />} />
+
+            <Route path="/orders" element={<MyOrders />} />
 
             {/* Catch-all Category Route (keep LAST) */}
             <Route path="/:categorySlug" element={<CategoryPosts />} />

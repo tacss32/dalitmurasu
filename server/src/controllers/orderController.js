@@ -469,3 +469,66 @@ exports.getDashboardStats = async (req, res) => {
       .json({ success: false, message: "Failed to fetch dashboard stats" });
   }
 };
+
+
+// Get Orders for a specific user
+exports.getUserOrders = async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization || req.headers.Authorization;
+        const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: "Authentication token is required." });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = decoded.id;
+
+        const orders = await Order.find({ userId: userId }).sort({ createdAt: -1 });
+
+        res.status(200).json({ success: true, data: orders });
+    } catch (err) {
+        console.error("[Order] Fetch User Orders Error:", err);
+        if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+            // Correctly handle JWT-specific errors with a 401 Unauthorized status
+            return res.status(401).json({ success: false, message: "Invalid or expired authentication token." });
+        }
+        res.status(500).json({ success: false, message: "Failed to fetch user orders." });
+    }
+};
+
+// Cancel an Order
+exports.cancelUserOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Authentication token is required." });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // Find the order and verify it belongs to the authenticated user
+    const order = await Order.findOne({ _id: id, userId: userId });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found or you do not have permission to cancel it." });
+    }
+
+    // Check if the order can be cancelled
+    if (order.status !== "pending") {
+      return res.status(400).json({ success: false, message: `Cannot cancel order with status: ${order.status}.` });
+    }
+
+    order.status = "cancelled";
+    await order.save();
+
+    res.status(200).json({ success: true, message: "Order successfully cancelled.", data: order });
+  } catch (err) {
+    console.error("[Order] Cancel Order Error:", err);
+    res.status(500).json({ success: false, message: "Failed to cancel order." });
+  }
+};

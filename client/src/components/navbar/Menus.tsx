@@ -971,32 +971,41 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false }: 
               </span>
             </button>
 
-            {isProfileDropdownOpen && (
-              <div
-                className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-50"
-                style={{ backgroundColor: "#FEEBB8" }}
-              >
-                <Link
-                  to="/profile"
-                  onClick={() => setIsProfileDropdownOpen(false)}
-                  className="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  My Profile
-                </Link>
+             {isProfileDropdownOpen && (
+              <div
+                className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-50"
+                style={{ backgroundColor: "#FEEBB8" }}
+              >
+                <Link
+                  to="/profile"
+                  onClick={() => setIsProfileDropdownOpen(false)}
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                >
+                  My Profile
+                </Link>
+                {/* NEW: My Orders Link */}
+                <Link
+                  to="/orders"
+                  onClick={() => setIsProfileDropdownOpen(false)}
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                >
+                  My Orders
+                </Link>
 
-                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsProfileDropdownOpen(false);
-                  }}
-                  className="block w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </li>
+                <div className="border-t border-gray-200 my-1"></div>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsProfileDropdownOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </li>
+
           {/* Notifications */}
           <li className="relative" ref={dropdownRef}>
             <button
