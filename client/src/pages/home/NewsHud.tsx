@@ -283,7 +283,7 @@ export default function NewsHud() {
               <p className="text-gray-700 font-semibold leading-relaxed mb-4 word-spacing-mobile" >
                 சாதிக்கு எதிரான உரையாடல்கள் வெகு மக்கள் படிக்கும் வணிக ஏடுகளில் இடம் பெறாததால் அத்தகைய உரையாடல்களை நிகழ்த்துகின்றவர்களுக்கு - சாதி சார்பற்ற, கட்சி மற்றும் அமைப்பு சார்பற்ற ஓர் இதழைத் தொடங்க வேண்டும் என்ற விழைவின் உந்துதலால் உருவாக்கப்பட்டதே ‘தலித் முரசு’ (பிப்ரவரி 13,1997) இதழ்.
               </p>
-              <p className="text-gray-700 font-semibold leading-relaxed mb-4 word-spacing-mobile">
+              <p className="text-gray-700 font-semibold leading-relaxed mb-4 ">
                 டாக்டர் அம்பேத்கர், பெரியார் கொள்கைகள் குறித்து தனித்தனியாக விவாதிக்கப்பட்டு வந்த காலகட்டத்தில், அவ்விரு சிந்தனைகளையும் இணைத்து விவாதிக்க வேண்டும் என்கிற முதல் முயற்சியை ‘தலித் முரசு’ முன்னெடுத்தது. அம்முயற்சிக்கு எதிரான கண்டனங்களையும் அவதூறுகளையும் எருவாக்கி, இன்று 28 ஆம் ஆண்டில் ‘தலித் முரசு’ இணைய இதழாகப் பரிணாமம் பெற்றிருக்கிறது.
               </p>
               <center>
@@ -316,20 +316,26 @@ export default function NewsHud() {
             {homeBooks.slice(0, 4).map((book) => (
               <div
                 key={book._id}
-                className="w-40 sm:w-48 md:w-full flex-shrink-0 border border-gray-200 rounded-xl p-3 md:p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer mb-4"
+                className="w-40 sm:w-40 md:w-full flex-shrink-0 border border-gray-200 rounded-xl p-3 md:p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer mb-4"
                 onClick={() => handleShowDescription(book)}
               >
+                <div className="flex-grow flex flex-col">
                 <img
                   src={book.imageUrl}
                   alt={book.name}
-                  className="w-full h-auto object-contain mb-3 md:mb-5 rounded-lg border border-gray-100"
+                  className="w-auto h-auto object-contain mb-5 rounded-lg border border-gray-100"
                   onError={(e) => {
                     e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
                   }}
                 />
-                <h2 className="text-sm md:text-xl font-bold text-gray-900 mb-2">
-  {book.name}
-</h2>
+                <h2 className="text-sm md:text-lg font-bold text-gray-900 mb-2">
+                  {book.name}
+                </h2>
+                <p className="text-gray-600 text-sm md:text-base mb-1">
+                  {/* by {book.author} */}
+                </p>
+                {/* <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p> */}
+              </div>
                 <div className="flex items-baseline mb-4">
                   <span className="text-red-500 line-through text-lg mr-2">
                     ₹{book.actualPrice.toFixed(2)}
@@ -343,7 +349,7 @@ export default function NewsHud() {
     e.stopPropagation();
     addToCart(book);
   }}
-  className="bg-red-600 hover:bg-black text-white font-bold py-2 px-3 md:py-2 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-28"
+  className="bg-red-600 hover:bg-black text-white font-bold py-1= px-3 md:py-2 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-7-"
   disabled={addingToCartStates.has(book._id)}
 >
   {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}

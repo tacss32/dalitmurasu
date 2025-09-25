@@ -144,15 +144,15 @@ export default function Books() {
                 <img
                   src={book.imageUrl}
                   alt={book.name}
-                  className="w-full h-60 object-contain mb-5 rounded-lg border border-gray-100"
+                  className="w-auto h-auto object-contain mb-5 rounded-lg border border-gray-100"
                   onError={(e) => {
                     e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
                   }}
                 />
-                <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                <h2 className="text-sm md:text-lg font-bold text-gray-900 mb-2">
                   {book.name}
                 </h2>
-                <p className="text-gray-600 text-sm md:text-base mb-1">
+              <p className="text-xs sm:text-sm md:text-sm mb-1 text-gray-600 ">
                   by {book.author}
                 </p>
                 {/* <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p> */}
@@ -173,7 +173,7 @@ export default function Books() {
                   e.stopPropagation();
                   addToCart(book);
                 }}
-                className="bg-red-600 hover:bg-black text-white font-bold py-2 px-3 md:py-2 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-28"
+                className="bg-red-600 hover:bg-black text-white font-bold py-2 px-3 md:py-2 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto md:w-60"
                 disabled={addingToCartStates.has(book._id)}
               >
                 {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}
