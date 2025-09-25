@@ -173,7 +173,7 @@ export default function Books() {
                   e.stopPropagation();
                   addToCart(book);
                 }}
-                className="bg-red-600 hover:bg-black text-white font-bold py-2 px-3 md:py-2 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-38 md:w-60"
+                className="bg-red-600 hover:bg-black text-white font-bold py-2 px-3 md:py-2 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-33 md:w-60"
                 disabled={addingToCartStates.has(book._id)}
               >
                 {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}
