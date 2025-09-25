@@ -59,7 +59,7 @@ interface MenusProps {
 
 const API = import.meta.env.VITE_API; // Your backend API URL
 
-export default function Menus({ isMobileHeader = false, isMobileMenu = false }: MenusProps) {
+export default function Menus({ isMobileHeader = false, isMobileMenu = false,closeMobileMenu, }: MenusProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -728,65 +728,77 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false }: 
     );
   }
 
-  if (isMobileMenu) {
-    return (
-      <ul className="flex items-center gap-3 ml-auto flex-row-reverse">
-        {isAuthenticated ? (
-          <>
-            {/* Profile Icon with Dropdown */}
-            <li className="relative" ref={profileDropdownRef}>
-              <button
-                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                className="relative flex items-center justify-center p-2 hover:text-highlight-1 transition-colors duration-150"
-                aria-label="Profile Menu"
-                aria-expanded={isProfileDropdownOpen ? "true" : "false"}
-                aria-haspopup="true"
+if (isMobileMenu) {
+  return (
+    <ul className="flex items-center gap-3 ml-auto flex-row-reverse">
+      {isAuthenticated ? (
+        <>
+          {/* Profile Icon with Dropdown */}
+          <li className="relative" ref={profileDropdownRef}>
+            <button
+              onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+              className="relative flex items-center justify-center p-2 hover:text-highlight-1 transition-colors duration-150"
+              aria-label="Profile Menu"
+              aria-expanded={isProfileDropdownOpen ? "true" : "false"}
+              aria-haspopup="true"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="size-6"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="size-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                  />
-                </svg>
-                <span className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
-                  Profile
-                </span>
-              </button>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                />
+              </svg>
+              <span className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                Profile
+              </span>
+            </button>
 
-              {isProfileDropdownOpen && (
-  <div
-    className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-[9999] overflow-hidden"
-    style={{ backgroundColor: "#FEEBB8" }}
-  >
-    <Link
-      to="/profile"
-      onClick={() => setIsProfileDropdownOpen(false)}
-      className="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-    >
-      My Profile
-    </Link>
-    <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-    <button
-      onClick={() => {
-        handleLogout();
-        setIsProfileDropdownOpen(false);
-      }}
-      className="block w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
-    >
-      Sign Out
-    </button>
+            {isProfileDropdownOpen && (
+              <div
+                className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-[9999] overflow-hidden"
+                style={{ backgroundColor: "#FEEBB8" }}
+              >
+                <Link
+                  to="/profile"
+                  onClick={() => {
+                    setIsProfileDropdownOpen(false);
+                    if (closeMobileMenu) closeMobileMenu();
+                  }}
+                  className="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  My Profile
+                </Link>
+                <Link
+                  to="/orders"
+                  onClick={() => {
+                    setIsProfileDropdownOpen(false);
+                    if (closeMobileMenu) closeMobileMenu();
+                  }}
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                >
+                  My Orders
+                </Link>
+                <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsProfileDropdownOpen(false);
+                    if (closeMobileMenu) closeMobileMenu();
+                  }}
+                  className="block w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  Sign Out
+                </button>
   </div>
 )}
-
-
             </li>
             
           </>
