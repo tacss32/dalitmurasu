@@ -181,62 +181,80 @@ const deletePost = async (req, res) => {
   }
 };
  
+
 // Update Post
 const updatePost = async (req, res) => {
-  try {
-    const { title, subtitle, content, author, category, isHome, isRecent, isPinned, date } =
-      req.body;
- 
-    if (!title || !content || !category) {
-      return res
-        .status(400)
-        .json({ error: "title, content, and categoryId are required" });
-    }
- 
-     if (isPinned) {
-      const existingPost = await UniversalPost.findById(req.params.id);
-      if (!existingPost.isPinned) {
-        const pinnedCount = await UniversalPost.countDocuments({ isPinned: true });
-        if (pinnedCount >= 3) {
-          return res.status(400).json({ error: "Maximum of 3 pinned posts allowed" });
+  try {
+    const { title, subtitle, content, author, category, isHome, isRecent, isPinned, date, existingImages } = // ✅ Destructure existingImages
+      req.body;
+
+    if (!title || !content || !category) {
+      return res
+        .status(400)
+        .json({ error: "title, content, and categoryId are required" });
+    }
+
+     if (isPinned) {
+      const existingPost = await UniversalPost.findById(req.params.id);
+      if (!existingPost.isPinned) {
+        const pinnedCount = await UniversalPost.countDocuments({ isPinned: true });
+        if (pinnedCount >= 3) {
+          return res.status(400).json({ error: "Maximum of 3 pinned posts allowed" });
+        }
+      }
+    }
+    
+    // 1. Parse existing images (sent as a JSON string)
+    let finalImageUrls = [];
+    if (existingImages) {
+        try {
+            finalImageUrls = JSON.parse(existingImages); // This is the array of URLs we kept
+        } catch (e) {
+            console.error("Failed to parse existingImages:", e);
+            // Handle error or proceed with an empty array if parsing fails
         }
-      }
     }
- 
-    const updateFields = {
-      title,
-      subtitle,
-      content,
-      author,
-      category,
-      isHome,
-      isRecent,
-      isPinned,
-      date: date || new Date()
-    };
- 
-    const imageFiles = req.files?.images || [];
- 
-    if (imageFiles.length > 0) {
-      const imageUrls = await Promise.all(
-        imageFiles.map((file) =>
-          uploadToCloudinary(file.path, "universal_posts/images")
-        )
-      );
-      updateFields.images = imageUrls;
-    }
- 
-    const updated = await UniversalPost.findByIdAndUpdate(
-      req.params.id,
-      updateFields,
-      { new: true }
-    );
-    res.status(200).json(updated);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Failed to update post", details: err.message });
-  }
+
+
+    const updateFields = {
+      title,
+      subtitle,
+      content,
+      author,
+      category,
+      isHome,
+      isRecent,
+      isPinned,
+      date: date || new Date()
+    };
+
+    const imageFiles = req.files?.images || [];
+
+    if (imageFiles.length > 0) {
+      const newImageUrls = await Promise.all(
+        imageFiles.map((file) =>
+          uploadToCloudinary(file.path, "universal_posts/images")
+        )
+      );
+      
+      // 2. Merge existing images (that were NOT removed) with new uploads
+      finalImageUrls = [...finalImageUrls, ...newImageUrls];
+    } 
+    
+    // 3. Update the document with the final list of images
+    updateFields.images = finalImageUrls;
+
+    const updated = await UniversalPost.findByIdAndUpdate(
+      req.params.id,
+      updateFields,
+      { new: true }
+    );
+    res.status(200).json(updated);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to update post", details: err.message });
+  }
 };
  
 const getPinnedPosts = async (req, res) => {
