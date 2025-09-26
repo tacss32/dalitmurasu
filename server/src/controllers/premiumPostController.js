@@ -320,31 +320,51 @@ exports.getPremiumPostForAdminEdit = async (req, res) => {
  
 // UPDATE (Edit Premium Post)
 exports.updatePremiumPost = async (req, res) => {
-  try {
-    const { id } = req.params;
- 
-    const updates = req.body;
-    let imageUrls = [];
- 
-    // Handle new images if uploaded
-    if (req.files?.images && req.files.images.length > 0) {
-      imageUrls = await Promise.all(req.files.images.map((f) => uploadToCloudinary(f.path)));
-      updates.images = imageUrls;
-    }
- 
-    const updatedPost = await PremiumPost.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    });
- 
-    if (!updatedPost) {
-      return res.status(404).json({ error: "Post not found" });
-    }
- 
-    res.json(updatedPost);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to update post", details: err.message });
-  }
+  try {
+    const { id } = req.params;
+
+    // Destructure all fields, including the JSON string of existing image URLs
+    const { existingImages, ...updates } = req.body;
+    
+    // 1. Start with the existing image URLs (the ones the user kept)
+    let finalImageUrls = [];
+    if (existingImages) {
+      try {
+        // The frontend sends this as a JSON string, so we must parse it
+        finalImageUrls = JSON.parse(existingImages);
+      } catch (e) {
+        console.error("Failed to parse existingImages:", e);
+        // Proceed with an empty array if parsing fails
+      }
+    }
+
+    // 2. Handle new images if uploaded
+    if (req.files?.images && req.files.images.length > 0) {
+      const newImageUrls = await Promise.all(
+        req.files.images.map((f) => uploadToCloudinary(f.path))
+      );
+      // 3. Merge the new image URLs with the existing (kept) ones
+      finalImageUrls = [...finalImageUrls, ...newImageUrls];
+    }
+ 
+    // 4. Add the combined image array to the updates object
+    updates.images = finalImageUrls;
+
+    // The update will now contain all other body fields + the correct images array
+    const updatedPost = await PremiumPost.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedPost) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    res.json(updatedPost);
+  } catch (err) {
+    console.error("Error updating premium post:", err);
+    res.status(500).json({ error: "Failed to update post", details: err.message });
+  }
 };
  
 // DELETE (Remove Premium Post)
