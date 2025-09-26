@@ -271,6 +271,18 @@ type BookmarkData = {
   postId: Post | string; // It could be a populated Post object or just a string ID
 };
 
+// --- START: Added function for reliable category slug creation ---
+const createCategorySlug = (categoryName: string): string => {
+  // 1. Check if the category name is already a simple slug (e.g. 'general')
+  // 2. Convert to lowercase
+  // 3. Remove all spaces and special characters, which is how 'Periyar speaks' becomes 'periyarspeaks'
+  // Note: This implementation assumes the slug is formed by removing spaces and lowercasing.
+  // If your router uses hyphens (e.g., 'periyar-speaks'), you should use .replace(/\s/g, "-").
+  return categoryName.toLowerCase().replace(/[^a-z0-9]+/g, "");
+};
+// --- END: Added function for reliable category slug creation ---
+
+
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate(); // ✅ Hook for back button
@@ -492,7 +504,7 @@ export default function PostDetail() {
           {/* Back button */}
           <button
             onClick={() => navigate(-1)}
-            className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200  "
+            className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200  "
           >
             <ArrowLeft size={25} />
             <span className="hidden sm:inline"></span>
@@ -501,9 +513,9 @@ export default function PostDetail() {
             {new Date(post.date).toLocaleDateString()}
           </span>
           <span className="text-2xl">•</span>
-          {/* Updated category link */}
+          {/* Updated category link - NOW USES createCategorySlug */}
           <Link
-            to={`/${post.category}`}
+            to={`/${createCategorySlug(post.category)}`}
             className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200"
           >
             {getTamilCategoryName(post.category)}
@@ -526,14 +538,14 @@ export default function PostDetail() {
         <div className="absolute top-6 right-0 flex items-center gap-2">
           <button
             onClick={handleShare}
-            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2"
+            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-1.5 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center gap-2"
           >
             <Share2 size={18} />
             <span className="hidden sm:inline">Share</span>
           </button>
           <button
             onClick={handleBookmark}
-            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center justify-center"
+            className="group bg-highlight-1 text-white hover:bg-highlight-1/80 px-4 py-2 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center justify-center"
           >
             {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
           </button>
