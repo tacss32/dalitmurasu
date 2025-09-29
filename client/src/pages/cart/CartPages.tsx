@@ -74,14 +74,14 @@ export default function CartPage() {
       const response = await axios.get(`${API_BASE_URL}api/cart/${userId}`);
       const rawItems: RawCartItem[] = response.data;
 
-      console.log("📦 Raw cart items:", rawItems);
+      // console.log("📦 Raw cart items:", rawItems);
 
       const validItems: CleanCartItem[] = rawItems.filter(
         (item): item is CleanCartItem =>
           item.bookId !== null && typeof item.bookId === "object"
       );
 
-      console.log("✅ Valid cart items being set:", validItems);
+      // console.log("✅ Valid cart items being set:", validItems);
 
       setCartItems(validItems);
     } catch (err) {
@@ -179,7 +179,7 @@ export default function CartPage() {
         <div className="flex justify-end mt-8">
           <button
             onClick={handleProceedToCheckout}
-            className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 transform hover:scale-105"
+            className="mt-4 bg-highlight-1 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 transform hover:scale-105"
             disabled={isUpdatingCart}
           >
             Proceed to Checkout

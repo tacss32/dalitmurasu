@@ -67,7 +67,7 @@ export default function Header({
           });
         } else {
           setBannerData(null);
-          console.log("No banner found for this category or missing image URL:", data);
+          // console.log("No banner found for this category or missing image URL:", data);
         }
       } catch (err) {
         console.error("Error fetching banner:", err);

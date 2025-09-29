@@ -142,6 +142,7 @@ export default function NewsHud() {
         quantity: 1,
       });
       console.log("Add to cart response:", response.data);
+
       alert(`${bookToAdd.name} added to cart!`);
     } catch (err: any) {
       console.error("Failed to add to cart:", err);
@@ -173,7 +174,7 @@ export default function NewsHud() {
   const postsToShow = combinedPosts.slice(0, 15);
 
   const firstSectionPosts = postsToShow.slice(0, 6);
-  console.log(firstSectionPosts)
+  // console.log(firstSectionPosts)
   const remainingSectionPosts = postsToShow.slice(6);
 
   return (
@@ -311,16 +312,17 @@ export default function NewsHud() {
           <p className="text-center text-lg text-gray-600">
             No featured books available at the moment.
           </p>
-        ) : (
-          <div className="flex overflow-x-auto lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 no-scrollbar ">
-            {homeBooks.slice(0, 4).map((book) => (
-              <div
-                key={book._id}
-                className="w-40 sm:w-40 md:w-full flex-shrink-0 border border-gray-200 rounded-xl p-3 md:p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer mb-4"
-                onClick={() => handleShowDescription(book)}
-              >
-                <div className="flex-grow flex flex-col">
-                <img
+             ) : (
+          <div className="flex overflow-x-auto xl:grid xl:grid-cols-4 gap-4 md:gap-8 no-scrollbar ">
+            {homeBooks.slice(0, 4).map((book) => (
+              <div
+                key={book._id}
+                // Card width: w-40 (mobile), sm:w-40 (small), md:w-48 (tablet scroller), xl:w-full (desktop grid)
+                className="w-40 sm:w-40 md:w-48 xl:w-full flex-shrink-0 border border-gray-200 rounded-xl p-3 xl:p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer mb-4"
+                onClick={() => handleShowDescription(book)}
+              >
+                <div className="flex-grow flex flex-col">
+              <img
                   src={book.imageUrl}
                   alt={book.name}
                   className="w-auto h-auto object-contain mb-5 rounded-lg border border-gray-100"
@@ -328,36 +330,39 @@ export default function NewsHud() {
                     e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
                   }}
                 />
-                <h2 className="text-sm md:text-lg font-bold text-gray-900 mb-2">
-                  {book.name}
-                </h2>
-                <p className="text-gray-600 text-sm md:text-base mb-1">
-                  {/* by {book.author} */}
-                </p>
-                {/* <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p> */}
-              </div>
-                <div className="flex items-baseline mb-4">
-                  <span className="text-red-500 line-through text-lg mr-2">
-                    ₹{book.actualPrice.toFixed(2)}
-                  </span>
-                  <span className="text-green-700 font-extrabold text-xl">
-                    ₹{book.sellingPrice.toFixed(2)}
-                  </span>
-                </div>
-                <button
-  onClick={(e) => {
-    e.stopPropagation();
-    addToCart(book);
-  }}
-  className="bg-red-600 hover:bg-black text-white font-bold py-2 px-3 md:py-2 md:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-7-"
-  disabled={addingToCartStates.has(book._id)}
+                {/* Title: text-sm for mobile/tablet, xl:text-lg for desktop */}
+                <h2 className="text-sm xl:text-lg font-bold text-gray-900 mb-2">
+                  {book.name}
+                </h2>
+                {/* Paragraph: text-sm for mobile/tablet, xl:text-base for desktop */}
+                <p className="text-gray-600 text-sm xl:text-base mb-1">
+                  {/* by {book.author} */}
+                </p>
+                {/* <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p> */}
+              </div>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-red-500 line-through text-lg mr-2">
+                    ₹{book.actualPrice.toFixed(2)}
+                  </span>
+                  <span className="text-green-700 font-extrabold text-xl">
+                    ₹{book.sellingPrice.toFixed(2)}
+                  </span>
+                </div>
+                <button
+  onClick={(e) => {
+    e.stopPropagation();
+    addToCart(book);
+  }}
+                  // Button size: py-2 px-3 for mobile/tablet, xl:py-2 xl:px-6 for desktop
+  className="bg-red-600 hover:bg-black text-white font-bold py-2 px-3 xl:py-2 xl:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-7-"
+  disabled={addingToCartStates.has(book._id)}
 >
-  {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}
+  {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}
 </button>
-              </div>
-            ))}
-          </div>
-        )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Section 4: Remaining Universal Posts */}
         <h2 className="text-3xl font-bold mb-4 text-gray-800 text-center"></h2>

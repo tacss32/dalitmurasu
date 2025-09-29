@@ -1,4 +1,4 @@
-// src/layouts/Layout.jsx
+
 
 import { Outlet } from "react-router-dom";
 import Footer from "../components/Footer";
@@ -6,9 +6,13 @@ import Navbar from "../components/navbar/Navbar";
 import SocialMediaScroller from "../components/SocialMediaScroller";
 import { useState, useEffect } from "react";
 
+// Define the breakpoint for hiding the scroller (e.g., 1024px for tablet/mobile)
+const HIDE_BREAKPOINT = 1024;
+
 export default function Layout() {
   const [navbarHeight, setNavbarHeight] = useState(0);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768); // Assuming 768px isyour mobile breakpoint
+  // Initial state check uses the new, broader breakpoint
+  const [shouldHideScroller, setShouldHideScroller] = useState(window.innerWidth < HIDE_BREAKPOINT); 
 
   useEffect(() => {
     // This effect handles the context menu
@@ -19,7 +23,8 @@ export default function Layout() {
 
     // This effect handles the screen resize
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      // Update state based on the broader breakpoint
+      setShouldHideScroller(window.innerWidth < HIDE_BREAKPOINT);
     };
     window.addEventListener("resize", handleResize);
 
@@ -38,7 +43,8 @@ export default function Layout() {
       >
         <Outlet />
       </main>
-      {!isMobile && <SocialMediaScroller />} {/* Conditionally render the component */}
+      {/* Change the condition to render the component ONLY if shouldHideScroller is false */}
+      {!shouldHideScroller && <SocialMediaScroller />} 
       <Footer />
     </div>
   );
