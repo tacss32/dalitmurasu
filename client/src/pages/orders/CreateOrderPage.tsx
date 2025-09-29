@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 
+// ----------------------------------------------------------------------
+// NEW: Define the structure for the Pincode Data
+interface PincodeLocation {
+    city: string;
+    state: string;
+    country: string;
+}
+// ----------------------------------------------------------------------
+
 // --- INTERFACE UPDATES ---
 // The Book interface now includes the deliveryFee for each book
 interface Book {
@@ -31,11 +40,10 @@ interface ItemInOrder {
 }
 
 // Razorpay-related global interface and key are no longer needed
-// but kept for reference if you ever want to re-add online payment.
 // declare global {
-//   interface Window {
-//     Razorpay: any;
-//   }
+//    interface Window {
+//      Razorpay: any;
+//    }
 // }
 
 // const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY;
@@ -49,6 +57,10 @@ const CreateOrderPage = () => {
   const passedCartItems = location.state?.cartItems as BackendCartItem[] | undefined;
 
   const [cartItems, setCartItems] = useState<ItemInOrder[]>([]);
+  
+  // NEW: State for storing the loaded Pincode Map
+  const [pincodeMap, setPincodeMap] = useState<Record<string, PincodeLocation> | null>(null);
+
   // UPDATED: Use separate state for each address field
   const [formData, setFormData] = useState({
     name: "",
@@ -74,6 +86,27 @@ const CreateOrderPage = () => {
   // UPDATED: totalAmount now uses the new totalDeliveryFee state
   const totalAmount = subtotal + totalDeliveryFee;
 
+  // NEW: Effect to load the Pincode Data once from the public directory
+  useEffect(() => {
+    const loadPincodeData = async () => {
+        try {
+            // Fetch the JSON file created from the CSV
+            const response = await fetch('/pincodeData.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data: Record<string, PincodeLocation> = await response.json();
+            setPincodeMap(data);
+            console.log("Pincode data loaded successfully.");
+        } catch (err) {
+            console.error("Failed to load pincode data (Autofill feature disabled):", err);
+            // Non-critical error, the page can still function for manual entry
+        }
+    };
+    loadPincodeData();
+  }, []); // Run only once on mount
+
+
   useEffect(() => {
     if (!token || !userId) {
       console.warn("User not authenticated. Redirecting to login.");
@@ -83,13 +116,13 @@ const CreateOrderPage = () => {
 
     // Razorpay script loading is no longer needed
     // const loadRazorpayScript = () => {
-    //   return new Promise((resolve) => {
-    //     const script = document.createElement('script');
-    //     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    //     script.onload = () => resolve(true);
-    //     script.onerror = () => resolve(false);
-    //     document.body.appendChild(script);
-    //   });
+    //    return new Promise((resolve) => {
+    //      const script = document.createElement('script');
+    //      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    //      script.onload = () => resolve(true);
+    //      script.onerror = () => resolve(false);
+    //      document.body.appendChild(script);
+    //    });
     // };
 
     const fetchAndSetCartItems = async () => {
@@ -148,15 +181,59 @@ const CreateOrderPage = () => {
     // loadRazorpayScript(); // No longer needed
   }, [userId, token, navigate, location.state, passedCartItems]);
 
+
+  // NEW: Logic to handle pincode change and autofill
+  const handlePincodeAutofill = (pincode: string) => {
+    if (!pincodeMap) return;
+
+    if (pincode.length === 6) {
+      const locationData = pincodeMap[pincode];
+      if (locationData) {
+        console.log(`Pincode ${pincode} found. Autofilling address.`);
+        setFormData(prevData => ({
+          ...prevData,
+          city: locationData.city,
+          state: locationData.state,
+          country: locationData.country,
+        }));
+        setError(null);
+      } else {
+        console.warn(`Pincode ${pincode} not found in database.`);
+        // Optionally, clear the fields if the pincode is invalid/not found
+        // setFormData(prevData => ({
+        //   ...prevData,
+        //   city: "",
+        //   state: "",
+        //   country: "",
+        // }));
+      }
+    } else if (pincode.length < 6) {
+        // Clear fields when pincode is partially entered or being deleted
+        setFormData(prevData => ({
+          ...prevData,
+          city: "",
+          state: "",
+          country: "",
+        }));
+    }
+  };
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
     if (name === "phone" || name === "pincode") {
       const cleanedValue = value.replace(/\D/g, '');
-      if ((name === "phone" && cleanedValue.length <= 10) || (name === "pincode" && cleanedValue.length <= 6) || name !== "phone" && name !== "pincode") {
-        setFormData({ ...formData, [name]: cleanedValue });
+
+      if (name === "phone" && cleanedValue.length <= 10) {
+        setFormData(prevData => ({ ...prevData, [name]: cleanedValue }));
+      } else if (name === "pincode" && cleanedValue.length <= 6) {
+        setFormData(prevData => ({ ...prevData, [name]: cleanedValue }));
+        // ⭐ Trigger autofill logic on pincode change
+        handlePincodeAutofill(cleanedValue);
       }
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData(prevData => ({ ...prevData, [name]: value }));
     }
   };
 
@@ -241,8 +318,9 @@ const CreateOrderPage = () => {
     }
   };
 
-  if (loading) {
-    return <div className="max-w-2xl mx-auto p-4 text-center">Loading checkout...</div>;
+  if (loading || !pincodeMap) {
+    // Add pincodeMap to loading state to wait for autofill data
+    return <div className="max-w-2xl mx-auto p-4 text-center">Loading checkout and address data...</div>;
   }
 
   if (error) {
@@ -317,63 +395,69 @@ const CreateOrderPage = () => {
           className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label htmlFor="city" className="block text-gray-700 text-sm font-bold mb-2">City:</label>
-          <input
-            type="text"
-            id="city"
-            name="city"
-            placeholder="City"
-            value={formData.city}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="state" className="block text-gray-700 text-sm font-bold mb-2">State:</label>
-          <input
-            type="text"
-            id="state"
-            name="state"
-            placeholder="State"
-            value={formData.state}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label htmlFor="pincode" className="block text-gray-700 text-sm font-bold mb-2">Pincode:</label>
-          <input
-            type="text"
-            id="pincode"
-            name="pincode"
-            placeholder="Pincode"
-            value={formData.pincode}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            maxLength={6}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="country" className="block text-gray-700 text-sm font-bold mb-2">Country:</label>
-          <input
-            type="text"
-            id="country"
-            name="country"
-            placeholder="Country"
-            value={formData.country}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-      </div>
+        
+        {/* 1. Pincode (Top Left) */}
+        <div>
+          <label htmlFor="pincode" className="block text-gray-700 text-sm font-bold mb-2">Pincode:</label>
+          <input
+            type="text"
+            id="pincode"
+            name="pincode"
+            placeholder="Pincode"
+            value={formData.pincode}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            maxLength={6}
+            required
+          />
+        </div>
+
+        {/* 2. City (Top Right) */}
+        <div>
+          <label htmlFor="city" className="block text-gray-700 text-sm font-bold mb-2">City (District):</label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            placeholder="City/District (Autofilled)"
+            value={formData.city}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        {/* 3. State (Bottom Left) */}
+        <div>
+          <label htmlFor="state" className="block text-gray-700 text-sm font-bold mb-2">State:</label>
+          <input
+            type="text"
+            id="state"
+            name="state"
+            placeholder="State (Autofilled)"
+            value={formData.state}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        {/* 4. Country (Bottom Right) */}
+        <div>
+          <label htmlFor="country" className="block text-gray-700 text-sm font-bold mb-2">Country:</label>
+          <input
+            type="text"
+            id="country"
+            name="country"
+            placeholder="Country (Autofilled)"
+            value={formData.country}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+      </div>
 
       <div className="border border-gray-200 p-4 rounded-lg shadow-sm mb-6 bg-gray-50">
         <h3 className="text-xl font-semibold mb-3 text-gray-800">Order Summary</h3>
