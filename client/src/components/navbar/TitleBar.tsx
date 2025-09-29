@@ -77,7 +77,7 @@ export default function TitleBar() {
         `}
       </style>
  
-      <nav className="w-full flex justify-center px-4">
+      <nav className="w-full flex justify-center ">
         <div className="flex items-center gap-3 w-full max-w-4xl overflow-hidden rounded-md text-black px-3 py-1">
           <h1 className="font-bold text-highlight-1 flex-shrink-0 px-3">
             #{("புதிய செய்திகள்")}

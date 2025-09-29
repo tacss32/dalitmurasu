@@ -321,7 +321,7 @@ export default function PremiumArticleDetail() {
               <ArrowLeft size={25} />
               <span className="hidden sm:inline"></span>
             </button>
-            <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200">
+            <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200 text-sm md:text">
               {new Date(article.date).toLocaleDateString()}
             </span>
             <span className="text-2xl text-yellow-600">•</span>
@@ -352,7 +352,7 @@ export default function PremiumArticleDetail() {
           <div className="absolute top-6 right-0 flex items-center gap-2">
             <button
               onClick={handleShare}
-              className="group bg-highlight-1 text-white hover:bg-yellow-700 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center gap-2"
+              className="group bg-highlight-1 text-white hover:bg-highlight-1 px-4 py-1.5 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center gap-2"
             >
               <Share2 size={18} />
               <span className="hidden sm:inline">Share</span>
@@ -363,7 +363,7 @@ export default function PremiumArticleDetail() {
 
             <button
               onClick={isBookmarked ? handleRemoveBookmark : handleBookmark}
-              className="group bg-highlight-1 text-white hover:bg-yellow-700 px-4 py-2 rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center justify-center"
+              className="group bg-highlight-1 text-white hover:bg-highlight-1 px-4 py-2 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center justify-center "
             >
               {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
             </button>
