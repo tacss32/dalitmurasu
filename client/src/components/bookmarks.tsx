@@ -49,9 +49,7 @@ const formatDate = (dateString: string | undefined) => {
     'Editorial': 'தலையங்கம்'
   };
 
-// NOTE: You'll need to fetch categories in the Bookmarks component if you want the Tamil category name.
-// Assuming for now you will display the English category name or will implement category fetching.
-// Since category data isn't available in this component's scope, we'll just use the post.category.
+
 
 export default function Bookmarks() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
