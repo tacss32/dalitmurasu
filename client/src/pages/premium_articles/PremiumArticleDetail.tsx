@@ -138,7 +138,6 @@ export default function PremiumArticleDetail() {
             } else {
               setError(data?.error || 'Authentication or subscription required for full access.');
               setArticle(null);
-              setIsUserCurrentlySubscribed(false);
             }
           } else if (status === 404) {
             setError('Article not found.');
@@ -264,7 +263,7 @@ export default function PremiumArticleDetail() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading article...</p>
         </div>
-      </div>
+        </div>
     );
   }
 
@@ -347,11 +346,12 @@ export default function PremiumArticleDetail() {
           </h1>
           {article.subtitle && <p className="text-1xl md:text-2xl font-bold text-gray-900 leading-tight">{article.subtitle}</p>}
           
-          {/*             --- START: AUTHOR/SHARE ROW MODIFICATION (Mobile) ---
-            Use flex-row justify-between on mobile, then reset to default/start on desktop (md:justify-start)
+          {/*             --- START: AUTHOR/MOBILE SHARE/BOOKMARK ROW MODIFICATION ---
+            - Uses `justify-between` to push the elements apart on mobile.
+            - `md:justify-start` resets alignment for tablet/desktop.
           */}
           <div className="flex items-center justify-between md:justify-start">
-            {/* Author Name - always visible, but the container controls its alignment */}
+            {/* Author Name (Left Side) */}
             <p className="text-base md:text-xl text-gray-700 flex items-center gap-2">
               <span className="w-7 h-7 bg-highlight-1 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                 {article.author.charAt(0).toUpperCase()}
@@ -359,16 +359,27 @@ export default function PremiumArticleDetail() {
               {article.author}
             </p>
 
-            {/* Mobile-only Share Button (Icon only) */}
-            <button
-              onClick={handleShare}
-              className="flex md:hidden group bg-highlight-1 text-white hover:bg-highlight-1 p-2 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 items-center justify-center"
-              aria-label="Share article"
-            >
-              <Share2 size={18} />
-            </button>
+            {/* Mobile-only Share and Bookmark Container (Right Side on Mobile) */}
+            <div className="flex md:hidden items-center gap-2">
+              {/* Mobile Share Button */}
+              <button
+                onClick={handleShare}
+                className="group bg-highlight-1 text-white hover:bg-highlight-1 p-2 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center justify-center"
+                aria-label="Share article"
+              >
+                <Share2 size={18} />
+              </button>
+              {/* Mobile Bookmark Button */}
+              <button
+                onClick={isBookmarked ? handleRemoveBookmark : handleBookmark}
+                className="group bg-highlight-1 text-white hover:bg-highlight-1 p-2 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center justify-center"
+                aria-label={isBookmarked ? "Remove bookmark" : "Bookmark article"}
+              >
+                {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+              </button>
+            </div>
           </div>
-          {/* --- END: AUTHOR/SHARE ROW MODIFICATION --- */}
+          {/* --- END: AUTHOR/MOBILE SHARE/BOOKMARK ROW MODIFICATION --- */}
 
           <div className="text-gray-600 text-sm mt-2">
             {article.publicationSource && <p>Source: {article.publicationSource}</p>}
@@ -377,7 +388,7 @@ export default function PremiumArticleDetail() {
           </div>
 
           {/*             --- START: DESKTOP-ONLY SHARE AND BOOKMARK CONTAINER --- 
-            This container is hidden on mobile and visible on desktop (md:flex).
+            This container remains absolutely positioned (top-right) and is only visible on desktop/tablet.
           */}
           <div className="hidden md:flex absolute top-6 right-0 items-center gap-2">
             {/* Desktop Share Button with 'Share' text */}
@@ -391,7 +402,7 @@ export default function PremiumArticleDetail() {
                 Share this article
               </span>
             </button>
-            
+            
             {/* Desktop Bookmark Button */}
             <button
               onClick={isBookmarked ? handleRemoveBookmark : handleBookmark}
@@ -402,22 +413,6 @@ export default function PremiumArticleDetail() {
             </button>
           </div>
           {/* --- END: DESKTOP-ONLY SHARE AND BOOKMARK CONTAINER --- */}
-
-          {/* --- START: MOBILE-ONLY BOOKMARK CONTAINER ---
-            This container keeps the Bookmark button in the top-right absolute position for mobile (flex), 
-            since the Share button has moved.
-          */}
-          <div className="flex md:hidden absolute top-6 right-0 items-center gap-2">
-            <button
-              onClick={isBookmarked ? handleRemoveBookmark : handleBookmark}
-              className="group bg-highlight-1 text-white hover:bg-highlight-1 px-4 py-2 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center justify-center"
-              aria-label={isBookmarked ? "Remove bookmark" : "Bookmark article"}
-            >
-              {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
-            </button>
-          </div>
-          {/* --- END: MOBILE-ONLY BOOKMARK CONTAINER --- */}
-
 
         </div>
 
