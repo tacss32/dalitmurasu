@@ -243,10 +243,10 @@ export default function NewsHud() {
                         {post.title}
                       </h2>
                       <p className="text-sm text-gray-500">
-                        {new Date(post.date || post.createdAt).toLocaleDateString()}
+                        {new Date(post.date || post.createdAt).toLocaleDateString()}  {categoryTranslations[post.category] || post.category}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {categoryTranslations[post.category] || post.category}
+                        
                       </p>
                     </div>
                   </div>
@@ -413,10 +413,10 @@ export default function NewsHud() {
                         {post.title}
                       </h2>
                       <p className="text-sm text-gray-500">
-                        {new Date(post.date || post.createdAt).toLocaleDateString()}
+                        {new Date(post.date || post.createdAt).toLocaleDateString()} {categoryTranslations[post.category] || post.category}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {categoryTranslations[post.category] || post.category}
+                        
                       </p>
                     </div>
                   </div>
