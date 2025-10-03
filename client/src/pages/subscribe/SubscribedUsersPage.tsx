@@ -218,7 +218,7 @@ const SubscribedUsersPage: React.FC = () => {
                 {user.subscriptionExpiresAt && (
                   <li className="flex items-center">
                     <MdCalendarToday className="mr-2 text-yellow-500" />
-                    <span>Expiry: <span className="text-red-500 font-medium">{format(parseISO(user.subscriptionExpiresAt), 'PPP')}</span></span>
+                    <span>Expiry: <span className="text-red-500 font-medium">{format(parseISO(user.subscriptionExpiresAt), 'PPP p')}</span></span>
                   </li>
                 )}
                 <li className="flex items-center">
