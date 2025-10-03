@@ -430,17 +430,40 @@ exports.unsubscribeUser = async (req, res) => {
 // -----------------------------
 // User: Get Current User Subscription Status
 exports.getUserSubscriptionStatus = async (req, res) => {
-  try {
-    const user = await ClientUser.findById(req.user._id)
-      .populate("subscriptionPlan", "title price durationInDays");
+  try {
+    const user = await ClientUser.findById(req.user._id)
+      .populate("subscriptionPlan", "title price durationInDays");
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
-    if (!user.isSubscribed || !user.subscriptionPlan) {
-      return res.status(200).json({ success: true, subscription: null });
-    }
+    // === START OF EXPIRY CHECK FIX ===
+    const now = new Date();
+    const isExpired = user.isSubscribed && user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < now;
+
+    if (isExpired) {
+      console.log(`Status check detected expired subscription for user ${user.email}. Auto-unsubscribing.`);
+      // Proactively update the user's status in the DB
+      const updatedUser = await ClientUser.findByIdAndUpdate(
+        user._id,
+        {
+          isSubscribed: false,
+          subscriptionPlan: null,
+          subscriptionExpiresAt: null,
+          title: null,
+        },
+        { new: true }
+      );
+      // After updating, treat as unsubscribed and return null
+      return res.status(200).json({ success: true, subscription: null });
+    }
+    // === END OF EXPIRY CHECK FIX ===
+
+
+    if (!user.isSubscribed || !user.subscriptionPlan) {
+      return res.status(200).json({ success: true, subscription: null });
+    }
 
     res.status(200).json({
       success: true,
