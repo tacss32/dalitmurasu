@@ -96,7 +96,7 @@ export default function Navbar({ onHeightChange }: NavbarProps) {
     };
   }, [isMobileMenuOpen]);
 
-  const logoSrc = isScrolled ? "/logo.png" : "/logo1.png";
+  const logoSrc = isScrolled ? "/logo.png" : "/logo1.webp";
   const logoHeightClass = isScrolled
     ? "h-12 sm:h-14 md:h-16 lg:h-18 xl:h-20"
     : "h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36";
