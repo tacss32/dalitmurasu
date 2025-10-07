@@ -23,19 +23,42 @@ interface Category {
   order: number;
 }
 
+declare global {
+  interface Window {
+    __PRELOADED_BANNERS__?: Banner[];
+  }
+}
+
 const API_BASE = import.meta.env.VITE_API;
 
 export default function MainBanner() {
-  const [banners, setBanners] = useState<Banner[]>([]);
+  // 1. Check for preloaded data first
+  const initialBanners = window.__PRELOADED_BANNERS__ || [];
+
+  // 2. Initialize 'banners' state with preloaded data or an empty array
+  const [banners, setBanners] = useState<Banner[]>(initialBanners);
+
+  // 3. Set 'loadingBanners' based on whether we had preloaded data
+  // If we have initial data, we aren't loading, so set to false.
+  const [loadingBanners, setLoadingBanners] = useState(initialBanners.length === 0);
+
   const [bannerCategories, setBannerCategories] = useState<Category[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loadingBanners, setLoadingBanners] = useState(true);
+  // Remove the now-redundant initialization of loadingBanners if it was here.
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Effect to fetch banners
   useEffect(() => {
+    // Check if data was preloaded successfully in index.html
+    if (initialBanners.length > 0) {
+      // Data is already available, clear the global object and stop execution.
+      delete window.__PRELOADED_BANNERS__;
+      return;
+    }
+
+    // If we reach here, preloading failed, so we fall back to client-side fetch.
     const fetchBanners = async () => {
       try {
         setLoadingBanners(true);
@@ -55,7 +78,7 @@ export default function MainBanner() {
     };
 
     fetchBanners();
-  }, []);
+  }, []); 
 
   // Effect to fetch banner categories
   useEffect(() => {
@@ -171,6 +194,7 @@ export default function MainBanner() {
               src={banner.desktopImage}
               alt={`Banner ${index + 1}`}
               className="w-full h-auto  "
+              {...(index === 0 ? { fetchpriority: "high" } : {})}
             />
           </picture>
         ))}

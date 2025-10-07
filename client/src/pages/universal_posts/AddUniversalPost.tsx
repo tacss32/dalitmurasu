@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useCallback } from "react";
 import ReactCrop, {
   centerCrop,
@@ -24,6 +25,7 @@ export default function AddUniversalPosts() {
   const [content, setContent] = useState("");
   const [author, setAuthor] = useState("");
   const [category, setCategory] = useState("");
+  // Only cropped image files will be stored here
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [isHome, setIsHome] = useState<boolean>(false);
   const [isRecent, setIsRecent] = useState<boolean>(false);
@@ -32,13 +34,14 @@ export default function AddUniversalPosts() {
   );
   const [fetchedCategories, setFetchedCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingFullPage, setIsLoadingFullPage] = useState(false); // New state for full-page loader
-  const [serverMessage, setServerMessage] = useState<string | null>(null); // For custom messages
-  const [messageType, setMessageType] = useState<'success' | 'error' | null>(null); // For message styling
+  const [isLoadingFullPage, setIsLoadingFullPage] = useState(false);
+  const [serverMessage, setServerMessage] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<'success' | 'error' | null>(null);
 
   // Image cropping states
+  const [fileToCrop, setFileToCrop] = useState<File | null>(null); // New state for the file currently being cropped
   const [currentImageSrc, setCurrentImageSrc] = useState<string | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState<number>(-1);
+  // currentImageIndex is no longer needed since we handle one file at a time for cropping
   const imgRef = useRef<HTMLImageElement>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
@@ -48,7 +51,7 @@ export default function AddUniversalPosts() {
   // Fetch categories on component mount
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoadingFullPage(true); // Show full-page loader while fetching categories
+      setIsLoadingFullPage(true);
       try {
         const categoriesRes = await axios.get<Category[]>(`${SERVER_URL}api/categories?available=true`);
         setFetchedCategories(categoriesRes.data);
@@ -57,37 +60,38 @@ export default function AddUniversalPosts() {
         setServerMessage("Failed to load categories. Please try again.");
         setMessageType('error');
       } finally {
-        setIsLoadingFullPage(false); // Hide full-page loader
+        setIsLoadingFullPage(false);
       }
     };
     fetchData();
   }, [SERVER_URL]);
 
+  // Modified to start cropping immediately
   const handleFileSelect = (files: FileList | null) => {
-    if (files) {
-      const newFiles = Array.from(files);
-      setImageFiles((prev) => [...prev, ...newFiles]);
+    if (files && files.length > 0) {
+      const file = files[0]; // Only take the first file, since we want a cropped-only flow.
+      setFileToCrop(file); // Set the file to be cropped
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const src = reader.result?.toString() || null;
+        setCurrentImageSrc(src); // Show the image in the crop modal
+        setCrop(undefined);
+        setCompletedCrop(undefined);
+        setServerMessage(null); // Clear messages
+        setMessageType(null);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setServerMessage("Image removed.");
+    setMessageType('success');
   };
 
-  const startCropping = (index: number) => {
-    const file = imageFiles[index];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const src = reader.result?.toString() || null;
-        setCurrentImageSrc(src);
-        setCurrentImageIndex(index);
-        setCrop(undefined);
-        setCompletedCrop(undefined);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // startCropping is now implicitly called by handleFileSelect
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -113,9 +117,8 @@ export default function AddUniversalPosts() {
     const imgElement = imgRef.current;
     const completedCropData = completedCrop;
 
-    if (imgElement && completedCropData && currentImageIndex >= 0) {
-      const originalFile = imageFiles[currentImageIndex];
-      const originalFileName = originalFile.name;
+    if (imgElement && completedCropData && fileToCrop) {
+      const originalFileName = fileToCrop.name;
 
       try {
         const croppedFile = await getCroppedImg(
@@ -124,38 +127,40 @@ export default function AddUniversalPosts() {
           `cropped_${originalFileName}`
         );
 
-        setImageFiles((prev) =>
-          prev.map((file, index) =>
-            index === currentImageIndex ? croppedFile : file
-          )
-        );
-        setServerMessage("Image cropped successfully!");
+        // ADD THE CROPPED FILE TO imageFiles
+        setImageFiles((prev) => [...prev, croppedFile]);
+
+        setServerMessage("Image cropped and added successfully! 🎉");
         setMessageType('success');
       } catch (e) {
         console.error("Error cropping image:", e);
         setServerMessage("Failed to crop image. Please try again.");
         setMessageType('error');
       } finally {
+        // Reset cropping states after success or failure
         setCurrentImageSrc(null);
-        setCurrentImageIndex(-1);
+        setFileToCrop(null); // Clear the file being cropped
         setCrop(undefined);
         setCompletedCrop(undefined);
       }
     } else {
-      setServerMessage("Please select an image and define a crop area.");
+      setServerMessage("Please define a crop area.");
       setMessageType('error');
     }
   };
 
   const cancelCropping = () => {
+    // Just reset the cropping states, the original file was never added to imageFiles
     setCurrentImageSrc(null);
-    setCurrentImageIndex(-1);
+    setFileToCrop(null);
     setCrop(undefined);
     setCompletedCrop(undefined);
+    setServerMessage("Image selection cancelled.");
+    setMessageType('error');
   };
 
   const handleSubmit = async () => {
-    setServerMessage(null); // Clear previous messages
+    setServerMessage(null);
     setMessageType(null);
 
     // Validation for required fields
@@ -164,9 +169,9 @@ export default function AddUniversalPosts() {
       setMessageType('error');
       return;
     }
-    
+
     setIsSubmitting(true);
-    setIsLoadingFullPage(true); // Show full-page loader on submission
+    setIsLoadingFullPage(true);
 
     const formData = new FormData();
     formData.append("title", title);
@@ -178,6 +183,7 @@ export default function AddUniversalPosts() {
     formData.append("isRecent", isRecent ? "true" : "false");
     formData.append("date", date);
 
+    // Only cropped images are in imageFiles, ready for submission
     imageFiles.forEach((file) => {
       formData.append("images", file);
     });
@@ -189,7 +195,7 @@ export default function AddUniversalPosts() {
       });
 
       if (res.ok) {
-        setServerMessage("Post created successfully!");
+        setServerMessage("Post created successfully! ✅");
         setMessageType('success');
         // Reset form fields
         setTitle("");
@@ -203,22 +209,22 @@ export default function AddUniversalPosts() {
         setDate(new Date().toISOString().substring(0, 10));
       } else {
         const errorData = await res.json();
-        setServerMessage(`Failed to create post: ${errorData.error || res.statusText}`);
+        setServerMessage(`Failed to create post: ${errorData.error || res.statusText} ❌`);
         setMessageType('error');
       }
     } catch (err) {
       console.error("Error submitting form:", err);
-      setServerMessage("An unexpected error occurred while submitting the form.");
+      setServerMessage("An unexpected error occurred while submitting the form. ⚠️");
       setMessageType('error');
     } finally {
       setIsSubmitting(false);
-      setIsLoadingFullPage(false); // Hide full-page loader
+      setIsLoadingFullPage(false);
       // Clear message after a few seconds if successful
       if (messageType === 'success') {
-          setTimeout(() => {
-              setServerMessage(null);
-              setMessageType(null);
-          }, 3000);
+        setTimeout(() => {
+          setServerMessage(null);
+          setMessageType(null);
+        }, 3000);
       }
     }
   };
@@ -243,9 +249,9 @@ export default function AddUniversalPosts() {
         </h2>
 
         {serverMessage && (
-            <div className={`p-3 rounded-md text-center ${messageType === 'success' ? 'bg-green-100 text-green-700 border-green-400' : 'bg-red-100 text-red-700 border-red-400'}`}>
-                {serverMessage}
-            </div>
+          <div className={`p-3 rounded-md text-center ${messageType === 'success' ? 'bg-green-100 text-green-700 border-green-400' : 'bg-red-100 text-red-700 border-red-400'}`}>
+            {serverMessage}
+          </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -335,17 +341,19 @@ export default function AddUniversalPosts() {
           {/* Images Section */}
           <div className="md:col-span-2">
             <label className="block text-sm font-semibold text-gray-700">
-              Images
+              Images (Select and Crop to Add)
             </label>
             <input
               type="file"
               accept="image/*"
-              multiple
+              // Multiple removed to enforce a clearer single-file-crop-and-add flow
               onChange={(e) => handleFileSelect(e.target.files)}
+              // Reset the input value so the same file can be selected again after cancelling or cropping
+              onClick={(e) => (e.currentTarget.value = '')}
               className="mt-1 block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             />
 
-            {/* Display selected images */}
+            {/* Display selected images (which are now guaranteed to be cropped) */}
             {imageFiles.length > 0 && (
               <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
                 {imageFiles.map((file, index) => (
@@ -359,13 +367,7 @@ export default function AddUniversalPosts() {
                       className="w-full h-auto object-cover"
                     />
                     <div className="absolute top-2 right-2 flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => startCropping(index)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded"
-                      >
-                        Crop
-                      </button>
+                      {/* Removed the 'Crop' button as images in this array are already cropped */}
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
@@ -390,11 +392,11 @@ export default function AddUniversalPosts() {
               </div>
             )}
 
-            {/* Image Cropping Modal */}
+            {/* Image Cropping Modal - Now triggered immediately on file selection */}
             {currentImageSrc && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-auto">
-                  <h3 className="text-lg font-semibold mb-4">Crop Image</h3>
+                  <h3 className="text-lg font-semibold mb-4">Crop Image (Aspect Ratio 1:1)</h3>
                   <ReactCrop
                     crop={crop}
                     onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -423,7 +425,8 @@ export default function AddUniversalPosts() {
                     <button
                       type="button"
                       onClick={handleDoneCropping}
-                      className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full"
+                      disabled={!completedCrop}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Done Cropping
                     </button>
@@ -462,10 +465,9 @@ export default function AddUniversalPosts() {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting || isLoadingFullPage} // Disable button if submitting OR full page is loading
-            className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-              isSubmitting || isLoadingFullPage ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            disabled={isSubmitting || isLoadingFullPage}
+            className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${isSubmitting || isLoadingFullPage ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             {isSubmitting ? "Submitting..." : "Add Post"}
           </button>
