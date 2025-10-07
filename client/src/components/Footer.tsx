@@ -59,10 +59,10 @@ export default function Footer() {
       {/* Column 3: Phone Number & Email (Now grouped together) */}
       <div className="flex flex-col items-center md:items-end text-black">
         <p onClick={handleCopyEmail} className="cursor-pointer hover:text-red-700 dark:hover:text-black-100">
-          📧 dalitmurasu@gmail.com
+           dalitmurasu@gmail.com    📧
         </p>
         <p className="mb-2 text-black">
-          Phone: 94444 52877
+           94444 52877 : Phone
         </p>
         
       </div>
