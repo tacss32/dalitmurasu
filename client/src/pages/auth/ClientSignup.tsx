@@ -106,7 +106,7 @@ export default function ClientSignup() {
       <div className=" p-3 rounded-xl shadow-xl w-full max-w-md flex justify-center flex-col items-center border">
         <Link to="/">
           <img
-            src={"/logo1.png"}
+            src={"/logo1.webp"}
             alt="logo"
             className={"h-25"}
           />
