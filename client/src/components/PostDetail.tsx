@@ -596,11 +596,11 @@ export default function PostDetail() {
 
       {/* --- Image Carousel --- */}
       {imageUrls.length > 0 && (
-        <div className="relative w-full h-auto rounded-xl overflow-hidden shadow-lg bg-gray-100">
+        <div className="relative w-full h-auto  overflow-hidden  flex justify-center">
           <img
             src={imageUrls[imageIndex]}
             alt={`Post Image ${imageIndex + 1}`}
-            className="object-cover w-full h-full transition-all duration-500"
+            className=" w-full md:w-3/4 lg:w-1/2 h-auto transition-all duration-500 rounded"
             onError={(e) => {
               e.currentTarget.src =
                 "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=400&fit=crop";
@@ -655,11 +655,12 @@ export default function PostDetail() {
             .rich-content a {
               color: #3b82f6;
               text-decoration: underline;
+              text-align-last:left;  
             }
           `}
         </style>
         <div
-          className="rich-content text-gray-800 leading-relaxed"
+          className="rich-content text-gray-800 leading-relaxed "
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
       </article>
