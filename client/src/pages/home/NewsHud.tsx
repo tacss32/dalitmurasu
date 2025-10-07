@@ -179,7 +179,7 @@ export default function NewsHud() {
 
   return (
     <div className="flex flex-col items-center gap-5">
-      <MainBanner />
+      <div className="w-full min-h-[150px] md:min-h-[300px]"> <MainBanner /> </div>
 
       <div className="container flex flex-col gap-5">
         <NewsLetter />
@@ -221,10 +221,10 @@ export default function NewsHud() {
                 <Link
                   key={post._id}
                   to={`/${post.source === "UniversalPost"
-                      ? "posts"
-                      : post.source === "PremiumPost"
-                        ? "premium-articles"
-                        : "posts"}/${post._id}`}
+                    ? "posts"
+                    : post.source === "PremiumPost"
+                      ? "premium-articles"
+                      : "posts"}/${post._id}`}
                 >
                   <div className="w-full flex gap-4 p-2 rounded shadow-lg bg-background-to hover:bg-white/50 duration-150 transition-colors ease-in-out">
                     {/* Image Section */}
@@ -246,7 +246,7 @@ export default function NewsHud() {
                         {new Date(post.date || post.createdAt).toLocaleDateString()}  {categoryTranslations[post.category] || post.category}
                       </p>
                       <p className="text-sm text-gray-500">
-                        
+
                       </p>
                     </div>
                   </div>
@@ -257,48 +257,48 @@ export default function NewsHud() {
         )}
 
         {/* About Us section */}
-        <div className="max-w-6xl mx-auto px-4 py-12">
-  <style>
-        {`
+        <div className="max-w-6xl mx-auto px-4 py-12">
+          <style>
+            {`
           @media (max-width: 767px) {
     .word-spacing-mobile {
         word-spacing: -0.2em;
     }
 }
         `}
-      </style>
-          <center>
-            <h2 className="text-3xl font-bold mb-10 text-center text-highlight-1">
-              About us
-            </h2>
-          </center>
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-            <div className="w-full md:w-1/2">
-              <img
-                src={aboutImage}
-                alt="About"
-                className=" w-full object-cover"
-              />
-            </div>
-            <div className="w-full md:w-2/2 text-justify">
-              <p className="text-gray-700 font-semibold leading-relaxed mb-4 word-spacing-mobile" >
-                சாதிக்கு எதிரான உரையாடல்கள் வெகு மக்கள் படிக்கும் வணிக ஏடுகளில் இடம் பெறாததால் அத்தகைய உரையாடல்களை நிகழ்த்துகின்றவர்களுக்கு - சாதி சார்பற்ற, கட்சி மற்றும் அமைப்பு சார்பற்ற ஓர் இதழைத் தொடங்க வேண்டும் என்ற விழைவின் உந்துதலால் உருவாக்கப்பட்டதே ‘தலித் முரசு’ (பிப்ரவரி 13,1997) இதழ்.
-              </p>
-              <p className="text-gray-700 font-semibold leading-relaxed mb-4 ">
-                டாக்டர் அம்பேத்கர், பெரியார் கொள்கைகள் குறித்து தனித்தனியாக விவாதிக்கப்பட்டு வந்த காலகட்டத்தில், அவ்விரு சிந்தனைகளையும் இணைத்து விவாதிக்க வேண்டும் என்கிற முதல் முயற்சியை ‘தலித் முரசு’ முன்னெடுத்தது. அம்முயற்சிக்கு எதிரான கண்டனங்களையும் அவதூறுகளையும் எருவாக்கி, இன்று 28 ஆம் ஆண்டில் ‘தலித் முரசு’ இணைய இதழாகப் பரிணாமம் பெற்றிருக்கிறது.
-              </p>
-              <center>
-                {" "}
-                <button
-                  onClick={() => navigate("/about")}
-                  className="bg-red-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
-                >
-                  Read More
-                </button>{" "}
-              </center>
-            </div>
-          </div>
-        </div>
+          </style>
+          <center>
+            <h2 className="text-3xl font-bold mb-10 text-center text-highlight-1">
+              About us
+            </h2>
+          </center>
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+            <div className="w-full md:w-1/2">
+              <img
+                src={aboutImage}
+                alt="About"
+                className=" w-full object-cover min-h-[250px] md:min-h-[350px]"
+              />
+            </div>
+            <div className="w-full md:w-2/2 text-justify">
+              <p className="text-gray-700 font-semibold leading-relaxed mb-4 word-spacing-mobile" >
+                சாதிக்கு எதிரான உரையாடல்கள் வெகு மக்கள் படிக்கும் வணிக ஏடுகளில் இடம் பெறாததால் அத்தகைய உரையாடல்களை நிகழ்த்துகின்றவர்களுக்கு - சாதி சார்பற்ற, கட்சி மற்றும் அமைப்பு சார்பற்ற ஓர் இதழைத் தொடங்க வேண்டும் என்ற விழைவின் உந்துதலால் உருவாக்கப்பட்டதே ‘தலித் முரசு’ (பிப்ரவரி 13,1997) இதழ்.
+              </p>
+              <p className="text-gray-700 font-semibold leading-relaxed mb-4 ">
+                டாக்டர் அம்பேத்கர், பெரியார் கொள்கைகள் குறித்து தனித்தனியாக விவாதிக்கப்பட்டு வந்த காலகட்டத்தில், அவ்விரு சிந்தனைகளையும் இணைத்து விவாதிக்க வேண்டும் என்கிற முதல் முயற்சியை ‘தலித் முரசு’ முன்னெடுத்தது. அம்முயற்சிக்கு எதிரான கண்டனங்களையும் அவதூறுகளையும் எருவாக்கி, இன்று 28 ஆம் ஆண்டில் ‘தலித் முரசு’ இணைய இதழாகப் பரிணாமம் பெற்றிருக்கிறது.
+              </p>
+              <center>
+                {" "}
+                <button
+                  onClick={() => navigate("/about")}
+                  className="bg-red-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
+                >
+                  Read More
+                </button>{" "}
+              </center>
+            </div>
+          </div>
+        </div>
 
         {/* Section 3: Featured Books */}
         <h2 className="text-3xl font-bold mt-10 mb-4 text-highlight-1 text-center">
@@ -312,57 +312,60 @@ export default function NewsHud() {
           <p className="text-center text-lg text-gray-600">
             No featured books available at the moment.
           </p>
-             ) : (
-          <div className="flex overflow-x-auto xl:grid xl:grid-cols-4 gap-4 md:gap-8 no-scrollbar ">
-            {homeBooks.slice(0, 4).map((book) => (
-              <div
-                key={book._id}
-                // Card width: w-40 (mobile), sm:w-40 (small), md:w-48 (tablet scroller), xl:w-full (desktop grid)
-                className="w-40 sm:w-40 md:w-48 xl:w-full flex-shrink-0 border border-gray-200 rounded-xl p-3 xl:p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer mb-4"
-                onClick={() => handleShowDescription(book)}
-              >
-                <div className="flex-grow flex flex-col">
-              <img
-                  src={book.imageUrl}
-                  alt={book.name}
-                  className="w-auto h-auto object-contain mb-5 rounded-lg border border-gray-100"
-                  onError={(e) => {
-                    e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
+        ) : (
+          <div className="flex overflow-x-auto xl:grid xl:grid-cols-4 gap-4 md:gap-8 no-scrollbar ">
+            {homeBooks.slice(0, 4).map((book) => (
+              <div
+                key={book._id}
+                // Card width: w-40 (mobile), sm:w-40 (small), md:w-48 (tablet scroller), xl:w-full (desktop grid)
+                className="w-40 sm:w-40 md:w-48 xl:w-full flex-shrink-0 border border-gray-200 rounded-xl p-3 xl:p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer mb-4"
+                onClick={() => handleShowDescription(book)}
+              >
+                <div className="flex-grow flex flex-col">
+                  <div className="relative mb-5 rounded-lg border border-gray-100 overflow-hidden  flex justify-center items-center">
+                    <img
+                      src={book.imageUrl}
+                      alt={book.name}
+                      // Use w-full and h-full to fill the container
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
+                      }}
+                    />
+                  </div>
+                  {/* Title: text-sm for mobile/tablet, xl:text-lg for desktop */}
+                  <h2 className="text-sm xl:text-lg font-bold text-gray-900 mb-2">
+                    {book.name}
+                  </h2>
+                  {/* Paragraph: text-sm for mobile/tablet, xl:text-base for desktop */}
+                  <p className="text-gray-600 text-sm xl:text-base mb-1">
+                    {/* by {book.author} */}
+                  </p>
+                  {/* <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p> */}
+                </div>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-red-500 line-through text-lg mr-2">
+                    ₹{book.actualPrice.toFixed(2)}
+                  </span>
+                  <span className="text-green-700 font-extrabold text-xl">
+                    ₹{book.sellingPrice.toFixed(2)}
+                  </span>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addToCart(book);
                   }}
-                />
-                {/* Title: text-sm for mobile/tablet, xl:text-lg for desktop */}
-                <h2 className="text-sm xl:text-lg font-bold text-gray-900 mb-2">
-                  {book.name}
-                </h2>
-                {/* Paragraph: text-sm for mobile/tablet, xl:text-base for desktop */}
-                <p className="text-gray-600 text-sm xl:text-base mb-1">
-                  {/* by {book.author} */}
-                </p>
-                {/* <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p> */}
-              </div>
-                <div className="flex items-baseline mb-4">
-                  <span className="text-red-500 line-through text-lg mr-2">
-                    ₹{book.actualPrice.toFixed(2)}
-                  </span>
-                  <span className="text-green-700 font-extrabold text-xl">
-                    ₹{book.sellingPrice.toFixed(2)}
-                  </span>
-                </div>
-                <button
-  onClick={(e) => {
-    e.stopPropagation();
-    addToCart(book);
-  }}
-                  // Button size: py-2 px-3 for mobile/tablet, xl:py-2 xl:px-6 for desktop
-  className="bg-red-600 hover:bg-black text-white font-bold py-2 px-3 xl:py-2 xl:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-7-"
-  disabled={addingToCartStates.has(book._id)}
->
-  {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}
-</button>
-              </div>
-            ))}
-          </div>
-        )}
+                  // Button size: py-2 px-3 for mobile/tablet, xl:py-2 xl:px-6 for desktop
+                  className="bg-red-600 hover:bg-black text-white font-bold py-2 px-3 xl:py-2 xl:px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mt-auto w-7-"
+                  disabled={addingToCartStates.has(book._id)}
+                >
+                  {addingToCartStates.has(book._id) ? "Adding..." : "Add to Cart"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Section 4: Remaining Universal Posts */}
         <h2 className="text-3xl font-bold mb-4 text-gray-800 text-center"></h2>
@@ -416,7 +419,7 @@ export default function NewsHud() {
                         {new Date(post.date || post.createdAt).toLocaleDateString()} {categoryTranslations[post.category] || post.category}
                       </p>
                       <p className="text-sm text-gray-500">
-                        
+
                       </p>
                     </div>
                   </div>
@@ -429,70 +432,70 @@ export default function NewsHud() {
 
       {/* Description Popup Modal */}
       {showDescriptionPopup && selectedBook && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-        <div className="bg-background-to rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] flex flex-col relative">
-            
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
+          <div className="bg-background-to rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] flex flex-col relative">
+
             {/* The close button container. It is absolutely positioned */}
             <div className="flex justify-end sticky top-0 bg-background-to z-20">
-                <button
-                    onClick={handleClosePopup}
-                    className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-                >
-                    &times;
-                </button>
+              <button
+                onClick={handleClosePopup}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                &times;
+              </button>
             </div>
 
             {/* The main content area that will scroll */}
             <div className="flex-grow flex flex-col md:flex-row gap-8 overflow-y-auto">
-                {/* Left column for the image */}
-                <div className="w-full md:w-1/2 flex justify-center items-start p-4 rounded-lg">
-                    <img
-                        src={selectedBook.imageUrl}
-                        alt={selectedBook.name}
-                        className="max-h-96 w-auto object-contain rounded-lg shadow-md"
-                        onError={(e) => {
-                            e.currentTarget.src = `https://placehold.co/400x600/E0E0E0/333333?text=No+Image`;
-                        }}
-                    />
+              {/* Left column for the image */}
+              <div className="w-full md:w-1/2 flex justify-center items-start p-4 rounded-lg">
+                <img
+                  src={selectedBook.imageUrl}
+                  alt={selectedBook.name}
+                  className="max-h-96 w-auto object-contain rounded-lg shadow-md"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://placehold.co/400x600/E0E0E0/333333?text=No+Image`;
+                  }}
+                />
+              </div>
+              {/* Right column for text content */}
+              <div className="w-full md:w-1/2 flex flex-col">
+                <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-2">
+                  {selectedBook.name}
+                </h2>
+                <p className="text-gray-600 mb-4 text-sm md:text-base">
+                  by{" "}
+                  <span className="font-semibold">{selectedBook.author}</span>
+                </p>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-red-500 line-through text-base md:text-lg mr-2">
+                    ₹{selectedBook.actualPrice.toFixed(2)}
+                  </span>
+                  <span className="text-green-700 font-extrabold text-xl md:text-2xl">
+                    ₹{selectedBook.sellingPrice.toFixed(2)}
+                  </span>
                 </div>
-                {/* Right column for text content */}
-                <div className="w-full md:w-1/2 flex flex-col">
-                    <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-2">
-                        {selectedBook.name}
-                    </h2>
-                    <p className="text-gray-600 mb-4 text-sm md:text-base">
-                        by{" "}
-                        <span className="font-semibold">{selectedBook.author}</span>
-                    </p>
-                    <div className="flex items-baseline mb-4">
-                        <span className="text-red-500 line-through text-base md:text-lg mr-2">
-  ₹{selectedBook.actualPrice.toFixed(2)}
-</span>
-<span className="text-green-700 font-extrabold text-xl md:text-2xl">
-  ₹{selectedBook.sellingPrice.toFixed(2)}
-</span>
-                    </div>
-                    <div className="flex-grow pr-2 mb-4">
-                        <p className="text-gray-800 whitespace-pre-wrap">
-                            {selectedBook.description}
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => {
-                            addToCart(selectedBook);
-                            handleClosePopup();
-                        }}
-                        className="w-full bg-red-600 hover:bg-black text-white font-bold py-3 px-6 mt-auto rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
-                        disabled={addingToCartStates.has(selectedBook._id)}
-                    >
-                        {addingToCartStates.has(selectedBook._id)
-                            ? "Adding..."
-                            : "Add to Cart"}
-                    </button>
+                <div className="flex-grow pr-2 mb-4">
+                  <p className="text-gray-800 whitespace-pre-wrap">
+                    {selectedBook.description}
+                  </p>
                 </div>
+                <button
+                  onClick={() => {
+                    addToCart(selectedBook);
+                    handleClosePopup();
+                  }}
+                  className="w-full bg-red-600 hover:bg-black text-white font-bold py-3 px-6 mt-auto rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
+                  disabled={addingToCartStates.has(selectedBook._id)}
+                >
+                  {addingToCartStates.has(selectedBook._id)
+                    ? "Adding..."
+                    : "Add to Cart"}
+                </button>
+              </div>
             </div>
+          </div>
         </div>
-    </div>
-)}   </div>
+      )}   </div>
   );
 }
