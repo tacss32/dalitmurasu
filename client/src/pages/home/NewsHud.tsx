@@ -268,7 +268,7 @@ export default function NewsHud() {
         `}
       </style>
           <center>
-            <h2 className="text-3xl font-bold mb-10 text-center text-gray-800">
+            <h2 className="text-3xl font-bold mb-10 text-center text-highlight-1">
               About us
             </h2>
           </center>
@@ -277,7 +277,7 @@ export default function NewsHud() {
               <img
                 src={aboutImage}
                 alt="About"
-                className="rounded-lg shadow-lg w-full object-cover"
+                className=" w-full object-cover"
               />
             </div>
             <div className="w-full md:w-2/2 text-justify">
@@ -301,7 +301,7 @@ export default function NewsHud() {
         </div>
 
         {/* Section 3: Featured Books */}
-        <h2 className="text-3xl font-bold mt-10 mb-4 text-gray-800 text-center">
+        <h2 className="text-3xl font-bold mt-10 mb-4 text-highlight-1 text-center">
           Our Book Collection
         </h2>
         {loadingBooks ? (

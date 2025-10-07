@@ -49,7 +49,7 @@ const CartDisplay: React.FC<CartDisplayProps> = ({
       {cartItems.map((item) => (
         <div
           key={item._id}
-          className="flex flex-col sm:flex-row items-center bg-white p-4 rounded-lg shadow-sm border"
+          className="flex flex-col sm:flex-row items-center bg-white/30 p-4 rounded-lg shadow-sm border"
         >
           <img
             src={item.bookId.imageUrl}
@@ -71,24 +71,24 @@ const CartDisplay: React.FC<CartDisplayProps> = ({
             <button
               onClick={() => onUpdateQuantity(item._id, item.quantity - 1)}
               disabled={item.quantity <= 1 || isUpdatingCart}
-              className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-l"
+              className="px-3 py-1 hover:bg-highlight-1/70 hover:text-white rounded-l border-highlight-1/70 border"
             >
               -
             </button>
-            <span className="px-4 py-1 bg-gray-100 border-y border-gray-300">
+            <span className="px-4 py-1 bg-highlight-1/60 border-highlight-1/70 border-y">
               {item.quantity}
             </span>
             <button
               onClick={() => onUpdateQuantity(item._id, item.quantity + 1)}
               disabled={isUpdatingCart}
-              className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-r"
+              className="px-3 py-1 hover:bg-highlight-1/70 hover:text-white rounded-r border-highlight-1/70 border"
             >
               +
             </button>
             <button
               onClick={() => onRemoveItem(item._id)}
               disabled={isUpdatingCart}
-              className="ml-3 px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded"
+              className="ml-3 px-3 py-1 bg-highlight-1 hover:bg-red-600 text-white rounded"
             >
               Remove
             </button>
