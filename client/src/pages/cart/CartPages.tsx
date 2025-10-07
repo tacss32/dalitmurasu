@@ -162,7 +162,7 @@ export default function CartPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 font-sans">
-      <h1 className="text-4xl font-extrabold mb-8 text-gray-800 text-center">
+      <h1 className="text-4xl font-extrabold mb-8 text-highlight-1 text-center">
         Your Shopping Cart
       </h1>
       <CartDisplay

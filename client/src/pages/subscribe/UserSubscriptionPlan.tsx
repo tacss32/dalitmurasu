@@ -141,7 +141,7 @@ if (token) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="flex justify-center items-center min-h-screen bg-white/30">
         <div className="text-xl font-semibold text-gray-700">Loading available plans...</div>
       </div>
     );
@@ -149,7 +149,7 @@ if (token) {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+      <div className="flex justify-center items-center min-h-screen bg-white/30 p-4">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative text-center">
           <strong className="font-bold">Error!</strong>
           <span className="block sm:inline ml-2">{error}</span>
@@ -160,7 +160,7 @@ if (token) {
 
   if (plans.length === 0) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gray-100 p-4">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-white/30 p-4">
         <p className="text-xl font-semibold text-gray-700 mb-4">No subscription plans are currently available.</p>
         <p className="text-gray-600">Please check back later or contact support.</p>
       </div>
@@ -169,7 +169,7 @@ if (token) {
 
   return (
     <div className="min-h-screen p-4 sm:p-8 flex flex-col items-center" style={{ backgroundColor: '#feebbd' }}>
-      <h2 className="text-4xl font-extrabold text-gray-900 mb-10 text-center">Choose Your Subscription Plan</h2>
+      <h2 className="text-4xl font-extrabold text-highlight-1 mb-10 text-center">Choose Your Subscription Plan</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
         {plans.map((plan) => {
@@ -179,7 +179,7 @@ if (token) {
           return (
             <div
               key={plan._id}
-              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between p-6 border border-gray-200"
+              className="bg-white/30 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between p-6 border border-gray-200"
             >
               <div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-3 text-center">{plan.title}</h3>

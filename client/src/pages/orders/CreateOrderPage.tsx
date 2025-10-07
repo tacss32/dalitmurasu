@@ -337,12 +337,12 @@ const CreateOrderPage = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 bg-white shadow-lg rounded-lg my-8">
-      <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Checkout</h2>
+    <div className="max-w-2xl mx-auto p-4 bg-white/20 shadow-lg rounded-lg my-8">
+      <h2 className="text-3xl font-bold mb-6 text-center text-highlight-1">Checkout</h2>
 
       {/* UPDATED: Address Form Inputs */}
       <div className="mb-4">
-        <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">Name:</label>
+        <label htmlFor="name" className="block  text-sm font-bold mb-2">Name:</label>
         <input
           type="text"
           id="name"
@@ -350,12 +350,12 @@ const CreateOrderPage = () => {
           placeholder="Enter your name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
       <div className="mb-4">
-        <label htmlFor="phone" className="block text-gray-700 text-sm font-bold mb-2">Phone:</label>
+        <label htmlFor="phone" className="block  text-sm font-bold mb-2">Phone:</label>
         <input
           type="tel"
           id="phone"
@@ -363,7 +363,7 @@ const CreateOrderPage = () => {
           placeholder="Enter your 10-digit phone number"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           maxLength={10}
           pattern="[0-9]{10}"
           title="Phone number must be exactly 10 digits"
@@ -371,7 +371,7 @@ const CreateOrderPage = () => {
         />
       </div>
       <div className="mb-4">
-        <label htmlFor="addressLine1" className="block text-gray-700 text-sm font-bold mb-2">Address Line 1:</label>
+        <label htmlFor="addressLine1" className="block  text-sm font-bold mb-2">Address Line 1:</label>
         <input
           type="text"
           id="addressLine1"
@@ -379,12 +379,12 @@ const CreateOrderPage = () => {
           placeholder="House No., Street Name"
           value={formData.addressLine1}
           onChange={handleChange}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
       <div className="mb-4">
-        <label htmlFor="addressLine2" className="block text-gray-700 text-sm font-bold mb-2">Address Line 2 (Optional):</label>
+        <label htmlFor="addressLine2" className="block  text-sm font-bold mb-2">Address Line 2 (Optional):</label>
         <input
           type="text"
           id="addressLine2"
@@ -392,14 +392,14 @@ const CreateOrderPage = () => {
           placeholder="Apartment, Landmark, etc."
           value={formData.addressLine2}
           onChange={handleChange}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         
         {/* 1. Pincode (Top Left) */}
         <div>
-          <label htmlFor="pincode" className="block text-gray-700 text-sm font-bold mb-2">Pincode:</label>
+          <label htmlFor="pincode" className="block  text-sm font-bold mb-2">Pincode:</label>
           <input
             type="text"
             id="pincode"
@@ -407,7 +407,7 @@ const CreateOrderPage = () => {
             placeholder="Pincode"
             value={formData.pincode}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             maxLength={6}
             required
           />
@@ -415,7 +415,7 @@ const CreateOrderPage = () => {
 
         {/* 2. City (Top Right) */}
         <div>
-          <label htmlFor="city" className="block text-gray-700 text-sm font-bold mb-2">City (District):</label>
+          <label htmlFor="city" className="block  text-sm font-bold mb-2">City (District):</label>
           <input
             type="text"
             id="city"
@@ -423,14 +423,14 @@ const CreateOrderPage = () => {
             placeholder="City/District (Autofilled)"
             value={formData.city}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
 
         {/* 3. State (Bottom Left) */}
         <div>
-          <label htmlFor="state" className="block text-gray-700 text-sm font-bold mb-2">State:</label>
+          <label htmlFor="state" className="block  text-sm font-bold mb-2">State:</label>
           <input
             type="text"
             id="state"
@@ -438,14 +438,14 @@ const CreateOrderPage = () => {
             placeholder="State (Autofilled)"
             value={formData.state}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
 
         {/* 4. Country (Bottom Right) */}
         <div>
-          <label htmlFor="country" className="block text-gray-700 text-sm font-bold mb-2">Country:</label>
+          <label htmlFor="country" className="block  text-sm font-bold mb-2">Country:</label>
           <input
             type="text"
             id="country"
@@ -453,13 +453,13 @@ const CreateOrderPage = () => {
             placeholder="Country (Autofilled)"
             value={formData.country}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
       </div>
 
-      <div className="border border-gray-200 p-4 rounded-lg shadow-sm mb-6 bg-gray-50">
+      <div className="border  p-4 rounded-lg  mb-6 ">
         <h3 className="text-xl font-semibold mb-3 text-gray-800">Order Summary</h3>
         {cartItems.length > 0 ? (
           <ul className="space-y-2 mb-3">

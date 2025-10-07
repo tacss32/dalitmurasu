@@ -97,7 +97,7 @@ export default function MainBanner() {
   if (isLoading) {
     return (
       <div
-        className="relative w-full overflow-hidden rounded-xl shadow-lg bg-gray-200 flex items-center justify-center animate-pulse"
+        className="relative w-full overflow-hidden rounded-xl shadow-lg bg-white/30 flex items-center justify-center animate-pulse"
         style={{ minHeight: "450px" }}
       >
         <div className="flex flex-col items-center justify-center text-gray-600">

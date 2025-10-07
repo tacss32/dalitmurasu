@@ -636,20 +636,20 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false,clo
               />
             </svg>
             {unreadNotificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold px-[6px] py-[1px] rounded-full shadow-sm min-w-[18px] text-center">
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white/30 text-[10px] font-bold px-[6px] py-[1px] rounded-full shadow-sm min-w-[18px] text-center">
                 {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
               </span>
             )}
-            <span className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+            <span className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-700 text-white/30 text-xs rounded py-1 px-2 whitespace-nowrap">
               Notifications
             </span>
           </button>
           {isNotificationsDropdownOpen && (
             <div
-              className="absolute right-0 mt-2 w-80 md:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden"
+              className="absolute right-0 mt-2 w-80 md:w-96 bg-white/30 border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden"
               style={{ maxHeight: "400px" }}
             >
-              <h3 className="text-lg font-semibold px-4 py-3 bg-blue-50 text-gray-800 border-b border-gray-200 sticky top-0 z-10">
+              <h3 className="text-lg font-semibold px-4 py-3 bg-white/40 text-highlight-1 border-b border-gray-200 sticky top-0 z-10">
                 Your Notifications
               </h3>
               <div
@@ -667,7 +667,7 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false,clo
                     {userNotifications.map((notif) => (
                       <li
                         key={notif._id}
-                        className={`p-3 rounded-md ${notif.read ? "bg-gray-50 text-gray-700" : "bg-blue-100 text-gray-900 font-medium"
+                        className={`p-3 rounded-md ${notif.read ? "bg-white/30 text-gray-700" : "bg-white/40 text-gray-900 font-medium"
                           }`}
                       >
                         <div className="flex justify-between items-start mb-1">
@@ -1044,16 +1044,16 @@ if (isMobileMenu) {
                   {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
                 </span>
               )}
-              <span className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+              <span className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-700 text-white/30 text-xs rounded py-1 px-2 whitespace-nowrap">
                 Notifications
               </span>
             </button>
             {isNotificationsDropdownOpen && (
               <div
-                className="absolute right-0 mt-2 w-80 md:w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden"
-                style={{ maxHeight: "400px" }}
+                className="absolute right-0 mt-2 w-80 md:w-96 bg-background-to border border-black rounded-lg shadow-xl z-50 overflow-hidden max-h-[400px]"
+               
               >
-                <h3 className="text-lg font-semibold px-4 py-3 bg-blue-50 text-gray-800 border-b border-gray-200 sticky top-0 z-10">
+                <h3 className="text-lg font-semibold px-4 py-3 bg-white/30 text-gray-800 border-b border-gray-200 sticky top-0 z-10">
                   Your Notifications
                 </h3>
                 <div
@@ -1071,7 +1071,7 @@ if (isMobileMenu) {
                       {userNotifications.map((notif) => (
                         <li
                           key={notif._id}
-                          className={`p-3 rounded-md ${notif.read ? "bg-gray-50 text-gray-700" : "bg-blue-100 text-gray-900 font-medium"
+                          className={`p-3 rounded-md ${notif.read ? "bg-white/30 text-gray-700" : "bg-white/40 text-gray-900 font-medium"
                             }`}
                         >
                           <div className="flex justify-between items-start mb-1">
