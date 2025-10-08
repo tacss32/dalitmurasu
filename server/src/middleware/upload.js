@@ -2,6 +2,8 @@ const multer = require("multer");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
+// Import the crypto module for generating unique IDs
+const crypto = require("crypto");
 
 const combinedPdfUpload = multer({
   storage: multer.diskStorage({
@@ -25,8 +27,17 @@ const combinedPdfUpload = multer({
     },
 
     filename: (req, file, cb) => {
-      const uniqueName = Date.now() + "_" + file.originalname;
-      cb(null, uniqueName);
+      // 1. Get the file extension
+      const ext = path.extname(file.originalname);
+
+      // 2. Generate a unique ID (like a UUID or MongoDB ObjectId)
+      //    We'll use a strong random UUID for a unique filename.
+      const uniqueId = crypto.randomBytes(16).toString("hex");
+
+      // 3. Combine the unique ID with the original file extension
+      const newFilename = uniqueId + ext;
+
+      cb(null, newFilename);
     },
   }),
 }).fields([

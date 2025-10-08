@@ -11,9 +11,7 @@ async function createPdfUpload(req, res) {
     const imageFile = req.files?.image?.[0];
     const pdfFile = req.files?.pdf?.[0];
 
-    // ✅ Always save relative URLs (not absolute paths or localhost)
-    // const pdfUrl = `uploads/pdfs/bot.pdf`;
-    // const imageUrl = `uploads/images/bot`;
+ 
     const pdfUrl = pdfFile ? `uploads/pdfs/${pdfFile.filename}` : "";
     const imageUrl = imageFile ? `uploads/images/${imageFile.filename}` : "";
 

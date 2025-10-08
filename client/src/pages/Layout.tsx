@@ -35,7 +35,7 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen w-full font-mukta-malar">
+    <div className="flex flex-col min-h-screen w-full font-mukta-malar select-none">
       <Navbar onHeightChange={setNavbarHeight} />
       <main
         style={{ paddingTop: `${navbarHeight}px` }}
