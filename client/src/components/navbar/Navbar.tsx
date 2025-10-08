@@ -126,6 +126,7 @@ export default function Navbar({ onHeightChange }: NavbarProps) {
                   src={logoSrc}
                   alt="logo"
                   className={`${TRANSITION_DURATION} ${logoHeightClass} w-auto`}
+                  loading="eager"
                 />
               </Link>
             </div>
