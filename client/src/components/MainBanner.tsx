@@ -193,7 +193,7 @@ export default function MainBanner() {
             <img
               src={banner.desktopImage}
               alt={`Banner ${index + 1}`}
-              className="w-full h-auto  "
+              className="w-full h-[450px] md:h-[750px] object-cover object-center"
               {...(index === 0 ? { fetchpriority: "high" } : {})}
             />
           </picture>
