@@ -218,7 +218,7 @@ export default function AdminBanner() {
       imageType: "mobile" | "desktop"
     ) => {
       const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
-      const aspect = imageType === "mobile" ? 10 / 16 : 16 / 10;
+      const aspect = imageType === "mobile" ? 1 / 1 : 16 / 10;
 
       const crop = centerCrop(
         makeAspectCrop({ unit: "%", width: 90 }, aspect, width, height),
@@ -352,7 +352,7 @@ export default function AdminBanner() {
     imgRef: React.RefObject<HTMLImageElement | null>,
     aspectRatio: string
   ) => {
-    const aspect = imageType === "mobile" ? 10 / 16 : 16 / 10;
+    const aspect = imageType === "mobile" ? 1/ 1 : 16 / 10;
     const setImageState =
       imageType === "mobile" ? setMobileImage : setDesktopImage;
 
@@ -487,7 +487,7 @@ export default function AdminBanner() {
         </h3>
 
         {/* Mobile Image Section */}
-        {renderImageCropSection("mobile", mobileImage, mobileImgRef, "10:16")}
+        {renderImageCropSection("mobile", mobileImage, mobileImgRef, "1:1")}
 
         {/* Desktop Image Section */}
         {renderImageCropSection(
