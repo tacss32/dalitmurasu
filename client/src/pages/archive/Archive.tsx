@@ -60,7 +60,7 @@ const PdfCard: React.FC<PdfCardProps> = ({ item, className, onClick }) => {
         <div
             onClick={() => onClick(item)}
             className={
-                "border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white flex flex-col cursor-pointer transform hover:scale-105" +
+                "border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white/30 flex flex-col cursor-pointer transform hover:scale-105" +
                 (className || "")
             }
         >
@@ -413,7 +413,7 @@ export default function Archive() {
             </div>
             {loadingPdf && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-                    <div className="relative flex flex-col items-center p-6 bg-white rounded-lg shadow-xl text-center">
+                    <div className="relative flex flex-col items-center p-6 bg-white/30 rounded-lg shadow-xl text-center">
                         <button
                             onClick={handleCancelRequest}
                             className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
@@ -428,7 +428,7 @@ export default function Archive() {
             )}
             {activePdf && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30">
-                    <div className="relative w-full h-full max-w-5xl bg-white shadow-xl flex flex-col md:h-[90vh] md:w-11/12 md:rounded-lg">
+                    <div className="relative w-full h-full max-w-5xl bg-white/30 shadow-xl flex flex-col md:h-[90vh] md:w-11/12 md:rounded-lg">
                         <button
                             onClick={handleClosePdfViewer}
                             className="absolute top-2 right-2 z-20 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
@@ -455,7 +455,7 @@ export default function Archive() {
             )}
             {viewMessage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-                    <div className="relative p-6 bg-white rounded-lg shadow-xl text-center">
+                    <div className="relative p-6 bg-background-to rounded-lg shadow-xl text-center">
                         <p className="text-lg font-semibold text-gray-800 mb-4">{viewMessage}</p>
                         <button
                             onClick={() => setViewMessage(null)}
@@ -469,7 +469,7 @@ export default function Archive() {
             )}
             {showSubscriptionPopup && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
-                    <div className="w-11/12 max-w-md p-6 bg-white rounded-lg shadow-xl md:w-3/4">
+                    <div className="w-11/12 max-w-md p-6 bg-background-to rounded-lg shadow-xl md:w-3/4">
                         <h2 className="text-2xl font-bold text-gray-900">Free View Limit Exceeded</h2>
                         <p className="mt-4 text-gray-700">
                             You've read your free preview of this PDF. To continue reading and unlock unlimited access to all PDF, please subscribe.

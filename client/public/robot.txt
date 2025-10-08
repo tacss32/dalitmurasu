@@ -1,0 +1,6 @@
+# Allow all search engines to crawl the entire site
+User-agent: *
+Allow: /
+
+# Provide the location of your sitemap file
+Sitemap: https://www.dalitmurasu.com/sitemap.xml
