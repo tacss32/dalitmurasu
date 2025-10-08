@@ -1,50 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dalitmurasu</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/logo.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dalitmurasu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+  </head>
 
-  <link href="https://fonts.googleapis.com/css2?family=Mukta+Malar:wght@200;300;400;500;600;700;800&display=swap"
-    rel="stylesheet">
+  <body class="bg-gradient-to-b bg-background-to">
+    <div id="root"></div>
 
-  <style>
-    /* 🚨 IMPORTANT: PASTE MINIMAL CRITICAL CSS HERE 🚨 
-           This includes any styles for the initial view (LCP element)
-           that must load immediately.
-         */
-    body {
-      -webkit-user-select: none;
-      /* Safari */
-      -ms-user-select: none;
-      /* IE 10+ */
-      user-select: none;
-      /* Standard syntax */
-    }
-
-    /* Add other essential 'above-the-fold' styles here */
-  </style>
-
-  <link rel="preload" href="/assets/index-BU400bpw.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript>
-    <link rel="stylesheet" href="/assets/index-BU400bpw.css">
-  </noscript>
-
-  <link rel="preload" href="/path/to/critical-font-1.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/path/to/critical-font-2.woff2" as="font" type="font/woff2" crossorigin>
-
-  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
-</head>
-
-<body class="bg-gradient-to-b bg-background-to">
-  <div id="root"></div>
-
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
