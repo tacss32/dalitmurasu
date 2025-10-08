@@ -14,12 +14,10 @@
     rel="stylesheet">
 
   <style>
-    /* 🚨 REPLACE THIS CONTENT 🚨 
-         Paste the minimal CSS (e.g., body background, critical layout styles) 
-         here to style content immediately and prevent FOUC (Flash of Unstyled Content).
-         
-         You can keep the body user-select styles here for immediate effect:
-      */
+    /* 🚨 IMPORTANT: PASTE MINIMAL CRITICAL CSS HERE 🚨 
+           This includes any styles for the initial view (LCP element)
+           that must load immediately.
+         */
     body {
       -webkit-user-select: none;
       /* Safari */
@@ -32,10 +30,9 @@
     /* Add other essential 'above-the-fold' styles here */
   </style>
 
-  <link rel="preload" href="/path/to/your/main-compiled-bundle.css" as="style"
-    onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="/assets/index-BU400bpw.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link rel="stylesheet" href="/path/to/your/main-compiled-bundle.css">
+    <link rel="stylesheet" href="/assets/index-BU400bpw.css">
   </noscript>
 
   <link rel="preload" href="/path/to/critical-font-1.woff2" as="font" type="font/woff2" crossorigin>
