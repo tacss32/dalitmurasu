@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
+    
+    <!-- ✅ Ensure favicon loads reliably -->
+    <link rel="icon" href="/logo.png" type="image/png" sizes="32x32" />
+    <link rel="shortcut icon" href="/logo.png" type="image/png" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="Dalitmurasu"
@@ -10,15 +14,17 @@
     />
     <title>Dalitmurasu</title>
 
-    <link
-      rel="preload"
-      href="/assets/index-egbJh-4N.css"
-      as="style"
-      onload="this.onload=null;this.rel='stylesheet'"
+    <!-- Keep non-blocking CSS loading as in original -->
+    <link 
+      rel="stylesheet" 
+      href="/assets/index-egbJh-4N.css" 
+      media="print" 
+      onload="this.media='all'" 
     />
-    <noscript
-      ><link rel="stylesheet" href="/assets/index-egbJh-4N.css"
-    /></noscript>
+    <noscript>
+      <link rel="stylesheet" href="/assets/index-egbJh-4N.css" />
+    </noscript>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
