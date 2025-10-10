@@ -116,7 +116,13 @@ export default function Navbar({ onHeightChange }: NavbarProps) {
       >
         {/* Mobile/Tablet View (Hidden on xl screens) */}
         <div className="xl:hidden">
-          <div className="flex justify-center items-center py-2 sm:py-3 md:py-4 px-2 sm:px-3 md:px-4">
+          <div
+            className={`flex justify-center items-center px-2 sm:px-3 md:px-4 ${TRANSITION_DURATION}
+              ${isTitleBarVisible
+                ? "py-2 sm:py-3 md:py-4 opacity-100 h-auto"
+                : "py-0 opacity-0 h-0 overflow-hidden"}`
+            }
+          >
             <TitleBar />
           </div>
           <div className="flex w-full px-2 sm:px-3 md:px-4 xl:px-2 items-center">
