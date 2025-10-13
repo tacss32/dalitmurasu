@@ -96,7 +96,7 @@ export default function AddUniversalPosts() {
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
-      const aspect = 1 / 1;
+      const aspect = 3 / 2;
 
       const initialCrop = centerCrop(
         makeAspectCrop({ unit: "%", width: 90 }, aspect, width, height),
@@ -341,7 +341,7 @@ export default function AddUniversalPosts() {
           {/* Images Section */}
           <div className="md:col-span-2">
             <label className="block text-sm font-semibold text-gray-700">
-              Images (Select and Crop to Add)
+              Images ( Recommended aspect ratio: 3:2)
             </label>
             <input
               type="file"
@@ -401,7 +401,7 @@ export default function AddUniversalPosts() {
                     crop={crop}
                     onChange={(_, percentCrop) => setCrop(percentCrop)}
                     onComplete={onCropComplete}
-                    aspect={1 / 1}
+                    aspect={3 / 2}
                     minWidth={100}
                     minHeight={100}
                     className="max-w-full h-auto"
