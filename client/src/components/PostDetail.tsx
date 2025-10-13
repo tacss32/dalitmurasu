@@ -596,11 +596,11 @@ export default function PostDetail() {
 
       {/* --- Image Carousel --- */}
       {imageUrls.length > 0 && (
-        <div className="relative w-full h-auto  overflow-hidden  flex justify-center">
+                          <div className="relative w-full h-100 rounded-xl overflow-hidden shadow-lg bg-gray-100">
           <img
             src={imageUrls[imageIndex]}
             alt={`Post Image ${imageIndex + 1}`}
-            className=" w-full md:w-3/4 lg:w-1/2 h-auto transition-all duration-500 rounded"
+                                         className="object-cover w-full h-full transition-all duration-500"
             onError={(e) => {
               e.currentTarget.src =
                 "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=400&fit=crop";
