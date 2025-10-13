@@ -417,7 +417,7 @@ export default function PremiumArticleDetail() {
         </div>
 
         {imageUrls.length > 0 && (
-          <div className="relative w-full h-auto rounded-xl overflow-hidden shadow-lg bg-gray-100 aspect-video">
+          <div className="relative w-full h-100 rounded-xl overflow-hidden shadow-lg bg-gray-100 aspect-video">
             <img
               src={imageUrls[imageIndex]}
               alt={`Article Image ${imageIndex + 1}`}

@@ -193,7 +193,7 @@ export default function UniversalPosts() {
   const onEditImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
-      const aspect = 1 / 1;
+      const aspect = 3 / 2;
 
       const initialCrop = centerCrop(
         makeAspectCrop({ unit: "%", width: 90 }, aspect, width, height),
@@ -627,7 +627,7 @@ export default function UniversalPosts() {
                         crop={editCrop}
                         onChange={(_, percentCrop) => setEditCrop(percentCrop)}
                         onComplete={onEditCropComplete}
-                        aspect={1 / 1}
+                        aspect={3 / 2}
                         minWidth={100}
                         minHeight={100}
                         className="max-w-full h-auto"
