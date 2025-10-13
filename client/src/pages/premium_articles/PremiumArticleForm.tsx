@@ -239,7 +239,7 @@ export default function PremiumArticleForm() {
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
-      const aspect = 1 / 1; // Square aspect ratio for cropping
+      const aspect = 3 / 2; // Square aspect ratio for cropping
 
       const initialCrop = centerCrop(
         makeAspectCrop({ unit: "%", width: 90 }, aspect, width, height),
@@ -302,7 +302,7 @@ export default function PremiumArticleForm() {
     setCrop(undefined);
     setCompletedCrop(undefined);
   };
-    const handleCancel = () => {
+  const handleCancel = () => {
     navigate(-1);
   };
 
@@ -395,9 +395,8 @@ export default function PremiumArticleForm() {
 
       {serverError && (
         <div
-          className={`text-white p-3 rounded mb-4 ${
-            serverError.includes("successfully") ? "bg-green-500" : "bg-red-500"
-          }`}
+          className={`text-white p-3 rounded mb-4 ${serverError.includes("successfully") ? "bg-green-500" : "bg-red-500"
+            }`}
           role="alert"
         >
           {serverError}
@@ -513,8 +512,8 @@ export default function PremiumArticleForm() {
                     backgroundColor: isSelected
                       ? "#FBBF24" // yellow-400
                       : isFocused
-                      ? "#6B7280" // gray-600
-                      : "#4B5563", // gray-700
+                        ? "#6B7280" // gray-600
+                        : "#4B5563", // gray-700
                     color: isSelected ? "#1F2937" : "#FFFFFF", // text-gray-900 or text-white
                     "&:active": {
                       backgroundColor: "#FBBF24",
@@ -533,7 +532,7 @@ export default function PremiumArticleForm() {
 
         {/* Images Section with Cropping */}
         <div>
-          <label className="block text-lg font-medium mb-2">Images:</label>
+          <label className="block text-lg font-medium mb-2"> Images ( Recommended aspect ratio: 3:2)</label>
           <input
             type="file"
             multiple
@@ -588,16 +587,16 @@ export default function PremiumArticleForm() {
             ))}
           </div>
 
-          {/* Image Cropping Modal */}
+          {/* Image Cropping Modal - Now triggered immediately on file selection */}
           {currentImageSrc && (
-            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-              <div className="bg-gray-900 rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-auto shadow-2xl">
-                <h3 className="text-xl font-semibold mb-4 text-yellow-400">Crop Image</h3>
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-auto">
+                <h3 className="text-lg font-semibold mb-4">Crop Image (Aspect Ratio 1:1)</h3>
                 <ReactCrop
                   crop={crop}
                   onChange={(_, percentCrop) => setCrop(percentCrop)}
                   onComplete={onCropComplete}
-                  aspect={1 / 1} // Enforce a square aspect ratio
+                  aspect={3 / 2}
                   minWidth={100}
                   minHeight={100}
                   className="max-w-full h-auto"
@@ -610,18 +609,19 @@ export default function PremiumArticleForm() {
                     className="max-w-full h-auto block"
                   />
                 </ReactCrop>
-                <div className="flex gap-4 mt-6 justify-end">
+                <div className="flex gap-4 mt-4 justify-end">
                   <button
                     type="button"
                     onClick={cancelCropping}
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-full transition-all duration-200"
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-full"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleDoneCropping}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold py-2 px-4 rounded-full transition-all duration-200"
+                    disabled={!completedCrop}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Done Cropping
                   </button>
@@ -707,8 +707,8 @@ export default function PremiumArticleForm() {
                     backgroundColor: isSelected
                       ? "#FBBF24"
                       : isFocused
-                      ? "#6B7280"
-                      : "#4B5563",
+                        ? "#6B7280"
+                        : "#4B5563",
                     color: isSelected ? "#1F2937" : "#FFFFFF",
                     "&:active": {
                       backgroundColor: "#FBBF24",
@@ -765,26 +765,24 @@ export default function PremiumArticleForm() {
             type="button"
             onClick={handleCancel}
             disabled={isSubmitting || isLoadingFullPage}
-            className={`bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
-              isSubmitting || isLoadingFullPage ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${isSubmitting || isLoadingFullPage ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting || isLoadingFullPage} // Disable button if form is submitting OR full page is loading
-            className={`bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 ${
-              isSubmitting || isLoadingFullPage ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 ${isSubmitting || isLoadingFullPage ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             {isSubmitting
               ? isEditing
                 ? "Updating..."
                 : "Creating..."
               : isEditing
-              ? "Update Article"
-              : "Create Article"}
+                ? "Update Article"
+                : "Create Article"}
           </button>
         </div>
       </form>
