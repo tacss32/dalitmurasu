@@ -7,7 +7,6 @@ const clientUserSchema = new mongoose.Schema({
   gender: {
     type: String,
     enum: ["male", "female"],
-    
   },
   password: String,
   googleId: { type: String, unique: true, sparse: true },
@@ -16,21 +15,27 @@ const clientUserSchema = new mongoose.Schema({
   dob: { type: Date },
   age: { type: Number },
 
-passwordResetCode: { type: String },
-passwordResetExpires: { type: Date },
-passwordResetVerified: Boolean,
+  passwordResetCode: { type: String },
+  passwordResetExpires: { type: Date },
+  passwordResetVerified: Boolean,
 
   // New: Reference to actual SubscriptionPlan
-subscriptionPlan: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "SubscriptionPlan", // model name
-},
+  subscriptionPlan: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "SubscriptionPlan", // model name
+  },
 
   // Optional: kept for legacy support/migration
   title: { type: String },
-
+  subscriptionStartDate: { type: Date },
   isSubscribed: { type: Boolean, default: false },
+
   subscriptionExpiresAt: { type: Date },
+  stackedSubscriptionCount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
 
   role: { type: String, enum: ["user", "admin"], default: "user" },
 });

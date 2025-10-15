@@ -15,8 +15,8 @@ const ManualAddSubscriptionPage: React.FC = () => {
   const API_BASE_URL = import.meta.env.VITE_API;
 
   // State for the user's email and the selected subscription plan title
-  const [userEmail, setUserEmail] = useState("");
-  const [selectedPlanTitle, setSelectedPlanTitle] = useState("");
+    const [userEmail, setUserEmail] = useState("");
+    const [selectedPlanId, setSelectedPlanId] = useState("");
 
   // State for the list of available subscription plans
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -36,11 +36,11 @@ const ManualAddSubscriptionPage: React.FC = () => {
           },
         });
         if (response.data) {
-          setPlans(response.data);
-          if (response.data.length > 0) {
-            // Set the default selected plan to the first one in the list
-            setSelectedPlanTitle(response.data[0].title);
-          }
+            setPlans(response.data);
+            if (response.data.length > 0) {
+                // Set the default selected plan to the first one in the list
+                setSelectedPlanId(response.data[0]._id); // Use _id here
+            }
         }
       } catch (error) {
         console.error("Error fetching plans:", error);
@@ -60,7 +60,7 @@ const ManualAddSubscriptionPage: React.FC = () => {
       toast.error("Please enter a User Email.");
       return;
     }
-    if (!selectedPlanTitle) {
+    if (!selectedPlanId) {
       toast.error("Please select a subscription plan.");
       return;
     }
@@ -68,10 +68,10 @@ const ManualAddSubscriptionPage: React.FC = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const payload = {
-        userEmail: userEmail,
-        title: selectedPlanTitle,
-      };
+        const payload = {
+            userEmail: userEmail,
+            planId: selectedPlanId, // <-- Change title to planId
+        };
 
       // API endpoint to manually subscribe a user
       const response = await axios.post(`${API_BASE_URL}api/subscription/subscribe-user`, payload, {
@@ -139,23 +139,23 @@ const ManualAddSubscriptionPage: React.FC = () => {
             {plansLoading ? (
               <p className="pl-10 text-gray-500">Loading plans...</p>
             ) : (
-              <select
-                id="plan-select"
-                value={selectedPlanTitle}
-                onChange={(e) => setSelectedPlanTitle(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none bg-white"
-                disabled={plans.length === 0}
-              >
-                {plans.length > 0 ? (
-                  plans.map((plan) => (
-                    <option key={plan._id} value={plan.title}>
-                      {plan.title} - ₹{plan.price}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">No plans available</option>
-                )}
-              </select>
+                              <select
+                                  id="plan-select"
+                                  value={selectedPlanId} // Use selectedPlanId
+                                  onChange={(e) => setSelectedPlanId(e.target.value)} // Set selectedPlanId
+                                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none bg-white"
+                                  disabled={plans.length === 0}
+                              >
+                                  {plans.length > 0 ? (
+                                      plans.map((plan) => (
+                                          <option key={plan._id} value={plan._id}> {/* Use plan._id for value */}
+                                              {plan.title} - ₹{plan.price}
+                                          </option>
+                                      ))
+                                  ) : (
+                                      <option value="">No plans available</option>
+                                  )}
+                              </select>
             )}
           </div>
         </div>
@@ -163,7 +163,7 @@ const ManualAddSubscriptionPage: React.FC = () => {
         <button
           type="submit"
           className="w-full bg-yellow-500 text-white font-bold py-3 px-4 rounded-md hover:bg-yellow-600 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          disabled={loading || plansLoading || !userEmail || !selectedPlanTitle}
+          disabled={loading || plansLoading || !userEmail || !selectedPlanId}
         >
           {loading ? "Adding Subscription..." : "Add Subscription"}
         </button>

@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { MdCheckCircle, MdStar, MdAccessTime } from 'react-icons/md';
+import { MdCheckCircle, MdStar, MdAccessTime, MdTimer } from 'react-icons/md';
 
 interface SubscriptionPlan {
   _id: string;
@@ -16,7 +17,7 @@ interface UserSubscription {
   _id: string;
   planId: SubscriptionPlan;
   userId: string;
-  startDate: string;
+  startDate: string; // This now correctly maps to subscriptionActivatedAt
   endDate: string;
   isActive: boolean;
 }
@@ -32,6 +33,9 @@ export default function UserSubscriptionPlans() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
+  const [remainingDays, setRemainingDays] = useState<number | null>(null);
+  // ⬇️ NEW: State to hold the count of stacked subscriptions
+  const [stackedCount, setStackedCount] = useState<number>(0);
 
   const API_BASE_URL = import.meta.env.VITE_API;
 
@@ -40,35 +44,42 @@ export default function UserSubscriptionPlans() {
       try {
         const token = localStorage.getItem("clientToken");
 
-        // Fetch all subscription plans
+        // Fetch all plans (public)
         const plansResponse = await axios.get<SubscriptionPlan[]>(
-          `${API_BASE_URL}api/subscriptions`,
-          { headers: { 'Content-Type': 'application/json' } }
+          `${API_BASE_URL}api/subscription/`, // Corrected endpoint
         );
         setPlans(plansResponse.data);
 
-       // Fetch user's current subscription if they are logged in
-if (token) {
-  try {
-    const userSubResponse = await axios.get(
-      `${API_BASE_URL}api/subscriptions/user-status`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    setUserSubscription(userSubResponse.data.subscription || null);
-  } catch (err) {
-    console.error("Error fetching user subscription status:", err);
-    setUserSubscription(null);
-  }
-}
+        if (token) {
+          try {
+            const userSubResponse = await axios.get(
+              `${API_BASE_URL}api/subscription/user-status`, // Corrected endpoint
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
 
+            const subscription = userSubResponse.data.subscription || null;
+            setUserSubscription(subscription);
+            // ⬇️ NEW: Set the stacked count from the API response
+            setStackedCount(userSubResponse.data.stackedCount || 0);
 
+            if (subscription?.endDate) {
+              const endDate = new Date(subscription.endDate);
+              const now = new Date();
+              const diff = endDate.getTime() - now.getTime();
+              const daysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+              setRemainingDays(daysLeft);
+            } else {
+              setRemainingDays(null);
+            }
+          } catch (err) {
+            console.error("Error fetching user subscription status:", err);
+            setUserSubscription(null);
+            setStackedCount(0); // Reset on error
+          }
+        }
       } catch (err) {
         console.error('Error fetching plans:', err);
-        if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.error || 'Failed to load plans. Please try again.');
-        } else {
-          setError('An unexpected error occurred while loading plans.');
-        }
+        setError('Failed to load plans. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -78,6 +89,12 @@ if (token) {
   }, [API_BASE_URL]);
 
   const handleSubscribe = async (plan: SubscriptionPlan) => {
+    // ⬇️ NEW: Client-side check before making API call
+    if (stackedCount >= 2) {
+      alert("Subscription limit reached. You cannot add another plan.");
+      return;
+    }
+
     const token = localStorage.getItem("clientToken");
     if (!token) {
       alert("Please login to subscribe.");
@@ -86,12 +103,12 @@ if (token) {
 
     try {
       const createOrderResponse = await axios.post(
-        `${API_BASE_URL}api/subscriptions/create-order`,
+        `${API_BASE_URL}api/subscription/create-order`, // Corrected endpoint
         { planId: plan._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      const { razorpayOrderId, amount, currency, userId } = createOrderResponse.data;
+      // ... (rest of handleSubscribe logic is the same)
+      const { razorpayOrderId, amount, currency } = createOrderResponse.data;
 
       const razorpay = new window.Razorpay({
         key: import.meta.env.VITE_RAZORPAY_KEY,
@@ -103,12 +120,11 @@ if (token) {
         handler: async function (response: any) {
           try {
             const verifyResponse = await axios.post(
-              `${API_BASE_URL}api/subscriptions/verify-payment`,
+              `${API_BASE_URL}api/subscription/verify-payment`, // Corrected endpoint
               {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                userId,
                 planId: plan._id,
               },
               { headers: { Authorization: `Bearer ${token}` } }
@@ -118,26 +134,29 @@ if (token) {
               alert("Subscription successful!");
               window.location.reload();
             } else {
-              alert("Payment verification failed.");
+              alert(verifyResponse.data.message || "Payment verification failed.");
             }
           } catch (error) {
             console.error("Verification Error:", error);
             alert("An error occurred during payment verification.");
           }
         },
-        prefill: {
-          name: "Dalit Murasu User",
-          email: "",
-        },
+        prefill: { name: "Dalit Murasu User", email: "" },
         theme: { color: "#cb1e19" },
       });
-
       razorpay.open();
+
     } catch (error) {
       console.error("Payment Error:", error);
-      alert("Failed to initiate subscription. Please try again.");
+      // ⬇️ NEW: Better error handling for limit reached
+      if (axios.isAxiosError(error) && error.response?.data?.limitReached) {
+        alert(error.response.data.message);
+      } else {
+        alert("Failed to initiate subscription. Please try again.");
+      }
     }
   };
+
 
   if (loading) {
     return (
@@ -171,16 +190,48 @@ if (token) {
     <div className="min-h-screen p-4 sm:p-8 flex flex-col items-center" style={{ backgroundColor: '#feebbd' }}>
       <h2 className="text-4xl font-extrabold text-highlight-1 mb-10 text-center">Choose Your Subscription Plan</h2>
 
+      
+
+      {/* Remaining days counter for active user */}
+      {userSubscription && remainingDays !== null && (
+        <div className="mb-8 text-center bg-white/40 px-6 py-3 rounded-lg shadow-md">
+          <div className="flex justify-center items-center space-x-2 text-lg font-semibold text-gray-800">
+            <MdTimer className="text-red-600 text-2xl" />
+            <span>
+              Your current plan (<strong>{userSubscription.planId.title}</strong>) expires in{" "}
+              <span className="text-red-700 font-bold">{remainingDays}</span> day
+              {remainingDays !== 1 ? "s" : ""}.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ⬇️ NEW: Add a visual indicator for the subscription limit */}
+      {stackedCount >= 2 && (
+        <div className="mb-8 text-center bg-yellow-100 border border-yellow-400 text-yellow-800 px-6 py-3 rounded-lg shadow-md">
+          <p className="font-semibold">
+            You have reached the maximum limit of 2 stacked subscriptions.
+          </p>
+          <p className="text-sm">You can subscribe to a new plan after your current one expires.</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
         {plans.map((plan) => {
           const isCurrentPlan = userSubscription?.planId?._id === plan._id;
-          // const hasSubscription = !!userSubscription;
 
           return (
             <div
               key={plan._id}
-              className="bg-white/30 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between p-6 border border-gray-200"
+              className={`relative bg-white/30 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between p-6 ${isCurrentPlan ? 'border-2 border-red-600' : 'border border-gray-200'
+                }`}
             >
+              {isCurrentPlan && (
+                <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-10">
+                  Current Plan
+                </div>
+              )}
+
               <div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-3 text-center">{plan.title}</h3>
                 <p className="text-center text-gray-600 mb-4">{plan.description || 'No description provided.'}</p>
@@ -195,23 +246,21 @@ if (token) {
                 </ul>
               </div>
 
-           <button
-  onClick={() => handleSubscribe(plan)}
-  disabled={isCurrentPlan}
-  className={`w-full py-3 rounded-lg text-white font-semibold transition duration-300 ease-in-out
-    ${isCurrentPlan 
-      ? "bg-[#cb1e19] opacity-60 cursor-not-allowed" // subscribed → transparent red
-      : "bg-[#cb1e19] hover:opacity-90"}             // others → normal red
-  `}
->
-  {isCurrentPlan
-    ? "Subscribed"                 
-    : userSubscription              
-      ? "Upgrade"                   
-      : "Subscribe Now"}            
-</button>
-
-
+              {/* ✅ MODIFIED: Button is disabled based on stackedCount */}
+              <button
+                onClick={() => handleSubscribe(plan)}
+                className="w-full py-3 rounded-lg text-white font-semibold transition duration-300 ease-in-out bg-[#cb1e19] hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={stackedCount >= 2}
+              >
+                {stackedCount >= 2
+                  ? "Limit Reached"
+                  : userSubscription
+                    ? isCurrentPlan
+                      ? "Extend Subscription"
+                      : "Switch & Extend"
+                    : "Subscribe Now"
+                }
+              </button>
             </div>
           );
         })}
