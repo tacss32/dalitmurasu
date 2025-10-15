@@ -318,32 +318,28 @@ export default function NewsHud() {
               <div
                 key={book._id}
                 // Card width: w-40 (mobile), sm:w-40 (small), md:w-48 (tablet scroller), xl:w-full (desktop grid)
-                className="w-40 sm:w-40 md:w-48 xl:w-full flex-shrink-0 border border-gray-200 rounded-xl p-3 xl:p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer mb-4"
+                className="w-40 sm:w-40 md:w-48 xl:w-full flex-shrink-0 border border-gray-200 rounded-xl p-3  shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer mb-4 "
                 onClick={() => handleShowDescription(book)}
               >
-                <div className="flex-grow flex flex-col">
-                  <div className="relative mb-5 rounded-lg border border-gray-100 overflow-hidden  flex justify-center items-center">
+                
+                  <div >
                     <img
                       src={book.imageUrl}
                       alt={book.name}
                       // Use w-full and h-full to fill the container
-                      className="w-full h-full object-contain"
+                    className="w-full h-full object-contain rounded-lg "
                       onError={(e) => {
                         e.currentTarget.src = `https://placehold.co/400x300/E0E0E0/333333?text=No+Image`;
                       }}
                     />
                   </div>
                   {/* Title: text-sm for mobile/tablet, xl:text-lg for desktop */}
-                  <h2 className="text-sm xl:text-lg font-bold text-gray-900 mb-2">
+                  <h2 className="text-sm xl:text-lg font-bold text-gray-900 my-2">
                     {book.name}
                   </h2>
-                  {/* Paragraph: text-sm for mobile/tablet, xl:text-base for desktop */}
-                  <p className="text-gray-600 text-sm xl:text-base mb-1">
-                    {/* by {book.author} */}
-                  </p>
-                  {/* <p className="text-gray-600 text-sm mb-3">Category: {book.category}</p> */}
-                </div>
-                <div className="flex items-baseline mb-4">
+    
+              
+                <div className="flex items-baseline mb-2">
                   <span className="text-red-500 line-through text-lg mr-2">
                     ₹{book.actualPrice.toFixed(2)}
                   </span>

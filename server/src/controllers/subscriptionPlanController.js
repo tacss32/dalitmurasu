@@ -1,4 +1,3 @@
-
 const SubscriptionPlan = require("../models/SubscriptionPlan");
 const ClientUser = require("../models/ClientUser");
 const razorpay = require("../config/razorpay_util");
@@ -24,7 +23,13 @@ const transporter = nodemailer.createTransport({
 /* -----------------------------------------------------------------------------
  * Email Helper Function
  * --------------------------------------------------------------------------- */
-async function sendSubscriptionEmail(toEmail, userName, planTitle, planPrice, expiryDate) {
+async function sendSubscriptionEmail(
+  toEmail,
+  userName,
+  planTitle,
+  planPrice,
+  expiryDate
+) {
   try {
     console.log(`Attempting to send subscription email to: ${toEmail}`);
     const formattedPrice = (planPrice / 100).toFixed(2); // Convert paisa back to rupees for display
@@ -133,18 +138,24 @@ exports.createSubscriptionOrder = async (req, res) => {
         .status(401)
         .json({ success: false, message: "User not authenticated" });
     }
-
-    if (!planId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Plan ID is required" });
-    }
-
     const plan = await SubscriptionPlan.findById(planId);
     if (!plan) {
       return res
         .status(404)
         .json({ success: false, message: "Subscription plan not found" });
+    }
+
+    // ⬇️ MODIFIED: Fetch full user to check stacked limit
+    const fullUser = await ClientUser.findById(user._id);
+
+    // ⬇️ NEW: Enforce the 2-plan limit for new purchases
+    if (fullUser && fullUser.stackedSubscriptionCount >= 2) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Subscription limit reached. You can have a maximum of 2 stacked plans.",
+        limitReached: true, // Special flag for client-side logic
+      });
     }
 
     const options = {
@@ -153,7 +164,6 @@ exports.createSubscriptionOrder = async (req, res) => {
       receipt: `sub_${Date.now()}`,
       payment_capture: 1,
     };
-
     const order = await razorpay.orders.create(options);
 
     res.status(200).json({
@@ -161,7 +171,6 @@ exports.createSubscriptionOrder = async (req, res) => {
       razorpayOrderId: order.id,
       amount: order.amount,
       currency: order.currency,
-      planTitle: plan.title,
       userId: user._id,
     });
   } catch (err) {
@@ -171,6 +180,7 @@ exports.createSubscriptionOrder = async (req, res) => {
       .json({ success: false, message: "Failed to create Razorpay order" });
   }
 };
+
 
 // -----------------------------
 // User: Verify Payment & Activate Subscription
@@ -184,7 +194,6 @@ exports.verifySubscriptionPayment = async (req, res) => {
       planId,
     } = req.body;
 
-    // 1. Validate Razorpay Signature
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -196,49 +205,71 @@ exports.verifySubscriptionPayment = async (req, res) => {
         .json({ success: false, message: "Invalid Razorpay signature" });
     }
 
-    // 2. Activate user subscription
     const plan = await SubscriptionPlan.findById(planId);
     if (!plan) {
       return res
         .status(404)
         .json({ success: false, message: "Subscription plan not found" });
     }
-
-    const now = new Date();
-    const expiryDate = new Date(
-      now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000
-    );
-
-    const user = await ClientUser.findByIdAndUpdate(
-      userId,
-      {
-        isSubscribed: true,
-        subscriptionExpiresAt: expiryDate,
-        subscriptionPlan: plan._id,
-        title: plan.title,
-      },
-      { new: true }
-    );
-
+    const user = await ClientUser.findById(userId);
     if (!user) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
 
-    // ✅ NEW: Send subscription confirmation email
+    // ⬇️ NEW: Enforce limit as a final check
+    if (user.stackedSubscriptionCount >= 2) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Subscription limit reached. Payment confirmed but subscription not activated. Contact support.",
+        limitReached: true,
+      });
+    }
+
+    const now = new Date();
+    const baseDate =
+      user.isSubscribed &&
+      user.subscriptionExpiresAt &&
+      new Date(user.subscriptionExpiresAt) > now
+        ? new Date(user.subscriptionExpiresAt)
+        : now;
+
+    const expiryDate = new Date(
+      baseDate.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000
+    );
+
+    // --- ⬇️ MODIFIED UPDATE LOGIC: Increment count ⬇️ ---
+    const updateData = {
+      isSubscribed: true,
+      subscriptionExpiresAt: expiryDate,
+      subscriptionPlan: plan._id,
+      title: plan.title,
+      $inc: { stackedSubscriptionCount: 1 }, // Atomically increment the count
+    };
+
+    if (!user.isSubscribed || new Date(user.subscriptionExpiresAt) < now) {
+      updateData.subscriptionStartDate = now;
+    }
+
+    const updatedUser = await ClientUser.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    });
+    // --- ⬆️ END: MODIFIED UPDATE LOGIC ⬆️ ---
+
     await sendSubscriptionEmail(
-      user.email,
-      user.name,
+      updatedUser.email,
+      updatedUser.name,
       plan.title,
       plan.price,
-      user.subscriptionExpiresAt
+      updatedUser.subscriptionExpiresAt
     );
 
     res.status(200).json({
       success: true,
       message: "Subscription activated successfully",
-      user,
+      user: updatedUser,
     });
   } catch (err) {
     console.error("Payment verification failed:", err);
@@ -250,68 +281,93 @@ exports.verifySubscriptionPayment = async (req, res) => {
 
 // -----------------------------
 // Admin: Manually Subscribe User
-// Admin: Manually Subscribe User
+// -----------------------------
 exports.manualSubscribeUser = async (req, res) => {
-  try {
-    const { userEmail, title } = req.body;
+  try {
+    const { userEmail, planId } = req.body;
 
-    // Validate input
-    if (!userEmail || !title) {
-      return res.status(400).json({
-        success: false,
-        message: "User email and Plan Title are required",
-      });
-    }
+    if (!userEmail || !planId) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "User email and Plan ID are required",
+        });
+    }
 
-    // Fetch plan by title
-    const plan = await SubscriptionPlan.findOne({ title });
-    if (!plan) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Subscription plan not found" });
-    }
+    const plan = await SubscriptionPlan.findById(planId);
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Subscription plan not found" });
+    }
+    let user = await ClientUser.findOne({ email: userEmail });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
-    // Fetch user by email
-    const user = await ClientUser.findOne({ email: userEmail });
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
+    // ⬇️ NEW: Enforce the 2-plan limit for manual subscription
+    if (user.stackedSubscriptionCount >= 2) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Subscription limit reached. User already has 2 active/stacked plans.",
+      });
+    }
 
-    // Calculate expiry date from today
-    const now = new Date();
-    const expiryDate = new Date(
-      now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000
-    );
+    const now = new Date();
+    const baseDate =
+      user.isSubscribed &&
+      user.subscriptionExpiresAt &&
+      new Date(user.subscriptionExpiresAt) > now
+        ? new Date(user.subscriptionExpiresAt)
+        : now;
 
-    // Update user
-    user.isSubscribed = true;
-    user.subscriptionPlan = plan._id;
-    user.subscriptionExpiresAt = expiryDate;
-    user.title = plan.title;
-    await user.save();
-    
-    // ✅ NEW: Send confirmation email for manual subscription
-    await sendSubscriptionEmail(
-      user.email,
-      user.name,
-      plan.title,
-      plan.price,
-      user.subscriptionExpiresAt
-    );
+    const expiryDate = new Date(
+      baseDate.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000
+    );
 
+    // --- ⬇️ MODIFIED UPDATE LOGIC: Increment count ⬇️ ---
+    const updateData = {
+      isSubscribed: true,
+      subscriptionExpiresAt: expiryDate,
+      subscriptionPlan: plan._id,
+      title: plan.title,
+      $inc: { stackedSubscriptionCount: 1 }, // Atomically increment the count
+    };
 
-    res.status(200).json({
-      success: true,
-      message: "User subscribed successfully",
-      user,
-    });
-  } catch (err) {
-    console.error("Manual subscription failed:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
+    if (!user.isSubscribed || new Date(user.subscriptionExpiresAt) < now) {
+      updateData.subscriptionStartDate = now;
+    }
+
+    user = await ClientUser.findByIdAndUpdate(user._id, updateData, {
+      new: true,
+    });
+    // --- ⬆️ END: MODIFIED UPDATE LOGIC ⬆️ ---
+
+    await sendSubscriptionEmail(
+      user.email,
+      user.name,
+      plan.title,
+      plan.price,
+      user.subscriptionExpiresAt
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `User subscribed successfully. New expiry: ${expiryDate.toLocaleDateString()}`,
+      user,
+    });
+  } catch (err) {
+    console.error("Manual subscription failed:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
 };
+
+
+
 // -----------------------------
 // Admin: Get Subscribed Users
 exports.getSubscribedUsers = async (req, res) => {
@@ -391,89 +447,108 @@ exports.getSubscriptionDashboard = async (req, res) => {
       message: "Failed to fetch dashboard data",
     });
   }
-}; 
+};
 
 // Admin: Unsubscribe User
 exports.unsubscribeUser = async (req, res) => {
-  try {
-    const { id } = req.params;
+  try {
+    const { id } = req.params;
+    const user = await ClientUser.findByIdAndUpdate(
+      id,
+      {
+        isSubscribed: false,
+        subscriptionPlan: null,
+        subscriptionExpiresAt: null,
+        title: null,
+        // ⬇️ NEW: Reset the stacked count to 0 upon manual unsubscribe
+        stackedSubscriptionCount: 0,
+      },
+      { new: true }
+    );
 
-    // Find the user and update their subscription status
-    const user = await ClientUser.findByIdAndUpdate(
-      id,
-      {
-        isSubscribed: false,
-        subscriptionPlan: null,
-        subscriptionExpiresAt: null,
-        title: null,
-      },
-      { new: true } // Return the updated document
-    );
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
 
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "User unsubscribed successfully.",
-      user,
-    });
-  } catch (err) {
-    console.error("Unsubscribe user failed:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error." });
-  }
+    res.status(200).json({
+      success: true,
+      message: "User unsubscribed successfully.",
+      user,
+    });
+  } catch (err) {
+    console.error("Unsubscribe user failed:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
 };
 
 // -----------------------------
 // User: Get Current User Subscription Status
 exports.getUserSubscriptionStatus = async (req, res) => {
-  try {
-    const user = await ClientUser.findById(req.user._id)
-      .populate("subscriptionPlan", "title price durationInDays");
+  try {
+    // ⬇️ MODIFIED: Select 'stackedSubscriptionCount'
+    const user = await ClientUser.findById(req.user._id)
+      .select(
+        "isSubscribed subscriptionExpiresAt subscriptionPlan title subscriptionStartDate stackedSubscriptionCount"
+      )
+      .populate("subscriptionPlan", "title price durationInDays");
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
-    // === START OF EXPIRY CHECK FIX ===
-    const now = new Date();
-    const isExpired = user.isSubscribed && user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < now;
+    const now = new Date();
+    const isExpired =
+      user.isSubscribed &&
+      user.subscriptionExpiresAt &&
+      new Date(user.subscriptionExpiresAt) < now;
 
-    if (isExpired) {
-      console.log(`Status check detected expired subscription for user ${user.email}. Auto-unsubscribing.`);
-      // Proactively update the user's status in the DB
-      const updatedUser = await ClientUser.findByIdAndUpdate(
-        user._id,
-        {
-          isSubscribed: false,
-          subscriptionPlan: null,
-          subscriptionExpiresAt: null,
-          title: null,
-        },
-        { new: true }
-      );
-      // After updating, treat as unsubscribed and return null
-      return res.status(200).json({ success: true, subscription: null });
-    }
-    // === END OF EXPIRY CHECK FIX ===
+    if (isExpired) {
+      // ⬇️ NEW: Decrement stackedSubscriptionCount and reset other fields
+      const updatedUser = await ClientUser.findByIdAndUpdate(
+        user._id,
+        {
+          isSubscribed: false,
+          subscriptionPlan: null,
+          subscriptionExpiresAt: null,
+          title: null,
+          // Decrement the count, ensuring it doesn't go below 0
+          $inc: { stackedSubscriptionCount: -1 },
+        },
+        { new: true }
+      );
 
+      return res.status(200).json({
+        success: true,
+        subscription: null,
+        // ⬇️ MODIFIED RESPONSE: Return the new count
+        stackedCount: updatedUser.stackedSubscriptionCount,
+      });
+    }
 
-    if (!user.isSubscribed || !user.subscriptionPlan) {
-      return res.status(200).json({ success: true, subscription: null });
-    }
+    // ⬇️ MODIFIED: Include stackedSubscriptionCount in the response
+    if (!user.isSubscribed || !user.subscriptionPlan) {
+      return res.status(200).json({
+        success: true,
+        subscription: null,
+        stackedCount: user.stackedSubscriptionCount || 0,
+      });
+    }
 
     res.status(200).json({
       success: true,
       subscription: {
-        _id: user._id,
-        planId: user.subscriptionPlan, // populated object with title etc
-        startDate: user.updatedAt,
+        _id: user.subscriptionPlan._id, // Send plan ID for comparison
+        planId: user.subscriptionPlan,
+        startDate: user.subscriptionStartDate,
         endDate: user.subscriptionExpiresAt,
         isActive: user.isSubscribed,
       },
+      // ⬇️ NEW: Return the current count
+      stackedCount: user.stackedSubscriptionCount || 0,
     });
   } catch (err) {
     console.error("Error fetching user subscription status:", err);

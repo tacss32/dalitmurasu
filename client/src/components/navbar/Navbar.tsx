@@ -5,7 +5,8 @@ import Tags from "./Tags";
 import TitleBar from "./TitleBar";
 import Menus from "./Menus";
 import Subscribe from "./Subscribe";
-import { FaFacebook, FaInstagram, FaTwitter, FaWhatsapp } from "react-icons/fa";
+
+import { socialLinks } from "../Footer";
 
 interface NavbarProps {
   onHeightChange: (height: number) => void;
@@ -98,7 +99,7 @@ export default function Navbar({ onHeightChange }: NavbarProps) {
 
   const logoSrc = isScrolled ? "/logo.png" : "/logo1.webp";
   const logoHeightClass = isScrolled
-    ? "h-12 sm:h-14 md:h-16 lg:h-18 xl:h-20"
+    ? "h-20 sm:h-14 md:h-16 lg:h-18 xl:h-20"
     : "h-20 sm:h-24 md:h-28 lg:h-32 xl:h-36";
 
   const isTitleBarVisible = !isScrolled;
@@ -117,10 +118,10 @@ export default function Navbar({ onHeightChange }: NavbarProps) {
         {/* Mobile/Tablet View (Hidden on xl screens) */}
         <div className="xl:hidden">
           <div
-            className={`flex justify-center items-center px-2 sm:px-3 md:px-4 ${TRANSITION_DURATION}
+            className={`flex justify-center items-center px-2 sm:px-3 md:px-4 py-0 ${TRANSITION_DURATION}
               ${isTitleBarVisible
-                ? "py-2 sm:py-3 md:py-4 opacity-100 h-auto"
-                : "py-0 opacity-0 h-0 overflow-hidden"}`
+                ? " sm:py-3 md:py-4 opacity-100 h-auto"
+                : " opacity-0 h-0 overflow-hidden"}`
             }
           >
             <TitleBar />
@@ -197,76 +198,55 @@ export default function Navbar({ onHeightChange }: NavbarProps) {
     ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
     backdrop-blur-sm shadow-lg border-l bg-background-to z-50 overflow-y-auto`}
       >
-       {/* Top bar: social icons + close button */}
-<div className="flex justify-between items-center p-4">
-  {/* Social media icons */}
-  <div className="flex space-x-4 text-2xl">
-    <a
-      href="https://www.facebook.com/dalitmurasuadmin?rdid=O3FlEPCoVVrE3uAm&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F19DuFLdYay%2F#"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="hover:text-red-700 dark:hover:text-red-100"
-    >
-      <FaFacebook />
-    </a>
-    <a
-      href="https://x.com/DalitMurasu?t=xF15mBqW1rLbOYfOnMd_0Q&s=08"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="hover:text-red-700 dark:hover:text-red-100"
-    >
-      <FaTwitter />
-    </a>
-    <a
-      href="http://googleusercontent.com/maps.google.com/3"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="hover:text-red-700 dark:hover:text-red-100"
-    >
-      <FaInstagram />
-    </a>
-    <a
-      href="https://wa.me/919444452877"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="hover:text-red-700 dark:hover:text-red-100"
-    >
-      <FaWhatsapp />
-    </a>
-  </div>
+        {/* Top bar: social icons + close button */}
+        <div className="flex justify-between items-center p-4">
+          {/* Social media icons */}
+          <div className="flex space-x-4 text-2xl">
+            {socialLinks.map((link, index) => (
+              <a
+                key={index}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-red-700 dark:hover:text-red-100"
+              >
+                <link.Icon />
+              </a>))}
 
-  {/* Close button */}
-  <button
-    onClick={closeMobileMenu}
-    className="text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
-    aria-label="Close mobile menu"
-  >
-    <X className="h-6 w-6" />
-  </button>
-</div>
+          </div>
+
+          {/* Close button */}
+          <button
+            onClick={closeMobileMenu}
+            className="text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
+            aria-label="Close mobile menu"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
 
 
         {/* Main content */}
         <div className="px-4 pb-6 space-y-6">
-         <div className="space-y-4">
-  {/* Row for Subscribe (left) and Login (right) */}
-  <div className="flex justify-between items-center gap-4">
-    {/* Subscribe (left) */}
-    <div>
-      <Subscribe />
-    </div>
+          <div className="space-y-4">
+            {/* Row for Subscribe (left) and Login (right) */}
+            <div className="flex justify-between items-center gap-4">
+              {/* Subscribe (left) */}
+              <div>
+                <Subscribe />
+              </div>
 
-    {/* Login/Profile (right) */}
-    <div>
-      <Menus isMobileMenu={true} closeMobileMenu={closeMobileMenu} />
-    </div>
-  </div>
+              {/* Login/Profile (right) */}
+              <div>
+                <Menus isMobileMenu={true} closeMobileMenu={closeMobileMenu} />
+              </div>
+            </div>
 
-  {/* Tags below */}
-  <div className="pb-4 border-b bg-background-to">
-    <Tags isMobileView={true} closeMobileMenu={closeMobileMenu} />
-  </div>
-</div>
+            {/* Tags below */}
+            <div className="pb-4 border-b bg-background-to">
+              <Tags isMobileView={true} closeMobileMenu={closeMobileMenu} />
+            </div>
+          </div>
 
 
         </div>
