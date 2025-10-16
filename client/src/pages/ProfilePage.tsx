@@ -20,10 +20,15 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  // 🔑 NEW STATE: To hold the password error message for inline display
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    currentPassword: "",
     phone: "",
     dob: "",
     gender: "",
@@ -55,6 +60,7 @@ export default function ProfilePage() {
         name: data.name || "",
         email: data.email || "",
         password: "",
+        currentPassword: "",
         phone: data.phone || "",
         dob: data.dob ? data.dob.slice(0, 10) : "",
         gender: data.gender || "",
@@ -71,6 +77,12 @@ export default function ProfilePage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+
+    // Clear password error when user starts typing
+    if (name === "currentPassword" || name === "password") {
+      setPasswordError(null);
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -79,6 +91,9 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setPasswordError(null); // Clear previous error before submission
+
     try {
       const token = localStorage.getItem("clientToken");
       if (!token) throw new Error("No token found");
@@ -90,11 +105,29 @@ export default function ProfilePage() {
       if (formData.dob !== userDetails?.dob?.slice(0, 10)) payload.dob = formData.dob;
       if (formData.gender.toLowerCase() !== userDetails?.gender?.toLowerCase())
         payload.gender = formData.gender.toLowerCase();
-      if (formData.password.trim()) payload.password = formData.password;
+      // --- New Password Logic ---
+      if (formData.password.trim()) {
+        // Client-side check 1
+        if (!formData.currentPassword.trim()) {
+          toast.error("Please enter your current password to set a new one.");
+          setLoading(false);
+          return;
+        }
+
+        payload.password = formData.password;
+        payload.currentPassword = formData.currentPassword;
+      } else if (formData.currentPassword.trim()) {
+        // Client-side check 2
+        toast.error("New password cannot be empty.");
+        setLoading(false);
+        return;
+      }
+      // --- End New Password Logic ---
 
       if (Object.keys(payload).length === 0) {
         toast.info("No changes made.");
         setIsEditing(false);
+        setLoading(false);
         return;
       }
 
@@ -107,12 +140,23 @@ export default function ProfilePage() {
       setUserDetails(res.data.data);
       toast.success("Profile updated!");
       setIsEditing(false);
+      // Reset passwords in state after successful update
+      setFormData(prev => ({ ...prev, password: "", currentPassword: "" }));
     } catch (err: any) {
       console.error(err);
-      const message = axios.isAxiosError(err)
-        ? err.response?.data?.message || "Update failed"
-        : "Unexpected error";
-      toast.error(message);
+
+      const message = axios.isAxiosError(err) && err.response?.data?.message
+        ? err.response.data.message
+        : "Update failed. Please check your inputs.";
+
+      // 🔑 KEY FIX: If the message indicates a wrong current password, set the inline error state
+      if (message === "Current password is incorrect") {
+        setPasswordError(message);
+        toast.error("Password update failed. Please check the current password.");
+      } else {
+        toast.error(message);
+      }
+
     } finally {
       setLoading(false);
     }
@@ -152,19 +196,12 @@ export default function ProfilePage() {
 
       {isEditing ? (
         <form onSubmit={handleUpdateProfile} className="space-y-4">
-          {/* Name */}
+          {/* ... (Other InputFields: Name, Email, Phone, DOB, Gender) ... */}
+
           <InputField label="Name" name="name" value={formData.name} onChange={handleInputChange} required />
-
-          {/* Email */}
-          <InputField label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
-
-          {/* Phone */}
-          <InputField label="Phone" name="phone" value={formData.phone} onChange={handleInputChange} />
-
-          {/* DOB */}
+          <InputField label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} required readOnly={true} />
+          <InputField label="Phone" name="phone" value={formData.phone} onChange={handleInputChange} readOnly={true} />
           <InputField label="Date of Birth" name="dob" type="date" value={formData.dob} onChange={handleInputChange} />
-
-          {/* Gender */}
           <div>
             <label htmlFor="gender" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Gender</label>
             <select
@@ -179,6 +216,18 @@ export default function ProfilePage() {
               <option value="female">Female</option>
             </select>
           </div>
+
+          {/* New Field: Current Password (WITH INLINE ERROR) */}
+          <InputField
+            label="Current Password"
+            name="currentPassword"
+            type="password"
+            value={formData.currentPassword}
+            onChange={handleInputChange}
+            placeholder="Required to set a new password"
+            // Pass the error down to the InputField component
+            error={passwordError}
+          />
 
           {/* Password */}
           <InputField
@@ -195,9 +244,11 @@ export default function ProfilePage() {
               type="button"
               onClick={() => {
                 setIsEditing(false);
+                setPasswordError(null); // Clear error on cancel
                 setFormData({
                   name: userDetails.name,
                   email: userDetails.email,
+                  currentPassword: "",
                   password: "",
                   phone: userDetails.phone || "",
                   dob: userDetails.dob?.slice(0, 10) || "",
@@ -210,7 +261,7 @@ export default function ProfilePage() {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              className="px-4 py-2 bg-highlight-1 text-white rounded-md hover:bg-green-700"
             >
               {loading ? "Saving..." : "Save Changes"}
             </button>
@@ -233,7 +284,7 @@ export default function ProfilePage() {
   );
 }
 
-// Reusable components for cleaner code
+// 🔑 InputField Component Updated to display error message
 const InputField = ({
   label,
   name,
@@ -243,15 +294,17 @@ const InputField = ({
   placeholder,
   required = false,
   readOnly = false,
+  error = null, // New prop for error message
 }: {
   label: string;
   name: string;
   type?: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   placeholder?: string;
   required?: boolean;
   readOnly?: boolean;
+  error?: string | null; // New prop interface
 }) => (
   <div>
     <label htmlFor={name} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -262,12 +315,18 @@ const InputField = ({
       name={name}
       type={type}
       value={value}
-      onChange={onChange}
+      onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
       placeholder={placeholder}
       required={required}
       readOnly={readOnly}
-      className="w-full mt-1 px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+      className={`w-full mt-1 px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+        // Apply red border if an error exists
+        error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+        }`}
     />
+    {/* Conditional Error Message */}
+    {error && (
+      <p className="text-sm text-red-500 mt-1">{error}</p>
+    )}
   </div>
 );
-
