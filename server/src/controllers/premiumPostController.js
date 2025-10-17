@@ -121,182 +121,127 @@ exports.getPremiumPostPreviews = async (req, res) => {
  
 // GET single with access check
 exports.getPremiumPostById = async (req, res) => {
- 
   try {
- 
     const post = await PremiumPost.findById(req.params.id).lean();
- 
+
     if (!post) return res.status(404).json({ error: "Post not found" });
- 
+
+    // The user object, which includes the subscriptionPlan array
     const user = req.user;
- 
-    const isSubscribed = user?.isSubscribed === true;
- 
-    // If post is marked for subscribers
- 
-    if (post.visibility === "subscribers") {
- 
-      // 1. Subscribed users: full access
- 
-      if (isSubscribed) {
- 
-        await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
- 
-        return res.json(post);
- 
-      }
- 
-      const previewWordCount = Math.max(
-  1,
-  Math.min(200, parseInt(req.query.words, 10) || 150)
-);
- 
-      const { preview: contentPreview, truncated } = getFirstWords(post.content, previewWordCount);
- 
-      // 2. Not logged in: only preview
- 
-      if (!user) {
- 
-        return res.status(401).json({
- 
-          error: "You must log in to access this premium post.",
- 
-          requiresSubscription: true,
- 
-          articleData: {
- 
-            _id: post._id,
- 
-            title: post.title,
- 
-            subtitle: post.subtitle,
- 
-            category: post.category,
- 
-            author: post.author,
- 
-            images: post.images,
- 
-            date: post.date,
- 
-            isHome: post.isHome,
- 
-            isRecent: post.isRecent,
- 
-            visibility: post.visibility,
- 
-            freeViewLimit: post.freeViewLimit,
- 
-            views: post.views,
- 
-            contentPreview,
- 
-            truncated,
- 
-          },
- 
-        });
- 
-      }
- 
-      // 3. Logged in, not subscribed: apply free view logic
- 
-      let record = await UserViewHistory.findOne({
- 
-        userId: user._id,
- 
-        postId: post._id,
- 
-      });
- 
-      if (!record) {
- 
-        await UserViewHistory.create({
- 
-          userId: user._id,
- 
-          postId: post._id,
- 
-          views: 1,
- 
-        });
- 
-        await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
- 
-        return res.json(post);
- 
-      }
- 
-      if (record.views < post.freeViewLimit) {
- 
-        record.views += 1;
- 
-        await record.save();
- 
-        await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
- 
-        return res.json(post);
- 
-      }
- 
-      // 4. Free view limit exceeded
- 
-      return res.status(403).json({
- 
-        error: "",
- 
-        requiresSubscription: true,
- 
-        articleData: {
- 
-          _id: post._id,
- 
-          title: post.title,
- 
-          subtitle: post.subtitle,
- 
-          category: post.category,
- 
-          author: post.author,
- 
-          images: post.images,
- 
-          date: post.date,
- 
-          isHome: post.isHome,
- 
-          isRecent: post.isRecent,
- 
-          visibility: post.visibility,
- 
-          freeViewLimit: post.freeViewLimit,
- 
-          views: post.views,
- 
-          contentPreview,
- 
-          truncated,
- 
-        },
- 
-      });
- 
+
+    // --- 1. SUBSCRIPTION STATUS CALCULATION (NEW LOGIC) ---
+    let isSubscribed = false;
+    const now = new Date();
+
+    if (user && user.subscriptionPlan?.length) {
+      // Check if ANY plan's expiry date is in the future (active)
+      isSubscribed = user.subscriptionPlan.some(
+        (plan) =>
+          plan.subscriptionExpires && new Date(plan.subscriptionExpires) > now
+      );
     }
- 
+    // --- END SUBSCRIPTION LOGIC ---
+
+    // If post is marked for subscribers
+    if (post.visibility === "subscribers") {
+      // 1. Subscribed users: full access
+      if (isSubscribed) {
+        await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
+        return res.json(post);
+      }
+
+      const previewWordCount = Math.max(
+        1,
+        Math.min(200, parseInt(req.query.words, 10) || 150)
+      );
+
+      // Assume getFirstWords is available in this scope
+      const { preview: contentPreview, truncated } = getFirstWords(
+        post.content,
+        previewWordCount
+      );
+
+   
+      if (!user) {
+        return res.status(401).json({
+          error: "You must log in to access this premium post.",
+          requiresSubscription: true,
+          articleData: {
+            _id: post._id,
+            title: post.title,
+            subtitle: post.subtitle,
+            category: post.category,
+            author: post.author,
+            images: post.images,
+            date: post.date,
+            isHome: post.isHome,
+            isRecent: post.isRecent,
+            visibility: post.visibility,
+            freeViewLimit: post.freeViewLimit,
+            views: post.views,
+            contentPreview,
+            truncated,
+          },
+        });
+      }
+
+      // 3. Logged in, not subscribed: apply free view logic
+      let record = await UserViewHistory.findOne({
+        userId: user._id,
+        postId: post._id,
+      });
+
+      if (!record) {
+        await UserViewHistory.create({
+          userId: user._id,
+          postId: post._id,
+          views: 1,
+        });
+
+        await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
+        return res.json(post);
+      }
+
+      if (record.views < post.freeViewLimit) {
+        record.views += 1;
+        await record.save();
+
+        await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
+        return res.json(post);
+      }
+
+      // 4. Free view limit exceeded
+      return res.status(403).json({
+        error: "", // Added error message
+        requiresSubscription: true,
+        articleData: {
+          _id: post._id,
+          title: post.title,
+          subtitle: post.subtitle,
+          category: post.category,
+          author: post.author,
+          images: post.images,
+          date: post.date,
+          isHome: post.isHome,
+          isRecent: post.isRecent,
+          visibility: post.visibility,
+          freeViewLimit: post.freeViewLimit,
+          views: post.views,
+          contentPreview,
+          truncated,
+        },
+      });
+    }
+
     // If post is public
- 
     await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
- 
     return res.json(post);
- 
   } catch (err) {
- 
     console.error("Error fetching premium post by ID:", err);
- 
-    res.status(500).json({ error: "Failed to fetch post", details: err.message });
- 
+    res
+      .status(500)
+      .json({ error: "Failed to fetch post", details: err.message });
   }
- 
 };
  
 // NEW: GET single post for ADMIN editing (no access checks, returns full content)

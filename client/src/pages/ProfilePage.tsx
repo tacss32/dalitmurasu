@@ -1,7 +1,10 @@
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { FaEdit } from "react-icons/fa";
+// 🔑 NEW IMPORT
+import { MdTimer } from "react-icons/md";
 
 // Define interface for user 
 interface UserDetails {
@@ -14,15 +17,42 @@ interface UserDetails {
   subscriptionExpiresAt: string | null;
 }
 
+// 🔑 NEW INTERFACES (Copied from usersubscriptionplan.tsx for local use)
+interface SubscriptionPlan {
+  _id: string;
+  title: string;
+  durationInDays: number;
+  // Removed price, description, timestamps as they aren't used in the profile display
+}
+
+interface SubscriptionItem {
+  plan: SubscriptionPlan;
+  startDate: string;
+  endDate: string;
+}
+
+interface UserSubscriptionStatus {
+  isActive: boolean;
+  overallEndDate: string;
+  stackedCount: number;
+  subscriptions: SubscriptionItem[];
+}
+// --------------------------------------------------
+
 const API = import.meta.env.VITE_API;
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-
-  // 🔑 NEW STATE: To hold the password error message for inline display
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  // 🔑 NEW STATE: To hold subscription data
+  const [userSubData, setUserSubData] = useState<UserSubscriptionStatus | null>(
+    null
+  );
+  const [remainingDays, setRemainingDays] = useState<number | null>(null);
+  // ------------------------------------
 
   const [formData, setFormData] = useState({
     name: "",
@@ -34,21 +64,36 @@ export default function ProfilePage() {
     gender: "",
   });
 
-  useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
-    if (!storedUserId) {
-      toast.error("User not logged in.");
-      setLoading(false);
-      return;
+  // 🔑 NEW FUNCTION: Fetch Subscription Status
+  const fetchSubscriptionStatus = async (token: string) => {
+    try {
+      const res = await axios.get<UserSubscriptionStatus>(
+        `${API}api/subscription/user-status`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const data: UserSubscriptionStatus = res.data;
+      setUserSubData(data);
+
+      if (data.overallEndDate) {
+        const endDate = new Date(data.overallEndDate);
+        const now = new Date();
+        const diff = endDate.getTime() - now.getTime();
+        const daysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+        setRemainingDays(daysLeft);
+      }
+    } catch (err) {
+      console.error("Error fetching subscription status for profile:", err);
+      // Fail silently for profile page if subscription status can't be fetched
     }
-    fetchUserDetails();
-  }, []);
+  };
 
   const fetchUserDetails = async () => {
     try {
       const token = localStorage.getItem("clientToken");
       if (!token) throw new Error("No token found");
 
+      // 1. Fetch User Details
       const res = await axios.get<{ success: boolean; data: UserDetails }>(
         `${API}api/client-users/profile`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -65,6 +110,10 @@ export default function ProfilePage() {
         dob: data.dob ? data.dob.slice(0, 10) : "",
         gender: data.gender || "",
       });
+
+      // 2. Fetch Subscription Status
+      await fetchSubscriptionStatus(token);
+
     } catch (err) {
       console.error(err);
       toast.error("Failed to load profile.");
@@ -72,6 +121,16 @@ export default function ProfilePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    if (!storedUserId) {
+      toast.error("User not logged in.");
+      setLoading(false);
+      return;
+    }
+    fetchUserDetails();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -162,14 +221,6 @@ export default function ProfilePage() {
     }
   };
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "N/A";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   if (loading) return <p className="text-center mt-8">Loading profile...</p>;
 
@@ -194,9 +245,15 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* 🔑 NEW SECTION: Active Subscription Details */}
+      <SubscriptionStatusCard
+        userSubData={userSubData}
+        remainingDays={remainingDays}
+      />
+      {/* ------------------------------------------- */}
+
       {isEditing ? (
         <form onSubmit={handleUpdateProfile} className="space-y-4">
-          {/* ... (Other InputFields: Name, Email, Phone, DOB, Gender) ... */}
 
           <InputField label="Name" name="name" value={formData.name} onChange={handleInputChange} required />
           <InputField label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} required readOnly={true} />
@@ -274,15 +331,64 @@ export default function ProfilePage() {
           <InputField label="Phone" name="phone" value={userDetails.phone || "N/A"} onChange={handleInputChange} readOnly />
           <InputField label="Date of Birth" name="dob" type="date" value={userDetails.dob ? userDetails.dob.slice(0, 10) : ""} onChange={handleInputChange} readOnly />
           <InputField label="Gender" name="gender" value={userDetails.gender || "N/A"} onChange={handleInputChange} readOnly />
-          <InputField label="Subscription Status" name="isSubscribed" value={userDetails.isSubscribed ? "Active" : "Inactive"} onChange={handleInputChange} readOnly />
-          {userDetails.isSubscribed && (
-            <InputField label="Subscription Expires" name="subscriptionExpiresAt" value={formatDate(userDetails.subscriptionExpiresAt)} onChange={handleInputChange} readOnly />
-          )}
+
         </div>
       )}
     </div>
   );
 }
+
+// 🔑 NEW COMPONENT: SubscriptionStatusCard
+const SubscriptionStatusCard = ({
+  userSubData,
+  remainingDays,
+}: {
+  userSubData: UserSubscriptionStatus | null;
+  remainingDays: number | null;
+}) => {
+  if (!userSubData || !userSubData.isActive) {
+    return (
+      <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg text-center text-gray-600 dark:text-gray-400 mb-6">
+        You do not have any active subscriptions.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-6 w-full  dark:bg-gray-700 p-4 rounded-xl shadow-inner border border-red-300 dark:border-red-800">
+      <h3 className="text-xl font-bold text-center mb-3  dark:text-red-400">
+        Active Subscription Details
+      </h3>
+
+      {userSubData.subscriptions.map((sub, index) => (
+        <div key={index} className="border-b border-gray-300 dark:border-gray-600 last:border-b-0 py-2">
+          <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+            Plan: {sub.plan.title}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            Ends: <span className="font-medium">
+              {new Date(sub.endDate).toLocaleDateString()}
+            </span>
+          </p>
+        </div>
+      ))}
+
+      <div className="flex justify-center items-center space-x-2 mt-4 text-gray-800 dark:text-gray-200 font-semibold">
+        <MdTimer className="text-red-600 text-xl" />
+        {remainingDays !== null && (
+          <span>
+            Overall expiry in{" "}
+            <span className="font-bold text-red-700 dark:text-red-400">{remainingDays}</span>{" "}
+            day{remainingDays !== 1 ? "s" : ""}.
+          </span>
+        )}
+      </div>
+      <div className="text-center mt-2 text-sm text-gray-600 dark:text-gray-400">
+        Stacked subscriptions: <span className="font-medium">{userSubData.stackedCount} / 2</span>
+      </div>
+    </div>
+  );
+};
 
 // 🔑 InputField Component Updated to display error message
 const InputField = ({

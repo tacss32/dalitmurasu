@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+// const { default: subscriptions } = require("razorpay/dist/types/subscriptions");
 
 const clientUserSchema = new mongoose.Schema({
   name: String,
@@ -20,22 +21,19 @@ const clientUserSchema = new mongoose.Schema({
   passwordResetVerified: Boolean,
 
   // New: Reference to actual SubscriptionPlan
-  subscriptionPlan: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "SubscriptionPlan", // model name
-  },
+  subscriptionPlan: [
+    {
+      plan: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SubscriptionPlan", // Reference to the SubscriptionPlan model
+      },
+      subscribedDate: { type: Date },
+      subscriptionExpires: { type: Date },
+    },
+  ],
 
   // Optional: kept for legacy support/migration
-  title: { type: String },
-  subscriptionStartDate: { type: Date },
-  isSubscribed: { type: Boolean, default: false },
 
-  subscriptionExpiresAt: { type: Date },
-  stackedSubscriptionCount: {
-    type: Number,
-    default: 0,
-    min: 0,
-  },
 
   role: { type: String, enum: ["user", "admin"], default: "user" },
 });
