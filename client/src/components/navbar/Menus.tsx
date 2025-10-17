@@ -75,13 +75,7 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false,clo
       isInBanner: false,
       setHeader: false
     },
-    {
-      _id: "shop",
-      name: { en: "shop", ta: "அங்காடி" },
-      isAvailable: true,
-      isInBanner: false,
-      setHeader: false
-    },
+    
   ];
 
   // States for notification dropdown functionality
