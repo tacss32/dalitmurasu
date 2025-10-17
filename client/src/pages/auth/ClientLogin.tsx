@@ -28,14 +28,14 @@ export default function ClientLogin() {
     // -----------------------------------------------------------------
     const checkAndFixSubscriptionStatus = async (token: string) => {
         try {
-            console.log("Checking subscription status for potential expiry fix...");
+            
             await axios.get(
                 `${API_BASE}/api/subscription/user-status`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             // The backend's getUserSubscriptionStatus route will automatically
             // update the DB if the subscription is expired.
-            console.log("Subscription status check complete.");
+          
         } catch (error) {
             console.warn("Failed to check subscription status (may not be critical):", error);
             // Continue execution even if this check fails
