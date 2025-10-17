@@ -4,9 +4,12 @@ import axios from "axios";
 // import { toast } from "react-toastify";
 
 // Define interface for user details
-interface UserDetails {
-  isSubscribed: boolean;
-  subscriptionExpiresAt: string | null;
+interface SubscriptionStatusResponse {
+  isActive: boolean;
+  overallEndDate: string | null;
+  subscriptions: any[]; // Using 'any' for brevity, but a 'Subscription' interface is better
+  stackedCount: number;
+  success: boolean;
 }
 
 const API = import.meta.env.VITE_API;
@@ -30,12 +33,12 @@ export default function Subscribe() {
         return;
       }
 
-      const res = await axios.get<{ success: boolean; data: UserDetails }>(
-        `${API}api/client-users/profile`,
+      const res = await axios.get<SubscriptionStatusResponse >(
+        `${API}api/subscription/user-status`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      setIsSubscribed(res.data.data.isSubscribed);
+      const data = await res.data;
+      setIsSubscribed(data.isActive);
     } catch (err) {
       console.error(err);
       setIsSubscribed(false); // Assume not subscribed on error

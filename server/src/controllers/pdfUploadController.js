@@ -62,7 +62,7 @@ async function getPdfByIdWithAccess(req, res) {
   try {
     let userId = req.user?._id;
 
-    // fallback: decode token if req.user missing
+    // Fallback: decode token if req.user missing (KEEPING YOUR EXISTING LOGIC)
     if (!userId) {
       const authHeader = req.headers["authorization"];
       if (authHeader?.startsWith("Bearer ")) {
@@ -80,24 +80,38 @@ async function getPdfByIdWithAccess(req, res) {
     if (!pdf) return res.status(404).json({ message: "PDF not found" });
 
     let isSubscribed = false;
+    const now = new Date();
+
     if (userId) {
-      const user = await ClientUser.findById(userId);
-      isSubscribed = user?.isSubscribed || false;
+      const user = await ClientUser.findById(userId).select("subscriptionPlan"); // Select only required field
+
+      // ✅ NEW/CORRECTED LOGIC: Determine subscription status from the array
+      if (user?.subscriptionPlan?.length) {
+        // Find if ANY plan's expiry date is in the future (active)
+        isSubscribed = user.subscriptionPlan.some(
+          (plan) =>
+            plan.subscriptionExpires && new Date(plan.subscriptionExpires) > now
+        );
+      }
+
+      // console.log("User isSubscribed status (CALCULATED):", isSubscribed); // Debugging line
     }
 
-    // Public PDF → increment views
+    // Public PDF OR Subscribed User → Grant access and increment views
     if (pdf.visibility === "public" || isSubscribed) {
       pdf.views = (pdf.views || 0) + 1;
       await pdf.save();
       return res.json(pdf);
     }
 
-    // Non-subscribed user → free view logic
+    // --- EXECUTION CONTINUES HERE ONLY IF: Not subscribed AND Not public ---
+
+    // Non-subscribed user → Enforce login
     if (!userId) {
       return res.status(401).json({ message: "Login required to view PDF" });
     }
 
-    // Check UserViewHistory
+    // Check UserViewHistory (Free view logic for logged-in, non-subscribed users)
     let record = await UserViewHistory.findOne({ userId, postId: pdf._id });
     if (!record) {
       record = new UserViewHistory({
@@ -136,7 +150,6 @@ async function getPdfByIdWithAccess(req, res) {
     res.status(500).json({ message: "Server error" });
   }
 }
-
 // Update PDF
 // controllers/pdfUploadController.js
 
