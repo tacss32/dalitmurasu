@@ -479,60 +479,87 @@ exports.getSubscriptionDashboard = async (req, res) => {
   }
 };
 
-// Admin: Unsubscribe User
+// Admin: Unsubscribe User (Revised to handle single plan removal)
 exports.unsubscribeUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = await ClientUser.findByIdAndUpdate(
-      id,
-      {
-      
-        subscriptionPlan: [],
-      
-      
-      },
-      { new: true }
-    );
+    try {
+        const { id } = req.params; // User ID
+        const { planId } = req.body; // Optional: ID of the plan to remove
 
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+        let update;
+
+        if (planId) {
+            // Case 1: Remove a specific plan from the subscriptionPlan array
+            update = {
+                $pull: { subscriptionPlan: { _id: planId } }
+            };
+        } else {
+            // Case 2: Remove ALL plans (default unsubscribe behavior)
+            update = {
+                subscriptionPlan: [],
+            };
+        }
+
+        const user = await ClientUser.findByIdAndUpdate(
+            id,
+            update,
+            { new: true }
+        );
+
+        if (!user) {
+            return res
+                .status(404)
+                .json({ success: false, message: "User not found." });
+        }
+        
+        // Re-run the active-plan logic to see what the user has left
+        const updatedActivePlans = user.subscriptionPlan
+            .filter(sub => new Date(sub.subscriptionExpires) > new Date());
+        
+        const message = planId 
+            ? "Subscription plan removed successfully."
+            : "User unsubscribed successfully (all plans removed).";
+
+        res.status(200).json({
+            success: true,
+            message: message,
+            // Include a flag/data to help the frontend update its list
+            hasActiveSubscriptions: updatedActivePlans.length > 0,
+            user,
+        });
+
+    } catch (err) {
+        console.error("Unsubscribe user failed:", err);
+        res.status(500).json({ success: false, message: "Internal Server Error." });
     }
-
-    res.status(200).json({
-      success: true,
-      message: "User unsubscribed successfully.",
-      user,
-    });
-  } catch (err) {
-    console.error("Unsubscribe user failed:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error." });
-  }
 };
-
 
 exports.getSubscribedUsers = async (req, res) => {
   try {
-    // --- MODIFIED QUERY: Filter for users with at least one active subscription ---
+    // 1. Initial Query: Find all users with at least one active subscription
     const users = await ClientUser.find({
       "subscriptionPlan.subscriptionExpires": { $gt: new Date() },
     })
-      // --- CORRECTED POPULATE PATH based on new schema ---
+      // 2. Populate: Get the title for each plan object
       .populate("subscriptionPlan.plan", "title")
-      .select("name email gender age phone subscriptionPlan"); // Removed non-existent fields
+      .select("name email gender age phone subscriptionPlan");
 
-    // --- UPDATED FORMATTING LOGIC ---
+    // 3. Updated Formatting Logic: Collect ALL active plans for each user
     const formatted = users.map((u) => {
-      // Filter for active plans and sort them to find the latest one
+      // Filter for active plans
       const activePlans = u.subscriptionPlan
         .filter((sub) => new Date(sub.subscriptionExpires) > new Date())
         .sort(
-          (a, b) =>
-            new Date(b.subscriptionExpires) - new Date(a.subscriptionExpires)
+          (a, b) => new Date(a.subscribedDate) - new Date(b.subscribedDate)
         );
 
-      const latestSubscription = activePlans[0];
+      // Map the active plans to a simplified array of plan objects
+      const plans = activePlans.map((plan) => ({
+        // *** CRITICAL FIX: Include the unique MongoDB _id for the embedded plan document ***
+        _id: plan._id,
+        subscriptionStartDate: plan.subscribedDate,
+        subscriptionExpiresAt: plan.subscriptionExpires,
+        title: plan.plan?.title || "N/A",
+      }));
 
       return {
         _id: u._id,
@@ -541,10 +568,7 @@ exports.getSubscribedUsers = async (req, res) => {
         email: u.email,
         gender: u.gender,
         phone: u.phone,
-        subscriptionStartDate: latestSubscription?.subscribedDate,
-        subscriptionExpiresAt: latestSubscription?.subscriptionExpires,
-        // Get the title from the populated nested 'plan' object
-        title: latestSubscription?.plan?.title || "N/A",
+        activeSubscriptions: plans,
       };
     });
 
