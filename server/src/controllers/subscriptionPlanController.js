@@ -480,51 +480,74 @@ exports.getSubscriptionDashboard = async (req, res) => {
 };
 
 // Admin: Unsubscribe User (Revised to handle single plan removal)
+// subscriptionController.js (Modified exports.unsubscribeUser)
 exports.unsubscribeUser = async (req, res) => {
     try {
         const { id } = req.params; // User ID
         const { planId } = req.body; // Optional: ID of the plan to remove
 
-        let update;
+        const user = await ClientUser.findById(id);
+        if (!user) return res.status(404).json({ success: false, message: "User not found." });
 
-        if (planId) {
-            // Case 1: Remove a specific plan from the subscriptionPlan array
-            update = {
-                $pull: { subscriptionPlan: { _id: planId } }
-            };
-        } else {
+        if (!planId) {
             // Case 2: Remove ALL plans (default unsubscribe behavior)
-            update = {
-                subscriptionPlan: [],
-            };
+            await ClientUser.findByIdAndUpdate(id, { subscriptionPlan: [] });
+            return res.status(200).json({ success: true, message: "User unsubscribed successfully (all plans removed)." });
         }
 
-        const user = await ClientUser.findByIdAndUpdate(
-            id,
-            update,
-            { new: true }
-        );
-
-        if (!user) {
-            return res
-                .status(404)
-                .json({ success: false, message: "User not found." });
+        // Case 1: Remove a specific plan from the subscriptionPlan array
+        // 1. Find the plan to remove
+        const planIndex = user.subscriptionPlan.findIndex(p => p._id.toString() === planId);
+        if (planIndex === -1) {
+            return res.status(404).json({ success: false, message: "Subscription plan not found on user." });
         }
+
+        const removedPlan = user.subscriptionPlan[planIndex];
+        const removedPlanDuration = await SubscriptionPlan.findById(removedPlan.plan);
+        const durationInDays = removedPlanDuration ? removedPlanDuration.durationInDays : 0;
         
+        // 2. Remove the plan
+        user.subscriptionPlan.splice(planIndex, 1);
+        
+        // --- 🔥 FIX START: Recalculate Stacking for Remaining Plans ---
+        
+        const now = new Date();
+        let baseDate = now;
+        
+        // 3. Re-stack the remaining plans in their original order
+        for (let i = 0; i < user.subscriptionPlan.length; i++) {
+            let currentPlan = user.subscriptionPlan[i];
+            
+            // Get the actual duration of the plan from the DB (using the populated 'plan' field)
+            const planDetails = await SubscriptionPlan.findById(currentPlan.plan);
+            if (!planDetails) continue; // Skip if plan details are missing
+
+            // Calculate new expiry date based on the current baseDate
+            const newExpiryDate = new Date(
+                baseDate.getTime() + planDetails.durationInDays * 24 * 60 * 60 * 1000
+            );
+            
+            // Update the plan's expiry date
+            user.subscriptionPlan[i].subscriptionExpires = newExpiryDate;
+            
+            // Set the new baseDate for the next plan to stack on
+            baseDate = newExpiryDate;
+        }
+
+        // --- 🔥 FIX END ---
+
+        // 4. Save the updated user document
+        const updatedUser = await user.save(); // Use save() since we modified the document object
+
         // Re-run the active-plan logic to see what the user has left
-        const updatedActivePlans = user.subscriptionPlan
-            .filter(sub => new Date(sub.subscriptionExpires) > new Date());
-        
-        const message = planId 
-            ? "Subscription plan removed successfully."
-            : "User unsubscribed successfully (all plans removed).";
+        const updatedActivePlans = updatedUser.subscriptionPlan
+            .filter(sub => new Date(sub.subscriptionExpires) > now);
 
         res.status(200).json({
             success: true,
-            message: message,
-            // Include a flag/data to help the frontend update its list
+            message: "Subscription plan removed and remaining plans re-stacked successfully.",
             hasActiveSubscriptions: updatedActivePlans.length > 0,
-            user,
+            user: updatedUser,
         });
 
     } catch (err) {

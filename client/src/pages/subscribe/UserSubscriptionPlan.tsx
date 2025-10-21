@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // Import useCallback
 import axios from "axios";
 import {
   MdCheckCircle,
@@ -47,42 +47,74 @@ export default function UserSubscriptionPlans() {
 
   const API_BASE_URL = import.meta.env.VITE_API;
 
-  useEffect(() => {
-    const fetchPlansAndSubscription = async () => {
-      try {
-        const token = localStorage.getItem("clientToken");
+  // --- REFACTORED: Put fetching logic into a reusable useCallback ---
+  const fetchPlansAndSubscription = useCallback(async () => {
+    // Set loading to true only if data isn't already present
+    setLoading((prev) => !prev && !plans.length);
+    try {
+      const token = localStorage.getItem("clientToken");
 
-        // Fetch all available plans
+      // Fetch all available plans (only if not already fetched)
+      if (plans.length === 0) {
         const plansRes = await axios.get(`${API_BASE_URL}api/subscription/`);
         setPlans(plansRes.data);
+      }
 
-        if (token) {
-          const res = await axios.get(`${API_BASE_URL}api/subscription/user-status`, {
+      if (token) {
+        const res = await axios.get(
+          `${API_BASE_URL}api/subscription/user-status`,
+          {
             headers: { Authorization: `Bearer ${token}` },
-          });
-
-          const data: UserSubscriptionStatus = res.data;
-          console.log("Subscription status:", data);
-          setUserSubData(data);
-
-          if (data.overallEndDate) {
-            const endDate = new Date(data.overallEndDate);
-            const now = new Date();
-            const diff = endDate.getTime() - now.getTime();
-            const daysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-            setRemainingDays(daysLeft);
           }
+        );
+
+        const data: UserSubscriptionStatus = res.data;
+        console.log("Subscription status:", data);
+        setUserSubData(data);
+
+        // --- UPDATED: Reset remaining days if user is no longer active ---
+        if (data.isActive && data.overallEndDate) {
+          const endDate = new Date(data.overallEndDate);
+          const now = new Date();
+          const diff = endDate.getTime() - now.getTime();
+          const daysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+          setRemainingDays(daysLeft);
+        } else {
+          // If user has no active subs, clear the old data
+          setRemainingDays(null);
         }
-      } catch (err) {
-        console.error("Error fetching plans/subscriptions:", err);
-        setError("Failed to load data. Please try again.");
-      } finally {
-        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Error fetching plans/subscriptions:", err);
+      setError("Failed to load data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [API_BASE_URL, plans.length]); // Add plans.length as dependency
+
+  // --- Original useEffect: Runs only on mount ---
+  useEffect(() => {
+    fetchPlansAndSubscription();
+  }, [fetchPlansAndSubscription]); // Dependency array now includes the callback
+
+  // --- NEW: useEffect to re-fetch data on window focus ---
+  // This solves the stale data problem after an admin removes a plan
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        console.log("Page is visible, re-fetching subscription status...");
+        fetchPlansAndSubscription();
       }
     };
 
-    fetchPlansAndSubscription();
-  }, [API_BASE_URL]);
+    // Add event listener for tab visibility changes
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Clean up the event listener on component unmount
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchPlansAndSubscription]); // Dependency array includes the callback
 
   const handleSubscribe = async (plan: SubscriptionPlan) => {
     if ((userSubData?.stackedCount ?? 0) >= 2) {
@@ -127,7 +159,10 @@ export default function UserSubscriptionPlans() {
 
             if (verifyRes.data.success) {
               alert("Subscription successful!");
-              window.location.reload();
+              // --- MODIFIED: Call fetch function instead of full reload ---
+              // This provides a smoother update
+              fetchPlansAndSubscription();
+              // window.location.reload();
             } else {
               alert(verifyRes.data.message || "Payment verification failed.");
             }
@@ -141,9 +176,13 @@ export default function UserSubscriptionPlans() {
       });
 
       razorpay.open();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment Error:", error);
-      alert("Failed to initiate payment.");
+      if (error.response && error.response.data.limitReached) {
+        alert(error.response.data.message); // Show specific error from backend
+      } else {
+        alert("Failed to initiate payment.");
+      }
     }
   };
 
@@ -170,7 +209,8 @@ export default function UserSubscriptionPlans() {
       </h2>
 
       {/* Active Subscription Details */}
-      {userSubData && (
+      {/* --- MODIFIED: Show this block only if user is active --- */}
+      {userSubData && userSubData.isActive && (
         <div className="mb-8 w-full max-w-3xl bg-white/50 p-5 rounded-xl shadow">
           <h3 className="text-2xl font-bold text-center mb-4 text-gray-800">
             Your Active Subscriptions
@@ -182,7 +222,7 @@ export default function UserSubscriptionPlans() {
               className="border border-gray-300 rounded-lg p-4 mb-3 "
             >
               <h4 className="text-lg font-semibold text-[#cb1e19]">
-                {sub.plan.title}
+                {sub.plan?.title || "Plan not found"}
               </h4>
               <p className="text-gray-600 text-sm">
                 Start: {new Date(sub.startDate).toLocaleDateString()} <br />
@@ -220,8 +260,9 @@ export default function UserSubscriptionPlans() {
       {/* All Plans */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
         {plans.map((plan) => {
+          // --- MODIFIED: Check against plan._id safely ---
           const isActive = userSubData?.subscriptions.some(
-            (sub) => sub.plan._id === plan._id
+            (sub) => sub.plan?._id === plan._id
           );
 
           return (
@@ -252,16 +293,16 @@ export default function UserSubscriptionPlans() {
               </div>
               <ul className="space-y-3 text-gray-700 mb-6">
                 <li className="flex items-center">
-                  <MdCheckCircle className="text-green-500 mr-2 text-xl" /> Access
-                  to Premium Content
+                  <MdCheckCircle className="text-green-500 mr-2 text-xl" />{" "}
+                  Access to Premium Content
                 </li>
                 <li className="flex items-center">
                   <MdStar className="text-blue-500 mr-2 text-xl" /> Ad-Free
                   Experience
                 </li>
                 <li className="flex items-center">
-                  <MdAccessTime className="text-purple-500 mr-2 text-xl" /> Unlimited
-                  Reading
+                  <MdAccessTime className="text-purple-500 mr-2 text-xl" />{" "}
+                  Unlimited Reading
                 </li>
               </ul>
               <button
@@ -271,7 +312,7 @@ export default function UserSubscriptionPlans() {
               >
                 {isActive
                   ? "Extend Subscription"
-                  : userSubData
+                  : userSubData?.isActive // Check if user has *any* active sub
                     ? "Add New Plan"
                     : "Subscribe Now"}
               </button>
