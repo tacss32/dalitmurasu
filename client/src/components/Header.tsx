@@ -113,7 +113,7 @@ export default function Header({
     />
   </picture>
 
-  <h1 className="text-lg md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
+  <h1 className="text-3xl md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
     <span>{headerText}</span>
   </h1>
 </div>
