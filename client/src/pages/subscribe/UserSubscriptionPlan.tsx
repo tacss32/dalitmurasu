@@ -1,10 +1,14 @@
-import { useState, useEffect, useCallback } from "react"; // Import useCallback
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+// Import useNavigate from react-router-dom (assuming you are using it)
+import { useNavigate } from "react-router-dom";
 import {
   MdCheckCircle,
   MdStar,
   MdAccessTime,
   MdTimer,
+  // Added an icon for donation
+  MdOutlineAttachMoney,
 } from "react-icons/md";
 
 interface SubscriptionPlan {
@@ -45,9 +49,11 @@ export default function UserSubscriptionPlans() {
   );
   const [remainingDays, setRemainingDays] = useState<number | null>(null);
 
+  // --- NEW: Initialize useNavigate hook ---
+  const navigate = useNavigate();
+
   const API_BASE_URL = import.meta.env.VITE_API;
 
-  // --- REFACTORED: Put fetching logic into a reusable useCallback ---
   const fetchPlansAndSubscription = useCallback(async () => {
     // Set loading to true only if data isn't already present
     setLoading((prev) => !prev && !plans.length);
@@ -72,7 +78,6 @@ export default function UserSubscriptionPlans() {
         console.log("Subscription status:", data);
         setUserSubData(data);
 
-        // --- UPDATED: Reset remaining days if user is no longer active ---
         if (data.isActive && data.overallEndDate) {
           const endDate = new Date(data.overallEndDate);
           const now = new Date();
@@ -80,7 +85,6 @@ export default function UserSubscriptionPlans() {
           const daysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
           setRemainingDays(daysLeft);
         } else {
-          // If user has no active subs, clear the old data
           setRemainingDays(null);
         }
       }
@@ -92,13 +96,10 @@ export default function UserSubscriptionPlans() {
     }
   }, [API_BASE_URL, plans.length]); // Add plans.length as dependency
 
-  // --- Original useEffect: Runs only on mount ---
   useEffect(() => {
     fetchPlansAndSubscription();
   }, [fetchPlansAndSubscription]); // Dependency array now includes the callback
 
-  // --- NEW: useEffect to re-fetch data on window focus ---
-  // This solves the stale data problem after an admin removes a plan
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -159,10 +160,8 @@ export default function UserSubscriptionPlans() {
 
             if (verifyRes.data.success) {
               alert("Subscription successful!");
-              // --- MODIFIED: Call fetch function instead of full reload ---
-              // This provides a smoother update
+              // Call fetch function instead of full reload
               fetchPlansAndSubscription();
-              // window.location.reload();
             } else {
               alert(verifyRes.data.message || "Payment verification failed.");
             }
@@ -172,7 +171,7 @@ export default function UserSubscriptionPlans() {
           }
         },
         prefill: { name: "Dalit Murasu User", email: "" },
-        theme: { color: "#cb1e19" },
+        theme: { color: "#feebbd" },
       });
 
       razorpay.open();
@@ -184,6 +183,11 @@ export default function UserSubscriptionPlans() {
         alert("Failed to initiate payment.");
       }
     }
+  };
+
+  // --- NEW: Handler for the donation button ---
+  const handleDonationClick = () => {
+    navigate("/donation");
   };
 
   if (loading) {
@@ -204,12 +208,21 @@ export default function UserSubscriptionPlans() {
 
   return (
     <div className="min-h-screen p-6 bg-[#feebbd] flex flex-col items-center">
-      <h2 className="text-4xl font-extrabold mb-10 text-center text-[#cb1e19]">
+      <h2 className="text-4xl font-extrabold mb-5 text-center text-[#cb1e19]">
         Choose Your Subscription Plan
       </h2>
 
+      {/* --- NEW: Donation Button Added Here --- */}
+      <button
+        onClick={handleDonationClick}
+        className="flex items-center justify-center mb-10 px-6 py-3 rounded-lg text-white font-semibold transition bg-highlight-1 hover:bg-highlight-1/90 shadow-md"
+      >
+        <MdOutlineAttachMoney className="text-2xl mr-2" />
+         Make a Donation
+      </button>
+      {/* ------------------------------------- */}
+
       {/* Active Subscription Details */}
-      {/* --- MODIFIED: Show this block only if user is active --- */}
       {userSubData && userSubData.isActive && (
         <div className="mb-8 w-full max-w-3xl bg-white/50 p-5 rounded-xl shadow">
           <h3 className="text-2xl font-bold text-center mb-4 text-gray-800">
@@ -260,7 +273,6 @@ export default function UserSubscriptionPlans() {
       {/* All Plans */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
         {plans.map((plan) => {
-          // --- MODIFIED: Check against plan._id safely ---
           const isActive = userSubData?.subscriptions.some(
             (sub) => sub.plan?._id === plan._id
           );
@@ -268,7 +280,9 @@ export default function UserSubscriptionPlans() {
           return (
             <div
               key={plan._id}
-              className={`relative bg-white/50 rounded-xl shadow-lg p-6 transition duration-300 ${isActive ? "border-2 border-red-600" : "border border-gray-200"
+              className={`relative bg-white/50 rounded-xl shadow-lg p-6 transition duration-300 ${isActive
+                  ? "border-2 border-red-600"
+                  : "border border-gray-200"
                 }`}
             >
               {isActive && (

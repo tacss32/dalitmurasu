@@ -33,6 +33,7 @@ import PremiumArticleList from './pages/premium_articles/PremiumArticleList';
 import PremiumArticleForm from './pages/premium_articles/PremiumArticleForm';
 
 import Bookmark from "./components/bookmarks";
+import Donation from "./pages/donation/Donation"
 
 // New ProfilePage (direct route)
 import ProfilePage from "./pages/ProfilePage";
@@ -80,6 +81,7 @@ import AdminPremiumUsers from "./pages/premium_articles/AdminPremiumUsers"  ;
 import PremiumArticlePage from './pages/premium_articles/PremiumArticlePage';
 import PremiumArticleDetail from './pages/premium_articles/PremiumArticleDetail';
 import MyOrders from "./pages/myorders";
+import AdminDonation from "./pages/donation/AdminDonation";
 
 
 createRoot(document.getElementById("root")!).render(
@@ -131,16 +133,16 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/posts/:id" element={<PostDetail />} />
-
+  
             <Route path="/orders" element={<MyOrders />} />
 
-            {/* Catch-all Category Route (keep LAST) */}
-            <Route path="/:categorySlug" element={<CategoryPosts />} />
-
-           
-
+            
+        
+            <Route path="/donation" element={<Donation />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/bookmarks" element={<Bookmark/>} />
+            {/* Catch-all Category Route (keep LAST) */}
+            <Route path="/:categorySlug" element={<CategoryPosts />} />
           
           </Route>
 
@@ -186,6 +188,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="premium-articles" element={<PremiumArticleList />} />
             <Route path="premium-articles/create" element={<PremiumArticleForm />} />
             <Route path="/admin/premium-articles/edit/:id" element={<PremiumArticleForm />} />
+            <Route path="/admin/donation" element={<AdminDonation />} />
           </Route>
         </Routes>
       </ThemeProvider>

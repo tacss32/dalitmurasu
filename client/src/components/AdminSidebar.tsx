@@ -226,6 +226,12 @@ export default function AdminSidebar() {
         },
       ],
     },
+    {
+      title: "Donation",
+      icon: <MdArticle className="text-xl" />,
+      mainLink: "/admin/donation",
+      subLinks: [],
+    },
   ];
 
   const performTokenVerification = async () => {
