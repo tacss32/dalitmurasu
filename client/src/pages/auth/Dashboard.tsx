@@ -26,20 +26,40 @@ const Dashboard = () => {
   const [totalSubscribedUsers, setTotalSubscribedUsers] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
       setError(null);
+
+      // 1. Retrieve the token from localStorage
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        console.error("Authentication Token is missing.");
+        setError("Session expired or token missing. Please log in again.");
+        setLoading(false);
+        // Optional: Redirect to login page
+        // navigate("/admin/login"); 
+        return;
+      }
+
+      // 2. Prepare the Authorization header configuration
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}` // Standard Bearer token format
+        }
+      };
+
       try {
-        // Fetch order stats
-        const orderResponse = await axios.get(`${API_BASE_URL}api/orders/dashboard`);
+        // 3. Fetch order stats with the Authorization header
+        const orderResponse = await axios.get(`${API_BASE_URL}api/orders/dashboard`, config);
         setOrderStats(orderResponse.data.data);
 
-        // Fetch subscription summary data
-        const subscriptionResponse = await axios.get(`${API_BASE_URL}api/subscription/subscription-dashboard`);
+        // 4. Fetch subscription summary data with the Authorization header
+        const subscriptionResponse = await axios.get(`${API_BASE_URL}api/subscription/subscription-dashboard`, config);
         const summary: { summary: SubscriptionSummary[] } = subscriptionResponse.data;
 
         // Calculate the total number of subscribers by summing the counts
@@ -47,6 +67,7 @@ const Dashboard = () => {
         setTotalSubscribedUsers(totalCount);
 
       } catch (err) {
+        // This will now catch the 401/403 errors and network failures
         setError("Failed to fetch dashboard stats.");
         console.error("Dashboard Fetch Error:", err);
       } finally {
@@ -55,14 +76,14 @@ const Dashboard = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [navigate]); // Added 'navigate' to dependency array for completeness
 
   const handleOrderCardClick = () => {
     navigate("/admin/orders");
   };
 
   const handleSubscriptionCardClick = () => {
-    navigate("/admin/subscription-dashboard"); 
+    navigate("/admin/subscription-dashboard");
   };
 
 
@@ -91,7 +112,7 @@ const Dashboard = () => {
 
           {/* Subscribed Users Card (Updated) */}
           {totalSubscribedUsers !== null && (
-            <div 
+            <div
               className="bg-gray-700 p-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 cursor-pointer"
               onClick={handleSubscriptionCardClick}
             >
@@ -105,7 +126,7 @@ const Dashboard = () => {
           {/* Existing Order Stats Cards */}
           {orderStats && (
             <>
-              <div 
+              <div
                 className="bg-gray-700 p-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 cursor-pointer"
                 onClick={handleOrderCardClick}
               >
@@ -114,7 +135,7 @@ const Dashboard = () => {
                   {orderStats.totalCODOrders + orderStats.totalOnlineOrders}
                 </p>
               </div>
-              <div 
+              <div
                 className="bg-gray-700 p-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 cursor-pointer"
                 onClick={handleOrderCardClick}
               >
@@ -123,7 +144,7 @@ const Dashboard = () => {
                   {orderStats.pendingOrders}
                 </p>
               </div>
-              <div 
+              <div
                 className="bg-gray-700 p-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 cursor-pointer"
                 onClick={handleOrderCardClick}
               >
@@ -132,7 +153,7 @@ const Dashboard = () => {
                   {orderStats.cancelledOrders}
                 </p>
               </div>
-              <div 
+              <div
                 className="bg-gray-700 p-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 cursor-pointer"
                 onClick={handleOrderCardClick}
               >
@@ -141,7 +162,7 @@ const Dashboard = () => {
                   {orderStats.deliveredOrders}
                 </p>
               </div>
-              <div 
+              <div
                 className="bg-gray-700 p-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 cursor-pointer"
                 onClick={handleOrderCardClick}
               >

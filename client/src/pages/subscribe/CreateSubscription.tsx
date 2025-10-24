@@ -57,8 +57,9 @@ export default function CreateSubscriptionPlan() {
       setLoading(false);
       return;
     }
-
+    
     try {
+  
       const response = await axios.post(
         `${API_BASE_URL}api/subscriptions/admin`,
         {
@@ -70,7 +71,7 @@ export default function CreateSubscriptionPlan() {
         {
           headers: {
             'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
         }
       );

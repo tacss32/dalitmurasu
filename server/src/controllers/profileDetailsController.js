@@ -33,7 +33,7 @@ exports.updateClientProfile = async (req, res) => {
   try {
     // Use req.user._id which is the standard Mongoose ID for the user object
     // fetched and attached by the new authentication middleware.
-    const userId = req.user._id;
+    const user = req.user;
 
     // Destructure all potential update fields, including the passwords
     const { name, email, phone, gender, dob, password, currentPassword } =
@@ -64,9 +64,7 @@ exports.updateClientProfile = async (req, res) => {
       // 1. Get the user's document, specifically including the stored hashed password for comparison
       // We must fetch it again here because the user object on req.user might be a lean object
       // *without* the password selected by the authentication middleware for security.
-      const userWithPassword = await ClientUser.findById(userId).select(
-        "password"
-      );
+      const userWithPassword = user.password
 
       if (!userWithPassword) {
         return res
