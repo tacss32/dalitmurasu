@@ -49,7 +49,12 @@ export default function ViewSubscriptionPlans() {
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this plan?")) {
       try {
-        await axios.delete(`${API_BASE_URL}api/subscriptions/admin/${id}`);
+        const token = localStorage.getItem("token");
+        await axios.delete(`${API_BASE_URL}api/subscriptions/admin/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setPlans(plans.filter((plan) => plan._id !== id));
         alert("Plan deleted successfully!");
       } catch (err) {
@@ -90,7 +95,14 @@ export default function ViewSubscriptionPlans() {
           description,
           price,
           durationInDays,
-        });
+        },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            },
+          }
+      );
         alert("Plan updated successfully!");
       } else {
         await axios.post(`${API_BASE_URL}api/subscriptions/admin`, {

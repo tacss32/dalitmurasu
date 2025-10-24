@@ -25,18 +25,48 @@ const SubscriptionDashboard: React.FC = () => {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      // --- FIX: Retrieve token and set headers for authentication ---
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication token missing. Please log in.');
+        setIsLoading(false);
+        return;
+      }
+
+      const authOptions = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      };
+      // -----------------------------------------------------------------
+
       try {
         // Step 1: Fetch all available subscription plans, including durationInDays
-        const plansResponse = await fetch(`${API_BASE_URL}api/subscription/`);
+        // FIX: Pass authOptions to the fetch call
+        const plansResponse = await fetch(`${API_BASE_URL}api/subscription/`, authOptions);
+
         if (!plansResponse.ok) {
+          // Check for specific 401 error
+          if (plansResponse.status === 401) {
+            throw new Error('Unauthorized: Session expired or invalid token.');
+          }
           throw new Error('Failed to fetch subscription plans');
         }
         const allPlans: SubscriptionPlan[] = await plansResponse.json();
         setPlans(allPlans);
 
-        // Step 2: Fetch the subscriber counts (only for plans with > 0 subscribers)
-        const summaryResponse = await fetch(`${API_BASE_URL}api/subscription/subscription-dashboard`);
+        // Step 2: Fetch the subscriber counts
+        // FIX: Pass authOptions to the fetch call
+        const summaryResponse = await fetch(`${API_BASE_URL}api/subscription/subscription-dashboard`, authOptions);
+
         if (!summaryResponse.ok) {
+          if (summaryResponse.status === 401) {
+            throw new Error('Unauthorized: Session expired or invalid token.');
+          }
           throw new Error('Failed to fetch dashboard data');
         }
         const summary: { summary: SubscriptionSummary[] } = await summaryResponse.json();
@@ -44,10 +74,11 @@ const SubscriptionDashboard: React.FC = () => {
 
       } catch (err) {
         if (err instanceof Error) {
-          setError(err.message);
+          setError(`Error: Failed to fetch dashboard data. ${err.message}`);
         } else {
-          setError('An unknown error occurred');
+          setError('Error: Failed to fetch dashboard data. An unknown network error occurred.');
         }
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
@@ -61,12 +92,12 @@ const SubscriptionDashboard: React.FC = () => {
   }
 
   if (error) {
-    return <div style={{ textAlign: 'center', marginTop: '20px', color: 'red' }}>Error: {error}</div>;
+    return <div style={{ textAlign: 'center', marginTop: '20px', color: 'red' }}>{error}</div>;
   }
 
   // Create a map for quick lookup of subscriber counts by planId
   const summaryMap = new Map(summaryData?.map(item => [item.planId, item.subscriberCount]));
-  
+
   // Calculate the total number of subscribers from the summary data
   const totalSubscribers = summaryData ? summaryData.reduce((sum, plan) => sum + plan.subscriberCount, 0) : 0;
 
@@ -74,7 +105,7 @@ const SubscriptionDashboard: React.FC = () => {
     <div style={{ padding: '20px', maxWidth: '800px', margin: 'auto', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ textAlign: 'center', color: '#333' }}>Premium Article Dashboard</h1>
       <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '15px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-        
+
         {/* Display Total Subscribers */}
         <div style={{ padding: '10px 0', textAlign: 'center', borderBottom: '2px solid #007bff', marginBottom: '20px' }}>
           <h2 style={{ margin: '0', color: '#007bff' }}>Total Subscribers</h2>

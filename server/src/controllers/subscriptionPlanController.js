@@ -209,7 +209,6 @@ exports.verifySubscriptionPayment = async (req, res) => {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      userId,
       planId,
     } = req.body;
 
@@ -233,12 +232,8 @@ exports.verifySubscriptionPayment = async (req, res) => {
         .json({ success: false, message: "Subscription plan not found" });
     }
 
-    const user = await ClientUser.findById(userId);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
+    // Assume req.user is a Mongoose document loaded by middleware
+    const user = req.user;
 
     const now = new Date();
     // Make a mutable copy of the user's current subscription plans
@@ -270,7 +265,6 @@ exports.verifySubscriptionPayment = async (req, res) => {
 
     // --- REVISED: Calculate Expiry Date (Stacking Logic) ---
     // Determine the base date for the new subscription.
-    // Default to 'now' if there are no existing plans.
     let baseDate = now;
 
     // If there are existing plans, find the one that expires last.
@@ -297,13 +291,14 @@ exports.verifySubscriptionPayment = async (req, res) => {
     // Add the new subscription to our managed array
     currentPlans.push(newSubscription);
 
-    // --- UPDATE LOGIC ---
-    // Update the user with the modified array of plans
-    const updatedUser = await ClientUser.findByIdAndUpdate(
-      userId,
-      { subscriptionPlan: currentPlans },
-      { new: true } // This option returns the updated document
-    );
+    // 3. Update User Document using .save()
+    // ----------------------------------------------------
+    // Assign the modified array back to the Mongoose document
+    user.subscriptionPlan = currentPlans;
+
+    // Save the document, triggering pre/post save hooks
+    const updatedUser = await user.save();
+    // ----------------------------------------------------
 
     // 4. Send Confirmation Email and Respond
     // Pass the correct expiry date of the newly added subscription
@@ -322,15 +317,12 @@ exports.verifySubscriptionPayment = async (req, res) => {
     });
   } catch (err) {
     console.error("Payment verification failed:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Internal server error during payment verification",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error during payment verification",
+    });
   }
 };
-
 
 // -----------------------------
 // Admin: Manually Subscribe User
