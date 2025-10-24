@@ -112,7 +112,7 @@ export default function BabasahebSpeaks() {
             ))
           ) : (
             <p className="text-gray-500 text-center py-8">
-              No articles found.
+              loading........
             </p>
           )}
         </div>
@@ -152,7 +152,7 @@ export default function BabasahebSpeaks() {
             </Link>
           ))
         ) : (
-          <p className="text-gray-500 text-center py-8">No articles found.</p>
+          <p className="text-gray-500 text-center py-8">loading.....</p>
         )}
       </div>
     </div>
