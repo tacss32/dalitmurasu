@@ -638,6 +638,7 @@ export default function UniversalPosts() {
                           src={editCurrentImageSrc}
                           onLoad={onEditImageLoad}
                           className="max-w-full h-auto block"
+                          crossOrigin="anonymous"
                         />
                       </ReactCrop>
                       <div className="flex gap-4 mt-4 justify-end">

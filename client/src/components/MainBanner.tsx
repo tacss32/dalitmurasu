@@ -121,7 +121,7 @@ export default function MainBanner() {
     return (
       <div
         className="relative w-full overflow-hidden rounded-xl shadow-lg bg-white/30 flex items-center justify-center animate-pulse"
-        style={{ minHeight: "450px" }}
+        
       >
         <div className="flex flex-col items-center justify-center text-gray-600">
           <svg
@@ -193,7 +193,7 @@ export default function MainBanner() {
             <img
               src={banner.desktopImage}
               alt={`Banner ${index + 1}`}
-              className="w-full h-[450px] md:h-[750px] object-cover object-center"
+              className="w-full h-auto  object-cover object-center"
               {...(index === 0 ? { fetchpriority: "high" } : {})}
             />
           </picture>

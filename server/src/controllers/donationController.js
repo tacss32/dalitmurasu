@@ -2,7 +2,7 @@ const Donation = require("../models/Donation");
 const razorpay = require("../config/razorpay_util");
 const crypto = require("crypto");
 
-const sendDonationEmail = require("../middleware/sndMail");
+const { sendDonationEmail } = require("../middleware/sndMail"); 
 
 /* ------------------ Create Donation Order ------------------ */
 exports.openDonation = async (req, res) => {

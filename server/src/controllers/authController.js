@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const passportCtl = require("passport"); // ensure passport is initialized in index.js
 const { URLSearchParams } = require("url");
 
-const sendWelcomeEmail = require("../middleware/sndMail");
+const {sendWelcomeEmail} = require("../middleware/sndMail");
 
 /* -----------------------------------------------------------------------------
  * ADMIN: LOGIN

@@ -47,7 +47,7 @@ async function sendSubscriptionEmail(
 ) {
   try {
     console.log(`Attempting to send subscription email to: ${toEmail}`);
-    const formattedPrice = (planPrice / 100).toFixed(2); // Convert paisa back to rupees for display
+    // Convert paisa back to rupees for display
     const formattedExpiryDate = new Date(expiryDate).toLocaleDateString();
 
     await transporter.sendMail({
@@ -61,7 +61,7 @@ async function sendSubscriptionEmail(
           <p>Your subscription details are as follows:</p>
           <ul>
             <li><strong>Plan:</strong> ${planTitle}</li>
-            <li><strong>Price Paid:</strong> ₹${formattedPrice}</li>
+            <li><strong>Price Paid:</strong> ₹${planPrice}</li>
             <li><strong>Status:</strong> Active</li>
             <li><strong>Expires On:</strong> ${formattedExpiryDate}</li>
           </ul>

@@ -3,7 +3,7 @@ const ClientUser = require("../models/ClientUser");
 const razorpay = require("../config/razorpay_util");
 const crypto = require("crypto");
 
-const sendSubscriptionEmail = require("../middleware/sndMail");
+const {sendSubscriptionEmail} = require("../middleware/sndMail");
 
 // -----------------------------
 // Admin: Create Plan

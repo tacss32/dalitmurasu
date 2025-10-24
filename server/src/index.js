@@ -127,6 +127,7 @@ connectDB()
     app.use("/api/forgot-password", forgotPasswordRoutes);
     app.use("/api/combined-posts", require("./routes/combinedPostRoutes"));
     app.use("/api/pdf-uploads", pdfUploadRoutes);
+    app.use("/api/donation", require("./routes/donationRoutes"))
   
     // ------------------------------------------------------------------------
     // Health Check
