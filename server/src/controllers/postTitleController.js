@@ -1,9 +1,14 @@
 const UniversalPost = require("../models/UniversalPost");
 const PostTitle = require("../models/PostTitle");
+const PremiumPost = require("../models/PremiumPost");
 
 exports.getAllTitles = async (req, res) => {
   try {
     const universalTitles = await UniversalPost.find(
+      {},
+      "title createdAt"
+    ).lean();
+    const premiumTitles = await PremiumPost.find(
       {},
       "title createdAt"
     ).lean();
@@ -15,9 +20,16 @@ exports.getAllTitles = async (req, res) => {
       source: "universal",
     }));
 
-    const allTitles = [...taggedUniversal].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
+    const taggedPremium = premiumTitles.map((item) => ({
+      _id: item._id,
+      title: item.title,
+      createdAt: item.createdAt,
+      source: "premium", // ⬅️ NEW SOURCE TAG
+    }));
+
+   const allTitles = [...taggedUniversal, ...taggedPremium].sort(
+     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+   );
 
     res.status(200).json(allTitles);
   } catch (err) {
@@ -30,9 +42,9 @@ exports.getAllTitles = async (req, res) => {
 
 exports.addToPostTitles = async (req, res) => {
   try {
-    const { postId, title, source } = req.body;
+  const { postId, title, source } = req.body;
 
-    if (!postId || !title || !["recent", "universal"].includes(source)) {
+    if (!postId || !title || !["recent", "universal", "premium"].includes(source)) { // ⬅️ MODIFIED LINE
       return res.status(400).json({ error: "Invalid input" });
     }
 

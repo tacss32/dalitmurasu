@@ -6,7 +6,7 @@ interface PostTitleEntry {
   _id: string;
   postId: string;
   title: string;
-  source: "recent" | "universal"; // Enforce specific source values
+  source: "recent" | "universal" | "premium"; // Enforce specific source values
   createdAt: string; // Assuming it's a string from the DB
 }
 
@@ -14,7 +14,7 @@ interface AvailablePost {
   _id: string;
   title: string;
   createdAt: string; // Assuming it's a string from the DB
-  source: "recent" | "universal"; // Enforce specific source values
+  source: "recent" | "universal" | "premium"; // Enforce specific source values
 }
 
 export default function AddNewsTitle() {

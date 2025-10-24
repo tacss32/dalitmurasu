@@ -6,7 +6,7 @@ interface PostTitleEntry {
   _id: string;
   postId: string; // The ID of the original post
   title: string;
-  source: "recent" | "universal" | "pdf"; // ⭐ allow pdf as well
+  source: "recent" | "universal" | "premium"; // ⭐ allow pdf as well
   createdAt: string;
 }
  
@@ -60,9 +60,9 @@ export default function TitleBar() {
     if (post.source === "universal") {
       navigate(`/posts/${post.postId}`);
     } else if (post.source === "recent") {
+      navigate(`/recentposts/${post.postId}`);
+    } else if (post.source === "premium") {
       navigate(`/premium-articles/${post.postId}`);
-    } else if (post.source === "pdf") {
-      navigate(`/pdf/${post.postId}`);
     }
   };
  
