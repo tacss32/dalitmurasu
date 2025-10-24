@@ -108,7 +108,7 @@ export default function PeriyarSpeaks() {
               ))
             ) : (
               <p className="text-gray-500 text-center py-8">
-                No articles found matching your search.
+                loading..........
               </p>
             )}
           </div>
@@ -149,7 +149,7 @@ export default function PeriyarSpeaks() {
             ))
           ) : (
             <p className="text-gray-500 text-center py-8">
-              No articles found matching your search.
+              loading.......
             </p>
           )}
         </div>
