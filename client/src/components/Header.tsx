@@ -97,21 +97,26 @@ export default function Header({
     }
   }
 
-  const desktopSrc = bannerData?.desktopImage || bannerData?.mobileImage;
-  const mobileSrc = bannerData?.mobileImage || bannerData?.desktopImage;
+  const desktopSrc = bannerData?.desktopImage;
+  const mobileSrc = bannerData?.mobileImage;
   const fallbackSrc = "/headerImg.jpg";
 
   return (
     <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
-  <picture>
-    {mobileSrc && <source media="(max-width: 767px)" srcSet={mobileSrc} />}
-    {desktopSrc && <source media="(min-width: 768px)" srcSet={desktopSrc} />}
-    <img
-      src={fallbackSrc}
-      alt="Header Banner"
-      className="w-screen h-auto object-cover"
-    />
-  </picture>
+      <picture>
+        {/* If mobileSrc is undefined, this source tag is skipped */}
+        {mobileSrc && <source media="(max-width: 767px)" srcSet={mobileSrc} />}
+
+        {/* If desktopSrc is undefined, this source tag is skipped */}
+        {desktopSrc && <source media="(min-width: 768px)" srcSet={desktopSrc} />}
+
+        {/* The generic fallback image that the browser will use if neither source tag is active */}
+        <img
+          src={fallbackSrc}
+          alt="Header Banner"
+          className="w-screen h-auto object-cover"
+        />
+      </picture>
 
   <h1 className="text-3xl md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
     <span>{headerText}</span>
