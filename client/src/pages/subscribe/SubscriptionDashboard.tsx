@@ -25,7 +25,8 @@ const SubscriptionDashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         // Step 1: Fetch all available subscription plans, including durationInDays
-        const plansResponse = await fetch(`${API_BASE_URL}api/subscription/`);
+        const token = localStorage.getItem("token");
+        const plansResponse = await fetch(`${API_BASE_URL}api/subscription/`)
         if (!plansResponse.ok) {
           throw new Error('Failed to fetch subscription plans');
         }
@@ -33,7 +34,12 @@ const SubscriptionDashboard: React.FC = () => {
         setPlans(allPlans);
 
         // Step 2: Fetch the subscriber counts (only for plans with > 0 subscribers)
-        const summaryResponse = await fetch(`${API_BASE_URL}api/subscription/subscription-dashboard`);
+  
+        const summaryResponse = await fetch(`${API_BASE_URL}api/subscription/subscription-dashboard`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!summaryResponse.ok) {
           throw new Error('Failed to fetch dashboard data');
         }
