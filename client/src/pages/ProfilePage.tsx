@@ -13,7 +13,6 @@ interface UserDetails {
   phone?: string;
   dob?: string;
   gender?: string;
-  isSubscribed: boolean;
   subscriptionExpiresAt: string | null;
 }
 
@@ -348,7 +347,7 @@ const SubscriptionStatusCard = ({
 }) => {
   if (!userSubData || !userSubData.isActive) {
     return (
-      <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg text-center text-gray-600 dark:text-gray-400 mb-6">
+      <div className="p-4 bg-highlight-1/30 dark:bg-gray-700 rounded-lg text-center text-gray-600 dark:text-gray-400 mb-6">
         You do not have any active subscriptions.
       </div>
     );

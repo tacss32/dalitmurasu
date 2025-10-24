@@ -149,13 +149,32 @@ exports.createSubscriptionOrder = async (req, res) => {
   
 
     // ⬇️ NEW: Enforce the 2-plan limit for new purchases
-    if (user && userser.stackedSubscriptionCount >= 2) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Subscription limit reached. You can have a maximum of 2 stacked plans.",
-        limitReached: true, // Special flag for client-side logic
-      });
+    const now = new Date();
+    // Make a mutable copy of the user's current subscription plans
+    let currentPlans = user.subscriptionPlan ? [...user.subscriptionPlan] : [];
+
+    // --- LOGIC: Manage subscription array limit (max 2) ---
+    if (currentPlans.length >= 2) {
+      // Sort plans by expiration date to ensure the first element is the oldest
+      currentPlans.sort(
+        (a, b) =>
+          new Date(a.subscriptionExpires) - new Date(b.subscriptionExpires)
+      );
+      const oldestPlan = currentPlans[0];
+
+      // Check if the oldest subscription has expired
+      if (new Date(oldestPlan.subscriptionExpires) < now) {
+        // If it's expired, remove it from the front of the array.
+        currentPlans.shift();
+      } else {
+        // If it's not expired, the user cannot add a third plan yet.
+        return res.status(403).json({
+          success: false,
+          message:
+            "Subscription limit reached. You already have two active plans.",
+          limitReached: true,
+        });
+      }
     }
 
     const options = {
@@ -434,37 +453,57 @@ exports.manualSubscribeUser = async (req, res) => {
 // -------Dashboard-------
 exports.getSubscriptionDashboard = async (req, res) => {
   try {
-    // Step 1: Get all plans with their IDs and titles
-    const plans = await SubscriptionPlan.find().select("title");
+    // Step 1: Get all plans with their IDs and titles (this part is correct and remains)
+    const allPlans = await SubscriptionPlan.find().select("title");
 
-    // Step 2: Build a map of planId to title for reference
+    // Step 2: Build a map of planId to title for easy lookup
     const planMap = {};
-    plans.forEach((plan) => {
+    allPlans.forEach((plan) => {
       planMap[plan._id.toString()] = plan.title;
     });
 
-    // Step 3: Aggregate subscribed user count grouped by subscriptionPlan
+    // Step 3: Aggregate subscribed user count, properly handling the subscriptionPlan array
     const counts = await ClientUser.aggregate([
+      // Stage 1: Deconstruct the subscriptionPlan array into separate documents
+      // This is the key change. If a user has 2 plans, this creates 2 documents for them in the pipeline.
+      {
+        $unwind: "$subscriptionPlan",
+      },
+
+      // Stage 2 (Optional but Recommended): Filter for only active subscriptions
+      // This ensures your dashboard reflects current, not expired, subscribers.
       {
         $match: {
-          isSubscribed: true,
-          subscriptionPlan: { $ne: null },
+          "subscriptionPlan.subscriptionExpires": { $gte: new Date() },
         },
       },
+
+      // Stage 3: Group by the actual plan ID inside the array and count them
       {
         $group: {
-          _id: "$subscriptionPlan",
-          count: { $sum: 1 },
+          _id: "$subscriptionPlan.plan", // Group by the ObjectId of the plan
+          count: { $sum: 1 }, // Count the documents in each group
         },
       },
     ]);
 
-    // Step 4: Format the output with plan titles
+    // Step 4: Format the output with plan titles (this part is also correct and remains)
     const summary = counts.map((entry) => ({
       planId: entry._id,
       title: planMap[entry._id.toString()] || "Unknown Plan",
       subscriberCount: entry.count,
     }));
+
+    // Bonus: Include plans that have zero subscribers
+    allPlans.forEach((plan) => {
+      if (!summary.some((s) => s.planId.toString() === plan._id.toString())) {
+        summary.push({
+          planId: plan._id,
+          title: plan.title,
+          subscriberCount: 0,
+        });
+      }
+    });
 
     res.status(200).json({
       success: true,
