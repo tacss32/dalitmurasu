@@ -2,64 +2,8 @@ const SubscriptionPlan = require("../models/SubscriptionPlan");
 const ClientUser = require("../models/ClientUser");
 const razorpay = require("../config/razorpay_util");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer"); // Import nodemailer
 
-/* -----------------------------------------------------------------------------
- * Email Transporter (copied from authController.js for consistency)
- * --------------------------------------------------------------------------- */
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
-
-/* -----------------------------------------------------------------------------
- * Email Helper Function
- * --------------------------------------------------------------------------- */
-async function sendSubscriptionEmail(
-  toEmail,
-  userName,
-  planTitle,
-  planPrice,
-  expiryDate
-) {
-  try {
-    console.log(`Attempting to send subscription email to: ${toEmail}`);
-    const formattedPrice = (planPrice / 100).toFixed(2); // Convert paisa back to rupees for display
-    const formattedExpiryDate = new Date(expiryDate).toLocaleDateString();
-
-    await transporter.sendMail({
-      from: `"Dalit Murasu" <${process.env.EMAIL_USER}>`,
-      to: toEmail,
-      subject: "Subscription Confirmation - Dalit Murasu",
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <h2 style="color: #0056b3;">Hello, ${userName}! 👋</h2>
-          <p>Thank you for subscribing to Dalit Murasu.</p>
-          <p>Your subscription details are as follows:</p>
-          <ul>
-            <li><strong>Plan:</strong> ${planTitle}</li>
-            <li><strong>Price Paid:</strong> ₹${formattedPrice}</li>
-            <li><strong>Status:</strong> Active</li>
-            <li><strong>Expires On:</strong> ${formattedExpiryDate}</li>
-          </ul>
-          <p>You can now enjoy full access to our content. Thank you for your support!</p>
-          <p>Best regards,<br/>The Dalit Murasu Team</p>
-        </div>
-      `,
-    });
-    console.log(`Subscription email successfully sent to ${toEmail}`);
-  } catch (error) {
-    console.error("Error sending subscription email:", error);
-  }
-}
+const sendSubscriptionEmail = require("../middleware/sndMail");
 
 // -----------------------------
 // Admin: Create Plan
@@ -146,7 +90,6 @@ exports.createSubscriptionOrder = async (req, res) => {
     }
 
     // ⬇️ MODIFIED: Fetch full user to check stacked limit
-  
 
     // ⬇️ NEW: Enforce the 2-plan limit for new purchases
     const now = new Date();
@@ -199,8 +142,6 @@ exports.createSubscriptionOrder = async (req, res) => {
       .json({ success: false, message: "Failed to create Razorpay order" });
   }
 };
-
-
 
 // User: Verify Payment & Activate Subscription
 exports.verifySubscriptionPayment = async (req, res) => {
@@ -440,7 +381,6 @@ exports.manualSubscribeUser = async (req, res) => {
   }
 };
 
-
 // -----------------------
 // -------Dashboard-------
 exports.getSubscriptionDashboard = async (req, res) => {
@@ -513,78 +453,94 @@ exports.getSubscriptionDashboard = async (req, res) => {
 // Admin: Unsubscribe User (Revised to handle single plan removal)
 // subscriptionController.js (Modified exports.unsubscribeUser)
 exports.unsubscribeUser = async (req, res) => {
-    try {
-        const { id } = req.params; // User ID
-        const { planId } = req.body; // Optional: ID of the plan to remove
+  try {
+    const { id } = req.params; // User ID
+    const { planId } = req.body; // Optional: ID of the plan to remove
 
-        const user = await ClientUser.findById(id);
-        if (!user) return res.status(404).json({ success: false, message: "User not found." });
+    const user = await ClientUser.findById(id);
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
 
-        if (!planId) {
-            // Case 2: Remove ALL plans (default unsubscribe behavior)
-            await ClientUser.findByIdAndUpdate(id, { subscriptionPlan: [] });
-            return res.status(200).json({ success: true, message: "User unsubscribed successfully (all plans removed)." });
-        }
-
-        // Case 1: Remove a specific plan from the subscriptionPlan array
-        // 1. Find the plan to remove
-        const planIndex = user.subscriptionPlan.findIndex(p => p._id.toString() === planId);
-        if (planIndex === -1) {
-            return res.status(404).json({ success: false, message: "Subscription plan not found on user." });
-        }
-
-        const removedPlan = user.subscriptionPlan[planIndex];
-        const removedPlanDuration = await SubscriptionPlan.findById(removedPlan.plan);
-        const durationInDays = removedPlanDuration ? removedPlanDuration.durationInDays : 0;
-        
-        // 2. Remove the plan
-        user.subscriptionPlan.splice(planIndex, 1);
-        
-        // --- 🔥 FIX START: Recalculate Stacking for Remaining Plans ---
-        
-        const now = new Date();
-        let baseDate = now;
-        
-        // 3. Re-stack the remaining plans in their original order
-        for (let i = 0; i < user.subscriptionPlan.length; i++) {
-            let currentPlan = user.subscriptionPlan[i];
-            
-            // Get the actual duration of the plan from the DB (using the populated 'plan' field)
-            const planDetails = await SubscriptionPlan.findById(currentPlan.plan);
-            if (!planDetails) continue; // Skip if plan details are missing
-
-            // Calculate new expiry date based on the current baseDate
-            const newExpiryDate = new Date(
-                baseDate.getTime() + planDetails.durationInDays * 24 * 60 * 60 * 1000
-            );
-            
-            // Update the plan's expiry date
-            user.subscriptionPlan[i].subscriptionExpires = newExpiryDate;
-            
-            // Set the new baseDate for the next plan to stack on
-            baseDate = newExpiryDate;
-        }
-
-        // --- 🔥 FIX END ---
-
-        // 4. Save the updated user document
-        const updatedUser = await user.save(); // Use save() since we modified the document object
-
-        // Re-run the active-plan logic to see what the user has left
-        const updatedActivePlans = updatedUser.subscriptionPlan
-            .filter(sub => new Date(sub.subscriptionExpires) > now);
-
-        res.status(200).json({
-            success: true,
-            message: "Subscription plan removed and remaining plans re-stacked successfully.",
-            hasActiveSubscriptions: updatedActivePlans.length > 0,
-            user: updatedUser,
-        });
-
-    } catch (err) {
-        console.error("Unsubscribe user failed:", err);
-        res.status(500).json({ success: false, message: "Internal Server Error." });
+    if (!planId) {
+      // Case 2: Remove ALL plans (default unsubscribe behavior)
+      await ClientUser.findByIdAndUpdate(id, { subscriptionPlan: [] });
+      return res.status(200).json({
+        success: true,
+        message: "User unsubscribed successfully (all plans removed).",
+      });
     }
+
+    // Case 1: Remove a specific plan from the subscriptionPlan array
+    // 1. Find the plan to remove
+    const planIndex = user.subscriptionPlan.findIndex(
+      (p) => p._id.toString() === planId
+    );
+    if (planIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Subscription plan not found on user.",
+      });
+    }
+
+    const removedPlan = user.subscriptionPlan[planIndex];
+    const removedPlanDuration = await SubscriptionPlan.findById(
+      removedPlan.plan
+    );
+    const durationInDays = removedPlanDuration
+      ? removedPlanDuration.durationInDays
+      : 0;
+
+    // 2. Remove the plan
+    user.subscriptionPlan.splice(planIndex, 1);
+
+    // --- 🔥 FIX START: Recalculate Stacking for Remaining Plans ---
+
+    const now = new Date();
+    let baseDate = now;
+
+    // 3. Re-stack the remaining plans in their original order
+    for (let i = 0; i < user.subscriptionPlan.length; i++) {
+      let currentPlan = user.subscriptionPlan[i];
+
+      // Get the actual duration of the plan from the DB (using the populated 'plan' field)
+      const planDetails = await SubscriptionPlan.findById(currentPlan.plan);
+      if (!planDetails) continue; // Skip if plan details are missing
+
+      // Calculate new expiry date based on the current baseDate
+      const newExpiryDate = new Date(
+        baseDate.getTime() + planDetails.durationInDays * 24 * 60 * 60 * 1000
+      );
+
+      // Update the plan's expiry date
+      user.subscriptionPlan[i].subscriptionExpires = newExpiryDate;
+
+      // Set the new baseDate for the next plan to stack on
+      baseDate = newExpiryDate;
+    }
+
+    // --- 🔥 FIX END ---
+
+    // 4. Save the updated user document
+    const updatedUser = await user.save(); // Use save() since we modified the document object
+
+    // Re-run the active-plan logic to see what the user has left
+    const updatedActivePlans = updatedUser.subscriptionPlan.filter(
+      (sub) => new Date(sub.subscriptionExpires) > now
+    );
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Subscription plan removed and remaining plans re-stacked successfully.",
+      hasActiveSubscriptions: updatedActivePlans.length > 0,
+      user: updatedUser,
+    });
+  } catch (err) {
+    console.error("Unsubscribe user failed:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
 };
 
 exports.getSubscribedUsers = async (req, res) => {
@@ -681,7 +637,6 @@ exports.getUserSubscriptionStatus = async (req, res) => {
 
     // 4. Send the successful response with the list of active plans
     res.status(200).json({
-      
       isActive: true,
       overallEndDate: overallEndDate,
       // Return the array of all active plans
@@ -694,4 +649,3 @@ exports.getUserSubscriptionStatus = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch status" });
   }
 };
-
