@@ -5,48 +5,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const passportCtl = require("passport"); // ensure passport is initialized in index.js
 const { URLSearchParams } = require("url");
-const nodemailer = require("nodemailer"); // Make sure this is present
 
-
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
-
-async function sendWelcomeEmail(toEmail, userName) {
-  try {
-    console.log(`Attempting to send welcome email to: ${toEmail}`);
-    await transporter.sendMail({
-      from: `"Dalit Murasu" <${process.env.EMAIL_USER}>`,
-      to: toEmail,
-      subject: "Welcome to Dalit Murasu!",
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <h2 style="color: #0056b3;">Hello, ${userName}! 👋</h2>
-          <p>Thank you for registering with Dalit Murasu. We are thrilled to have you join our community.</p>
-          <p>You can now log in and explore all the features we have to offer.</p>
-          <p>If you have any questions, feel free to reach out to us.</p>
-          <p>Best regards,<br/>The Dalit Murasu Team</p>
-        </div>
-      `,
-    });
-    console.log(`Welcome email successfully sent to ${toEmail}`);
-  } catch (error) {
-    console.error("Error sending welcome email:", error);
-    // Log the full error object for more detail
-    console.error(error);
-  }
-}
-
-
+const sendWelcomeEmail = require("../middleware/sndMail");
 
 /* -----------------------------------------------------------------------------
  * ADMIN: LOGIN
@@ -102,8 +62,7 @@ exports.adminVerifyToken = async (req, res) => {
     return res.status(401).json({ message: "No token provided" });
 
   const token = authHeader.split(" ")[1];
-  if (!token)
-    return res.status(401).json({ message: "Invalid token format" });
+  if (!token) return res.status(401).json({ message: "Invalid token format" });
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -117,15 +76,12 @@ exports.adminVerifyToken = async (req, res) => {
       return res.status(401).json({ message: "Token expired" });
     if (err.name === "JsonWebTokenError")
       return res.status(401).json({ message: "Invalid token" });
-    res
-      .status(500)
-      .json({ message: "Server error during token verification" });
+    res.status(500).json({ message: "Server error during token verification" });
   }
 };
 
 // Build redirect back to frontend login page with query params
 function buildFrontendRedirectUrl({ token, uid, error }) {
-
   // const loginPath = "http://localhost:5173/login"; // e.g. /login-client or /login
   const loginPath = "https://dalitmurasu.com/login";
   const params = new URLSearchParams();
@@ -146,44 +102,38 @@ exports.googleAuth = passportCtl.authenticate("google", {
 
 // Callback after Google grants auth
 exports.googleCallback = (req, res, next) => {
-  try {
-    if (!req.user) {
-      console.error("googleCallback: req.user missing");
-      return res.redirect(buildFrontendRedirectUrl({ error: "no-user" }));
-    }
+  try {
+    if (!req.user) {
+      console.error("googleCallback: req.user missing");
+      return res.redirect(buildFrontendRedirectUrl({ error: "no-user" }));
+    }
 
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
+    if (req.user.isNewUser) {
+      // Call the email sending function
+      sendWelcomeEmail(req.user.email, req.user.name)
+        .then(() => {
+          console.log("Welcome email sent for new Google user."); // Optional: Clear the flag after sending the email // req.user.isNewUser = false; // await req.user.save();
+        })
+        .catch((err) => {
+          console.error("Failed to send welcome email for Google user:", err);
+        });
+    }
 
-    if (req.user.isNewUser) {
-      // Call the email sending function
-      sendWelcomeEmail(req.user.email, req.user.name)
-        .then(() => {
-          console.log("Welcome email sent for new Google user.");
-          // Optional: Clear the flag after sending the email
-          // req.user.isNewUser = false;
-          // await req.user.save();
-        })
-        .catch((err) => {
-          console.error("Failed to send welcome email for Google user:", err);
-        });
-    }
+    const redirectUrl = buildFrontendRedirectUrl({
+      token,
+      uid: req.user._id.toString(),
+    });
 
-    const redirectUrl = buildFrontendRedirectUrl({
-      token,
-      uid: req.user._id.toString(),
-    });
-
-    return res.redirect(redirectUrl);
-  } catch (err) {
-    console.error("googleCallback error:", err);
-    return next(err);
-  }
+    return res.redirect(redirectUrl);
+  } catch (err) {
+    console.error("googleCallback error:", err);
+    return next(err);
+  }
 };
-
-
 
 /* -----------------------------------------------------------------------------
  * CLIENT: REGISTER (with name, email, phone, gender, password, dob)
@@ -231,8 +181,6 @@ exports.clientRegister = async (req, res) => {
     res.status(500).json({ message: "Server error during signup" });
   }
 };
-
-
 
 /* -----------------------------------------------------------------------------
  * CLIENT: LOGIN (email/password)
@@ -287,8 +235,6 @@ exports.clientVerifyToken = async (req, res) => {
       return res.status(401).json({ message: "Token expired" });
     if (err.name === "JsonWebTokenError")
       return res.status(401).json({ message: "Invalid token" });
-    res
-      .status(500)
-      .json({ message: "Server error during token verification" });
+    res.status(500).json({ message: "Server error during token verification" });
   }
 };
