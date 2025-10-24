@@ -8,7 +8,11 @@ const PostTitleSchema = new mongoose.Schema(
       refPath: "source",
     },
     title: { type: String, required: true },
-    source: { type: String, required: true, enum: ["recent", "universal"] },
+    source: {
+      type: String,
+      required: true,
+      enum: ["recent", "universal", "premium"],
+    },
   },
   { timestamps: true }
 );
