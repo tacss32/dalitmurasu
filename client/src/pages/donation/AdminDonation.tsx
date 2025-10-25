@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // --- Type Definitions for Admin View ---
 
@@ -31,6 +30,11 @@ interface ITotalStatsResponse {
     totalDonations: number;
 }
 
+interface IReconcileResponse {
+    success: boolean;
+    message: string;
+}
+
 interface IFilterState {
     page: number;
     limit: number;
@@ -58,6 +62,7 @@ export default function DonationManagement() {
     const [donationsData, setDonationsData] = useState<IDonationsResponse | null>(null);
     const [totalStats, setTotalStats] = useState<ITotalStatsResponse | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
+    const [isReconciling, setIsReconciling] = useState<boolean>(false); // NEW state for reconciliation
     const [filter, setFilter] = useState<IFilterState>({
         page: 1,
         limit: 20,
@@ -79,7 +84,10 @@ export default function DonationManagement() {
         }
 
         setLoading(true);
-        setMessage({ text: '', type: '' });
+        // Clear message only when starting a new fetch, not for reconciliation
+        if (!isReconciling) {
+            setMessage({ text: '', type: '' });
+        }
 
         // Construct the query string from the filter state
         const queryParams = new URLSearchParams({
@@ -114,7 +122,7 @@ export default function DonationManagement() {
         } finally {
             setLoading(false);
         }
-    }, [filter.page, filter.limit, filter.status, filter.search, API_BASE_URL, ADMIN_TOKEN]);
+    }, [filter.page, filter.limit, filter.status, filter.search, API_BASE_URL, ADMIN_TOKEN, isReconciling]); // Added isReconciling
 
     // Fetch Total Stats (Amount and Count)
     const fetchTotalStats = useCallback(async () => {
@@ -138,6 +146,40 @@ export default function DonationManagement() {
             console.error('Fetch total stats error:', err);
         }
     }, [API_BASE_URL, ADMIN_TOKEN]);
+
+
+    // NEW: Handle Reconciliation
+    const handleReconcile = useCallback(async () => {
+        if (!ADMIN_TOKEN || isReconciling) return;
+
+        setIsReconciling(true);
+        setMessage({ text: 'Starting payment reconciliation...', type: '' });
+
+        try {
+            const res = await fetch(`${API_BASE_URL}api/donation/reconcile`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${ADMIN_TOKEN}`,
+                },
+            });
+            const data: IReconcileResponse = await res.json();
+
+            if (data.success) {
+                setMessage({ text: `Reconciliation successful! ${data.message}`, type: 'success' });
+                // Re-fetch the donations list and stats to update the UI
+                fetchDonations();
+                fetchTotalStats();
+            } else {
+                setMessage({ text: `Reconciliation failed: ${data.message}`, type: 'error' });
+            }
+        } catch (err) {
+            console.error('Reconciliation error:', err);
+            setMessage({ text: 'Network error during reconciliation. Check server connectivity.', type: 'error' });
+        } finally {
+            setIsReconciling(false);
+        }
+    }, [API_BASE_URL, ADMIN_TOKEN, isReconciling, fetchDonations, fetchTotalStats]); // Added dependencies
 
     // Initial load and whenever filters change
     useEffect(() => {
@@ -209,7 +251,30 @@ export default function DonationManagement() {
     return (
         <div className="p-8 min-h-screen bg-gray-50 font-sans">
             <h1 className="text-4xl font-bold text-gray-800 mb-2">💰 Donation Management</h1>
-            <p className="text-gray-500 mb-8">View, search, and manage all donation records.</p>
+            <p className="text-gray-500 mb-4">View, search, and manage all donation records.</p>
+
+            {/* --- Reconciliation Button --- */}
+            <div className="mb-8 flex justify-end">
+                <button
+                    onClick={handleReconcile}
+                    disabled={isReconciling || loading}
+                    className="flex items-center space-x-2 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 disabled:opacity-50 transition duration-150"
+                >
+                    {isReconciling ? (
+                        <>
+                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Reconciling...</span>
+                        </>
+                    ) : (
+                        <>
+                            <span>🔄 Reconcile Payments</span>
+                        </>
+                    )}
+                </button>
+            </div>
 
             {/* --- Overall Statistics --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -223,7 +288,12 @@ export default function DonationManagement() {
                     value={formatAmount(totalStats?.totalAmount ?? 0)}
                     icon="📈"
                 />
-                
+                <StatCard
+                    title="Pending Donations"
+                    // Display pending count from donationsData if available, otherwise '...'
+                    value={donationsData?.donations.filter(d => d.payment_status === 'pending').length.toLocaleString('en-IN') ?? '...'}
+                    icon="⏳"
+                />
             </div>
 
             {/* Message Display */}
@@ -265,7 +335,7 @@ export default function DonationManagement() {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-100">
                             <tr>
-                                {/* --- UPDATED: 8 columns total --- */}
+                                {/* --- 8 columns total --- */}
                                 {['Date', 'Name', 'Email/Phone', 'Pincode', 'Amount (₹)', 'Payment Status', 'Order ID', 'Payment ID'].map(header => (
                                     <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         {header}
@@ -315,9 +385,8 @@ export default function DonationManagement() {
                                             {d.razorpay_order_id}
                                         </td>
 
-                                        {/* --- NEW COLUMN: Razorpay Payment ID --- */}
+                                        {/* --- Razorpay Payment ID Column --- */}
                                         <td className="px-6 py-4 text-xs text-gray-500">
-                                            {/* Display the payment ID or a dash if it's missing */}
                                             {d.razorpay_payment_id || '-'}
                                         </td>
                                     </tr>
@@ -357,7 +426,7 @@ export default function DonationManagement() {
     );
 }
 
-// Helper component for the stat cards
+// Helper component for the stat cards (Remains unchanged)
 const StatCard: React.FC<{ title: string; value: string; icon: string }> = ({ title, value, icon }) => (
     <div className="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 border-l-4 border-indigo-500">
         <div className="text-3xl">{icon}</div>

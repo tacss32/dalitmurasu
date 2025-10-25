@@ -125,22 +125,22 @@ exports.reconcileDonations = async (req, res) => {
           const payment = payments.items[0];
 
           // If payment is captured (successful)
-          if (payment.status === "captured") {
-            donation.payment_status = "success";
-            donation.razorpay_payment_id = payment.id;
-            await donation.save();
+         if (["captured", "authorized"].includes(payment.status)) {
+           donation.payment_status = "success";
+           donation.razorpay_payment_id = payment.id;
+           await donation.save();
 
-            // Send thank-you email (optional)
-            await sendDonationEmail(
-              donation.mail,
-              donation.name,
-              donation.amount
-            );
+           // Send thank-you email (optional)
+           await sendDonationEmail(
+             donation.mail,
+             donation.name,
+             donation.amount
+           );
 
-            updatedCount++;
-          } else {
-            failedCount++;
-          }
+           updatedCount++;
+         } else {
+           failedCount++;
+         }
         }
       } catch (err) {
         console.error(`Error checking donation ${donation._id}:`, err.message);
