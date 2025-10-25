@@ -7,6 +7,8 @@ router.post("/create-order", controller.openDonation);
 router.post("/verify-payment", controller.verifyDonation);
 
 // Admin routes
+router.post("/reconcile", adminAuth, controller.reconcileDonations);
+
 router.get("/all", adminAuth, controller.getAllDonations);
 router.get("/total", adminAuth, controller.getTotalDonations);
 router.get("/stats", adminAuth, controller.getDonationStats);
