@@ -2,7 +2,7 @@ const Donation = require("../models/Donation");
 const razorpay = require("../config/razorpay_util");
 const crypto = require("crypto");
 
-const { sendDonationEmail } = require("../middleware/sndMail"); 
+const { sendDonationEmail } = require("../middleware/sndMail");
 
 /* ------------------ Create Donation Order ------------------ */
 exports.openDonation = async (req, res) => {
@@ -96,6 +96,67 @@ exports.verifyDonation = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error verifying donation payment",
+    });
+  }
+};
+
+exports.reconcileDonations = async (req, res) => {
+  try {
+    // Get all pending donations
+    const pendingDonations = await Donation.find({ payment_status: "pending" });
+
+    if (!pendingDonations.length) {
+      return res
+        .status(200)
+        .json({ success: true, message: "No pending donations found" });
+    }
+
+    let updatedCount = 0;
+    let failedCount = 0;
+
+    for (const donation of pendingDonations) {
+      try {
+        // Fetch payments linked to the order
+        const payments = await razorpay.orders.fetchPayments(
+          donation.razorpay_order_id
+        );
+
+        if (payments.items && payments.items.length > 0) {
+          const payment = payments.items[0];
+
+          // If payment is captured (successful)
+          if (payment.status === "captured") {
+            donation.payment_status = "success";
+            donation.razorpay_payment_id = payment.id;
+            await donation.save();
+
+            // Send thank-you email (optional)
+            await sendDonationEmail(
+              donation.mail,
+              donation.name,
+              donation.amount
+            );
+
+            updatedCount++;
+          } else {
+            failedCount++;
+          }
+        }
+      } catch (err) {
+        console.error(`Error checking donation ${donation._id}:`, err.message);
+        failedCount++;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Reconciliation completed. Updated: ${updatedCount}, Still pending/failed: ${failedCount}`,
+    });
+  } catch (err) {
+    console.error("Error reconciling donations:", err);
+    res.status(500).json({
+      success: false,
+      message: "Error reconciling donations",
     });
   }
 };
