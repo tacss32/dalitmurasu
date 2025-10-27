@@ -155,6 +155,27 @@ export default function NewsHud() {
       });
     }
   };
+  const handleShare = async () => {
+    if (!selectedBook) return;
+
+    const shareData = {
+      title: selectedBook.name,
+      text: `Check out this book: "${selectedBook.name}" by ${selectedBook.author}`,
+      url: window.location.href, // you can also generate a /books/:id link later
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        console.log("Shared successfully");
+      } catch (error) {
+        console.error("Error sharing:", error);
+      }
+    } else {
+      alert("Sharing is not supported on this browser.");
+    }
+  };
+
 
   const handleShowDescription = (book: BookType) => {
     setSelectedBook(book);
@@ -476,18 +497,29 @@ export default function NewsHud() {
                     {selectedBook.description}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    addToCart(selectedBook);
-                    handleClosePopup();
-                  }}
-                  className="w-full bg-red-600 hover:bg-black text-white font-bold py-3 px-6 mt-auto rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
-                  disabled={addingToCartStates.has(selectedBook._id)}
-                >
-                  {addingToCartStates.has(selectedBook._id)
-                    ? "Adding..."
-                    : "Add to Cart"}
-                </button>
+                {/* ACTION BUTTONS (Share + Add to Cart) */}
+                <div className="mt-auto flex flex-col md:flex-row gap-3">
+
+
+                  <button
+                    onClick={() => {
+                      addToCart(selectedBook);
+                      handleClosePopup();
+                    }}
+                    className="w-full md:w-auto bg-highlight-1 hover:bg-highlight-1/80 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
+                    disabled={addingToCartStates.has(selectedBook._id)}
+                  >
+                    {addingToCartStates.has(selectedBook._id)
+                      ? "Adding..."
+                      : "Add to Cart"}
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="w-full md:w-auto bg-highlight-1 hover:bg-highlight-1/80 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out"
+                  >
+                    Share
+                  </button>
+                </div>
               </div>
             </div>
           </div>
