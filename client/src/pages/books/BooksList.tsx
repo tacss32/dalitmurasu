@@ -112,6 +112,27 @@ export default function Books() {
     setShowDescriptionPopup(false);
     setSelectedBook(null);
   };
+  const handleShare = async () => {
+    if (!selectedBook) return;
+
+    const shareData = {
+      title: selectedBook.name,
+      text: `Check out this book: "${selectedBook.name}" by ${selectedBook.author}`,
+      url: window.location.href, // you can also generate a /books/:id link later
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        console.log("Shared successfully");
+      } catch (error) {
+        console.error("Error sharing:", error);
+      }
+    } else {
+      alert("Sharing is not supported on this browser.");
+    }
+  };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 font-sans">
@@ -187,9 +208,11 @@ export default function Books() {
       {showDescriptionPopup && selectedBook && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 p-4">
           <div className="bg-background-to rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] flex flex-col relative">
+            
 
             {/* The close button container. It is absolutely positioned */}
             <div className="flex justify-end sticky top-0 bg-background-to z-20">
+              
               <button
                 onClick={handleClosePopup}
                 className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -213,6 +236,7 @@ export default function Books() {
               </div>
               {/* Right column for text content */}
               <div className="w-full md:w-1/2 flex flex-col">
+              
                 <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-2">
                   {selectedBook.name}
                 </h2>
@@ -228,23 +252,36 @@ export default function Books() {
                     ₹{selectedBook.sellingPrice.toFixed(2)}
                   </span>
                 </div>
+               
                 <div className="flex-grow pr-2 mb-4">
                   <p className="text-gray-800 whitespace-pre-wrap">
                     {selectedBook.description}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    addToCart(selectedBook);
-                    handleClosePopup();
-                  }}
-                  className="w-full bg-red-600 hover:bg-black text-white font-bold py-3 px-6 mt-auto rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
-                  disabled={addingToCartStates.has(selectedBook._id)}
-                >
-                  {addingToCartStates.has(selectedBook._id)
-                    ? "Adding..."
-                    : "Add to Cart"}
-                </button>
+                {/* ACTION BUTTONS (Share + Add to Cart) */}
+                <div className="mt-auto flex flex-col md:flex-row gap-3">
+                 
+
+                  <button
+                    onClick={() => {
+                      addToCart(selectedBook);
+                      handleClosePopup();
+                    }}
+                    className="w-full md:w-auto bg-highlight-1 hover:bg-highlight-1/80 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
+                    disabled={addingToCartStates.has(selectedBook._id)}
+                  >
+                    {addingToCartStates.has(selectedBook._id)
+                      ? "Adding..."
+                      : "Add to Cart"}
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="w-full md:w-auto bg-highlight-1 hover:bg-highlight-1/80 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 ease-in-out"
+                  >
+                    Share
+                  </button>
+                </div>
+
               </div>
             </div>
           </div>
