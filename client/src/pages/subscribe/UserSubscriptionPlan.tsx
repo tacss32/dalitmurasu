@@ -125,9 +125,12 @@ export default function UserSubscriptionPlans() {
 
     const token = localStorage.getItem("clientToken");
     if (!token) {
-      alert("Please login to subscribe.");
+      if (window.confirm("You need to login to subscribe.\nClick OK to go to Login page.")) {
+        window.location.href = "/login";
+      }
       return;
     }
+
 
     try {
       const createOrderRes = await axios.post(
