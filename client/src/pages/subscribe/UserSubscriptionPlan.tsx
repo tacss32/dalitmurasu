@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 // Import useNavigate from react-router-dom (assuming you are using it)
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import {
   MdCheckCircle,
   MdStar,
   MdAccessTime,
   MdTimer,
   // Added an icon for donation
-  MdOutlineAttachMoney,
+  // MdOutlineAttachMoney,
 } from "react-icons/md";
 
 interface SubscriptionPlan {
@@ -50,7 +50,7 @@ export default function UserSubscriptionPlans() {
   const [remainingDays, setRemainingDays] = useState<number | null>(null);
 
   // --- NEW: Initialize useNavigate hook ---
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const API_BASE_URL = import.meta.env.VITE_API;
 
@@ -189,9 +189,9 @@ export default function UserSubscriptionPlans() {
   };
 
   // --- NEW: Handler for the donation button ---
-  const handleDonationClick = () => {
-    navigate("/donation");
-  };
+  // const handleDonationClick = () => {
+  //   navigate("/donation");
+  // };
 
   if (loading) {
     return (
@@ -216,13 +216,13 @@ export default function UserSubscriptionPlans() {
       </h2>
 
       {/* --- NEW: Donation Button Added Here --- */}
-      <button
+      {/* <button
         onClick={handleDonationClick}
         className="flex items-center justify-center mb-10 px-6 py-3 rounded-lg text-white font-semibold transition bg-highlight-1 hover:bg-highlight-1/90 shadow-md"
       >
         <MdOutlineAttachMoney className="text-2xl mr-2" />
          Make a Donation
-      </button>
+      </button> */}
       {/* ------------------------------------- */}
 
       {/* Active Subscription Details */}

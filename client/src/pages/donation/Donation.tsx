@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 // --- Type Definitions ---
@@ -15,57 +16,14 @@ interface IMessage {
     type: 'success' | 'error' | 'info' | '';
 }
 
-// Data received from our backend /api/donation/create-order
-interface IOrderData {
-    orderId: string;
-    amount: number; // This is amount in paisa
-    currency: string;
+
+interface IRecordData {
     donationId: string; // or number, depending on your DB
-}
-
-// Response from Razorpay's handler
-interface IRazorpayResponse {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-}
-
-// For Razorpay's failed payment response
-interface IRazorpayError {
-    code: string;
-    description: string;
-    source: string;
-    step: string;
-    reason: string;
-    metadata?: {
-        order_id: string;
-        payment_id: string;
-    };
-}
-
-// Define the Razorpay options
-interface IRazorpayOptions {
-    key: string;
     amount: number;
-    currency: string;
-    name: string;
-    description: string;
-    order_id: string;
-    handler: (response: IRazorpayResponse) => void;
-    prefill: {
-        name: string;
-        email: string;
-        contact: string;
-    };
-    notes: {
-        pincode: string;
-    };
-    theme: {
-        color: string;
-    };
+    message: string;
 }
 
-// NOTE: The previous 'declare global' block has been removed to fix the conflict.
+
 
 export default function Donation() {
     const [formData, setFormData] = useState<IFormData>({
@@ -78,8 +36,7 @@ export default function Donation() {
     const [loading, setLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<IMessage>({ text: '', type: '' });
 
-    // IMPORTANT: Replace with your actual Razorpay Key ID
-    const RAZORPAY_KEY_ID: string = import.meta.env.VITE_RAZORPAY_KEY
+    // IMPORTANT: Removed RAZORPAY_KEY_ID
 
     // Base URL for API calls
     const API_BASE_URL = import.meta.env.VITE_API;
@@ -91,105 +48,18 @@ export default function Donation() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // 1. Verify payment on the backend
-    const verifyPayment = async (response: IRazorpayResponse) => {
-        setLoading(true);
-        setMessage({ text: 'Verifying your payment, please wait...', type: 'info' });
+    // NOTE: Removed verifyPayment and openRazorpayCheckout functions.
 
-        try {
-            const res = await fetch(`${API_BASE_URL}api/donation/verify-payment`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                }),
-            });
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const data: { success: boolean; message?: string } = await res.json();
-
-            if (data.success) {
-                setMessage({ text: 'Donation successful! Thank you for your support.', type: 'success' });
-                // Clear the form only upon success
-                setFormData({ name: '', phone: '', mail: '', pincode: '', amount: '' });
-            } else {
-                setMessage({ text: data.message || 'Payment verification failed. Please contact support.', type: 'error' });
-            }
-        } catch (err) {
-            console.error('Verification error:', err);
-            setMessage({ text: 'An error occurred during payment verification.', type: 'error' });
-        }
-        setLoading(false);
-    };
-
-    // 2. Open Razorpay Checkout
-    const openRazorpayCheckout = (orderData: IOrderData) => {
-        const options: IRazorpayOptions = {
-            key: RAZORPAY_KEY_ID,
-            amount: orderData.amount, // Amount in paisa (received from backend)
-            currency: orderData.currency,
-            name: 'Dalitmurasu', // Replace with your org name
-            description: 'Thank you for your donation',
-            order_id: orderData.orderId, // Received from backend
-            handler: function (response: IRazorpayResponse) {
-                // This function is called on successful payment
-                verifyPayment(response);
-            },
-            prefill: {
-                name: formData.name,
-                email: formData.mail,
-                contact: formData.phone,
-            },
-            notes: {
-                pincode: formData.pincode,
-            },
-            theme: {
-                color: '#feebbd', // Brand color
-            },
-        };
-
-        // Check if Razorpay script is loaded
-        if (!window.Razorpay) {
-            setMessage({ text: 'Razorpay SDK not loaded. Please ensure the script tag is present in index.html.', type: 'error' });
-            setLoading(false);
-            return;
-        }
-
-        // --- FIX: Use a local type assertion instead of global declaration ---
-        type RazorpayConstructor = new (options: IRazorpayOptions) => {
-            open: () => void;
-            on: (event: 'payment.failed', callback: (response: { error: IRazorpayError }) => void) => void;
-        };
-
-        const RazorpayInstance = window.Razorpay as unknown as RazorpayConstructor;
-        // --- END FIX ---
-
-        // Open the Razorpay modal
-        const rzp1 = new RazorpayInstance(options);
-        rzp1.on('payment.failed', function (response: { error: IRazorpayError }) {
-            console.error('Payment Failed:', response.error);
-            setMessage({
-                text: `Payment failed: ${response.error.description || 'Unknown error'}. Please try again.`,
-                type: 'error'
-            });
-            setLoading(false);
-        });
-
-        rzp1.open();
-    };
-
-    // 3. Handle Form Submission - Create Order
+    // Handle Form Submission - Record Donation
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (loading) return;
 
         setLoading(true);
-        setMessage({ text: 'Processing your request...', type: 'info' });
+        setMessage({ text: 'Recording your donation details...', type: 'info' });
 
         try {
-            const res = await fetch(`${API_BASE_URL}api/donation/create-order`, {
+            const res = await fetch(`${API_BASE_URL}api/donation/record-donation`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -198,36 +68,39 @@ export default function Donation() {
                 }),
             });
 
-            // We expect IOrderData on success, or an error message
+            // We expect IRecordData on success, or an error message
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const data: IOrderData & { success: boolean; message?: string } = await res.json();
+            const data: IRecordData & { success: boolean; message?: string } = await res.json();
 
             if (data.success) {
-                // On success, open the checkout modal
-                setMessage({ text: 'Redirecting to payment...', type: 'info' });
-                openRazorpayCheckout(data);
-                // Loading will be set to false by the handler or on failure
+                // On success, show confirmation
+                setMessage({
+                    text: data.message || `Donation of ₹${data.amount} successfully recorded. We will contact you with payment instructions if required.`,
+                    type: 'success'
+                });
+                // Clear the form
+                setFormData({ name: '', phone: '', mail: '', pincode: '', amount: '' });
             } else {
-                setMessage({ text: data.message || 'Failed to create order.', type: 'error' });
-                setLoading(false);
+                setMessage({ text: data.message || 'Failed to record donation. Please try again.', type: 'error' });
             }
         } catch (err) {
-            console.error('Order creation error:', err);
-            setMessage({ text: 'An error occurred. Please try again later.', type: 'error' });
+            console.error('Donation record error:', err);
+            setMessage({ text: 'An unexpected error occurred. Please try again later.', type: 'error' });
+        } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen  font-inter p-4">
+        <div className="flex items-center justify-center min-h-screen font-inter p-4">
             <div className="w-full max-w-md p-8 space-y-6 bg-white/30 rounded-lg shadow-xl">
                 <h1 className="text-3xl font-extrabold text-center text-gray-800">
                     💖 Support Our Cause
                 </h1>
                 <p className="text-center text-gray-500">
-                    Your contribution helps us make a difference. Thank you!
+                    Your contribution helps us make a difference. Please fill out your details.
                 </p>
-
+             
                 {/* Message Display */}
                 {message.text && (
                     <div
@@ -241,7 +114,7 @@ export default function Donation() {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Form Fields */}
+                    {/* Form Fields - Unchanged */}
                     <div>
                         <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-1">
                             Full Name*
@@ -333,13 +206,11 @@ export default function Donation() {
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                             ) : (
-                                `Donate ₹${formData.amount || 0}`
+                                `Commit to Donate ₹${formData.amount || 0}` // Updated button text
                             )}
                         </button>
                     </div>
                 </form>
-                {/* Note about Razorpay integration */}
-
             </div>
         </div>
     );

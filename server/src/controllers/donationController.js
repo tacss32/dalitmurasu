@@ -1,11 +1,11 @@
+
 const Donation = require("../models/Donation");
-const razorpay = require("../config/razorpay_util");
-const crypto = require("crypto");
 
-const { sendDonationEmail } = require("../middleware/sndMail");
 
-/* ------------------ Create Donation Order ------------------ */
-exports.openDonation = async (req, res) => {
+// const { sendDonationEmail } = require("../middleware/sndMail"); // REMOVED: Email sending is often tied to payment confirmation
+
+
+exports.recordDonation = async (req, res) => {
   try {
     const { name, phone, mail, pincode, amount } = req.body;
     if (!name || !phone || !mail || !pincode || !amount) {
@@ -14,152 +14,40 @@ exports.openDonation = async (req, res) => {
         .json({ success: false, message: "Missing required fields" });
     }
 
-    // Create Razorpay order
-    const options = {
-      amount: amount * 100, // convert to paisa
-      currency: "INR",
-      receipt: `donation_${Date.now()}`,
-      payment_capture: 1,
-    };
-    const order = await razorpay.orders.create(options);
-
-    // Save donation entry (pending)
+    // Save donation entry with status as 'success' (assuming payment details
+    // like bank account details were provided on the frontend for manual transfer)
+    // You can change 'success' to 'pending' if you want admin to verify manually.
     const donation = await Donation.create({
       name,
       phone,
       mail,
       pincode,
       amount,
-      razorpay_order_id: order.id,
-      payment_status: "pending",
+      // Removed Razorpay fields
+      payment_status: "success", // Simplified to mark as successful record
     });
+
+    // NOTE: Removed 'sendDonationEmail' as payment confirmation is no longer automatic.
+    // If this is for manual payment, you might send an email with bank details.
 
     res.status(200).json({
       success: true,
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
+      message: "Donation details recorded successfully. Thank you!",
       donationId: donation._id,
+      amount: donation.amount,
     });
   } catch (err) {
-    console.error("Error creating donation order:", err);
+    console.error("Error recording donation:", err);
     res.status(500).json({
       success: false,
-      message: "Failed to create Razorpay order",
+      message: "Failed to record donation details",
     });
   }
 };
 
-/* ------------------ Verify Donation Payment ------------------ */
-exports.verifyDonation = async (req, res) => {
-  try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-      req.body;
+/* ------------------ Admin Routes (Unchanged, but ensure 'Donation' model doesn't require Razorpay fields) ------------------ */
 
-    // Find the pending donation
-    const donation = await Donation.findOne({ razorpay_order_id });
-    if (!donation) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Donation not found" });
-    }
-
-    // Verify signature
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest("hex");
-
-    if (expectedSignature !== razorpay_signature) {
-      donation.payment_status = "failed";
-      await donation.save();
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid payment signature" });
-    }
-
-    // Update donation record as successful
-    donation.razorpay_payment_id = razorpay_payment_id;
-    donation.razorpay_signature = razorpay_signature;
-    donation.payment_status = "success";
-    await donation.save();
-
-    // Send thank-you email
-    sendDonationEmail(donation.mail, donation.name, donation.amount);
-
-    res.status(200).json({
-      success: true,
-      message: "Donation verified successfully",
-    });
-  } catch (err) {
-    console.error("Payment verification error:", err);
-    res.status(500).json({
-      success: false,
-      message: "Error verifying donation payment",
-    });
-  }
-};
-
-exports.reconcileDonations = async (req, res) => {
-  try {
-    // Get all pending donations
-    const pendingDonations = await Donation.find({ payment_status: "pending" });
-
-    if (!pendingDonations.length) {
-      return res
-        .status(200)
-        .json({ success: true, message: "No pending donations found" });
-    }
-
-    let updatedCount = 0;
-    let failedCount = 0;
-
-    for (const donation of pendingDonations) {
-      try {
-        // Fetch payments linked to the order
-        const payments = await razorpay.orders.fetchPayments(
-          donation.razorpay_order_id
-        );
-
-        if (payments.items && payments.items.length > 0) {
-          const payment = payments.items[0];
-
-          // If payment is captured (successful)
-         if (["captured", "authorized"].includes(payment.status)) {
-           donation.payment_status = "success";
-           donation.razorpay_payment_id = payment.id;
-           await donation.save();
-
-           // Send thank-you email (optional)
-           await sendDonationEmail(
-             donation.mail,
-             donation.name,
-             donation.amount
-           );
-
-           updatedCount++;
-         } else {
-           failedCount++;
-         }
-        }
-      } catch (err) {
-        console.error(`Error checking donation ${donation._id}:`, err.message);
-        failedCount++;
-      }
-    }
-
-    res.status(200).json({
-      success: true,
-      message: `Reconciliation completed. Updated: ${updatedCount}, Still pending/failed: ${failedCount}`,
-    });
-  } catch (err) {
-    console.error("Error reconciling donations:", err);
-    res.status(500).json({
-      success: false,
-      message: "Error reconciling donations",
-    });
-  }
-};
+// Removed exports.reconcileDonations - It was specific to Razorpay.
 
 exports.getAllDonations = async (req, res) => {
   try {
