@@ -120,16 +120,15 @@ exports.getPremiumPostPreviews = async (req, res) => {
 };
  
 // GET single with access check
+// GET single with access check
 exports.getPremiumPostById = async (req, res) => {
   try {
     const post = await PremiumPost.findById(req.params.id).lean();
 
-    if (!post) return res.status(404).json({ error: "Post not found" });
+    if (!post) return res.status(404).json({ error: "Post not found" }); // The user object, which includes the subscriptionPlan array
 
-    // The user object, which includes the subscriptionPlan array
-    const user = req.user;
+    const user = req.user; // --- 1. SUBSCRIPTION STATUS CALCULATION (NEW LOGIC) ---
 
-    // --- 1. SUBSCRIPTION STATUS CALCULATION (NEW LOGIC) ---
     let isSubscribed = false;
     const now = new Date();
 
@@ -139,51 +138,44 @@ exports.getPremiumPostById = async (req, res) => {
         (plan) =>
           plan.subscriptionExpires && new Date(plan.subscriptionExpires) > now
       );
-    }
-    // --- END SUBSCRIPTION LOGIC ---
-
-    // If post is marked for subscribers
+    } // --- END SUBSCRIPTION LOGIC --- // If post is marked for subscribers
     if (post.visibility === "subscribers") {
       // 1. Subscribed users: full access
       if (isSubscribed) {
         await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
         return res.json(post);
       }
-
       const previewWordCount = Math.max(
         1,
         Math.min(200, parseInt(req.query.words, 10) || 150)
-      );
-
-      // Assume getFirstWords is available in this scope
+      ); // Assume getFirstWords is available in this scope
       const { preview: contentPreview, truncated } = getFirstWords(
         post.content,
         previewWordCount
-      );
+      ); // --- NEW LOGIC START --- // 2. If NOT logged in: Bypass free view limit and go straight to paywall (403).
 
-   
       if (!user) {
-        return res.status(401).json({
-          error: "You must log in to access this premium post.",
+        return res.status(403).json({
+          error: "", // General paywall message
           requiresSubscription: true,
           articleData: {
             _id: post._id,
             title: post.title,
             subtitle: post.subtitle,
             category: post.category,
-            author: post.author,
-            images: post.images,
-            date: post.date,
-            isHome: post.isHome,
-            isRecent: post.isRecent,
-            visibility: post.visibility,
-            freeViewLimit: post.freeViewLimit,
-            views: post.views,
+            author: post.author, // ⬅️ FIXED: Changed p.author to post.author
+            images: post.images, // ⬅️ FIXED: Changed p.images to post.images
+            date: post.date, // ⬅️ FIXED: Changed p.date to post.date
+            isHome: post.isHome, // ⬅️ FIXED: Changed p.isHome to post.isHome
+            isRecent: post.isRecent, // ⬅️ FIXED: Changed p.isRecent to post.isRecent
+            visibility: post.visibility, // ⬅️ FIXED: Changed p.visibility to post.visibility
+            freeViewLimit: post.freeViewLimit, // ⬅️ FIXED: Changed p.freeViewLimit to post.freeViewLimit
+            views: post.views, // ⬅️ FIXED: Changed p.views to post.views
             contentPreview,
-            truncated,
+            truncated: true, // Force truncated to true for preview state
           },
         });
-      }
+      } // --- NEW LOGIC END ---
 
       // 3. Logged in, not subscribed: apply free view logic
       let record = await UserViewHistory.findOne({
@@ -192,6 +184,7 @@ exports.getPremiumPostById = async (req, res) => {
       });
 
       if (!record) {
+        // First free view: grant full access and log it
         await UserViewHistory.create({
           userId: user._id,
           postId: post._id,
@@ -203,6 +196,7 @@ exports.getPremiumPostById = async (req, res) => {
       }
 
       if (record.views < post.freeViewLimit) {
+        // Within free view limit: grant full access and increment count
         record.views += 1;
         await record.save();
 
@@ -210,9 +204,10 @@ exports.getPremiumPostById = async (req, res) => {
         return res.json(post);
       }
 
-      // 4. Free view limit exceeded
+      // 4. Free view limit exceeded (Logged in but unsubscribed and limit hit)
       return res.status(403).json({
-        error: "", // Added error message
+        error:
+          "",
         requiresSubscription: true,
         articleData: {
           _id: post._id,

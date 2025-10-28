@@ -51,7 +51,7 @@ router.get("/home", optionalAuth, premiumPostController.getHomePostsConditional)
 router.get("/recent", optionalAuth, premiumPostController.getRecentPostsConditional);
  
 // READ full single post (requires subscription or valid token)
-router.get("/:id", verifyToken, premiumPostController.getPremiumPostById);
+router.get("/:id", optionalAuth, premiumPostController.getPremiumPostById);
  
 // NEW: READ full single post for ADMIN editing (Admin only, bypasses user-tier checks)
 // This new route will be used by the admin frontend to get full content for editing.
