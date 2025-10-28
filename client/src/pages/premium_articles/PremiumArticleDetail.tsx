@@ -63,7 +63,7 @@ export default function PremiumArticleDetail() {
   const [accessDeniedByLimit, setAccessDeniedByLimit] = useState<boolean>(false);
   const [isUserCurrentlySubscribed, setIsUserCurrentlySubscribed] = useState<boolean>(false);
   const [showSubscriptionPopup, setShowSubscriptionPopup] = useState<boolean>(false);
-  const [showLoginPopup, setShowLoginPopup] = useState<boolean>(false);
+//   const [showLoginPopup, setShowLoginPopup] = useState<boolean>(false);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [bookmarkId, setBookmarkId] = useState<string | null>(null); // New state to store bookmark's ID
   const navigate = useNavigate();
@@ -97,68 +97,67 @@ export default function PremiumArticleDetail() {
 
 
   // Fetch article details and check subscription status
-  useEffect(() => {
-    const fetchArticle = async () => {
-      if (!id) {
-        setError('Article ID is missing.');
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        setError(null);
-        setAccessDeniedByLimit(false);
-        setIsUserCurrentlySubscribed(false);
-        setShowLoginPopup(false);
+    useEffect(() => {
+        const fetchArticle = async () => {
+            if (!id) {
+                setError('Article ID is missing.');
+                setLoading(false);
+                return;
+            }
+            try {
+                setLoading(true);
+                setError(null);
+                setAccessDeniedByLimit(false);
+                setIsUserCurrentlySubscribed(false);
+                // Removed: setShowLoginPopup(false);
 
-        const headers = clientToken ? { Authorization: `Bearer ${clientToken}` } : {};
-        const response = await axios.get<IPremiumPost>(`${API_BASE_URL}api/premium-posts/${id}`, { headers });
-        setArticle(response.data);
-        setIsUserCurrentlySubscribed(response.data.isUserSubscribed || false);
-      } catch (err: any) {
-        if (err.response) {
-          const { status, data } = err.response;
-          if (status === 401) {
-            setShowLoginPopup(true);
-            setError("Please log in to view this article.");
-            setArticle(null);
-          } else if (status === 403) {
-            setAccessDeniedByLimit(true);
-            setError(data?.error || '');
-            if (data?.articleData) {
-              const backendArticleData = data.articleData;
-              setArticle({
-                ...backendArticleData,
-                content: backendArticleData.contentPreview || "This article requires a subscription for full access.",
-                truncated: backendArticleData.truncated || true,
-                visibility: backendArticleData.visibility || "subscribers",
-                isUserSubscribed: backendArticleData.isUserSubscribed,
-              });
-              setIsUserCurrentlySubscribed(backendArticleData.isUserSubscribed || false);
-            } else {
-              setError(data?.error || 'Authentication or subscription required for full access.');
-              setArticle(null);
-            }
-          } else if (status === 404) {
-            setError('Article not found.');
-            setArticle(null);
-            setIsUserCurrentlySubscribed(false);
-          } else {
-            setError(data?.message || 'Failed to load article. Please try again later.');
-            setArticle(null);
-          }
-        } else {
-          setError('Network error or server unreachable. Please try again later.');
-          setArticle(null);
-          setIsUserCurrentlySubscribed(false);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchArticle();
-  }, [id, clientToken]);
+                const headers = clientToken ? { Authorization: `Bearer ${clientToken}` } : {};
+                const response = await axios.get<IPremiumPost>(`${API_BASE_URL}api/premium-posts/${id}`, { headers });
+                setArticle(response.data);
+                setIsUserCurrentlySubscribed(response.data.isUserSubscribed || false);
+            } catch (err: any) {
+                if (err.response) {
+                    const { status, data } = err.response;
 
+                    // REMOVED 401 handling, which showed the login popup.
+                    // The backend now sends 403 for non-logged-in users as well.
+
+                    if (status === 403) {
+                        setAccessDeniedByLimit(true);
+                        setError(data?.error || '');
+                        if (data?.articleData) {
+                            const backendArticleData = data.articleData;
+                            setArticle({
+                                ...backendArticleData,
+                                content: backendArticleData.contentPreview || "This article requires a subscription for full access.",
+                                truncated: backendArticleData.truncated || true,
+                                visibility: backendArticleData.visibility || "subscribers",
+                                isUserSubscribed: backendArticleData.isUserSubscribed,
+                            });
+                            setIsUserCurrentlySubscribed(backendArticleData.isUserSubscribed || false);
+                        } else {
+                            setError(data?.error || 'Authentication or subscription required for full access.');
+                            setArticle(null);
+                        }
+                    } else if (status === 404) {
+                        setError('Article not found.');
+                        setArticle(null);
+                        setIsUserCurrentlySubscribed(false);
+                    } else {
+                        setError(data?.message || 'Failed to load article. Please try again later.');
+                        setArticle(null);
+                    }
+                } else {
+                    setError('Network error or server unreachable. Please try again later.');
+                    setArticle(null);
+                    setIsUserCurrentlySubscribed(false);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchArticle();
+    }, [id, clientToken]);
   // Fetch bookmark status for the current user and post
   useEffect(() => {
     fetchBookmarkStatus();
@@ -267,24 +266,24 @@ export default function PremiumArticleDetail() {
     );
   }
 
-  if (showLoginPopup) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-sm w-full">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Please Log In</h2>
-          <p className="text-gray-600 mb-6">
-            You need to be logged in to view this premium content.
-          </p>
-          <Link
-            to="/login"
-            className="w-full inline-block px-6 py-3 font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-200"
-          >
-            Log In
-          </Link>
-        </div>
-      </div>
-    );
-  }
+//   if (showLoginPopup) {
+//     return (
+//       <div className="flex flex-col items-center justify-center min-h-screen p-4">
+//         <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-sm w-full">
+//           <h2 className="text-2xl font-bold text-gray-900 mb-4">Please Log In</h2>
+//           <p className="text-gray-600 mb-6">
+//             You need to be logged in to view this premium content.
+//           </p>
+//           <Link
+//             to="/login"
+//             className="w-full inline-block px-6 py-3 font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-200"
+//           >
+//             Log In
+//           </Link>
+//         </div>
+//       </div>
+//     );
+//   }
 
   if (!article && error && !accessDeniedByLimit) {
     return (
@@ -308,11 +307,11 @@ export default function PremiumArticleDetail() {
     );
   }
 
-  const shouldShowPaywall = (
-    article.visibility === 'subscribers' &&
-    !isUserCurrentlySubscribed &&
-    article.truncated
-  );
+    const shouldShowPaywall = (
+        article.visibility === 'subscribers' &&
+        !isUserCurrentlySubscribed &&
+        article.truncated
+    );
 
   const imageUrls = (article.images || []).filter(url => url);
   const contentToDisplay = shouldShowPaywall ? truncateTo150Words(article.contentPreview) : article.content;
