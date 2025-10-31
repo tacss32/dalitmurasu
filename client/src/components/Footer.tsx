@@ -1,4 +1,5 @@
 
+import { Link } from "react-router-dom";
 
 // Define the social media icons and links outside the component
 export const socialLinks = [
@@ -85,6 +86,25 @@ export default function Footer() {
     </svg>
   );
 
+  const FeedbackIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="icon icon-tabler icons-tabler-outline icon-tabler-message-circle"
+    >
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M3 20l1.3 -3.9a8 8 0 1 1 2.7 2.7l-4 1.2" />
+    </svg>
+  );
+
+
   return (
     <footer className="w-full mt-10 py-4 text-sm text-red-500 dark:text-red-300 border-t-2 border-red-500">
       <div className="container mx-auto px-4">
@@ -123,6 +143,7 @@ export default function Footer() {
                 </a>
               ))}
             </div>
+            
           </div>
           
           {/* Column 3: Phone Number & Email */}
@@ -136,6 +157,15 @@ export default function Footer() {
             <p className=" text-black flex gap-1 items-center">
               {phoneNumber} <PhoneIcon />
             </p>
+            <Link
+              to="/feedback"
+              className="text-black py-1 rounded-full flex items-center gap-2 hover:text-red-700 transition"
+            >
+              Feedback
+              <FeedbackIcon /> 
+            </Link>
+
+
           </div>
         </div>
       </div>

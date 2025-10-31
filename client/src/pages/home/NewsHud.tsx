@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Card from "../../components/Card";
 import MainBanner from "../../components/MainBanner";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import aboutImage from "/about.webp";
 
 // Interface for a News Post, updated to include a 'source' field
@@ -49,6 +49,7 @@ export default function NewsHud() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const API_BASE_URL = import.meta.env.VITE_API;
 
@@ -113,6 +114,18 @@ export default function NewsHud() {
       setLoadingBooks(false);
     }
   };
+  // NEW: This useEffect handles opening the popup if a bookId is in the URL
+  useEffect(() => {
+    const bookIdFromUrl = searchParams.get("bookId");
+    // Only proceed if books are loaded and a bookId is present
+    if (bookIdFromUrl && homeBooks.length > 0) {
+      const bookToOpen = homeBooks.find((book) => book._id === bookIdFromUrl);
+      if (bookToOpen) {
+        handleShowDescription(bookToOpen);
+      }
+    }
+  }, [homeBooks, searchParams]);
+
   const fetchCategories = async () => {
     try {
     } catch (err) {
@@ -155,13 +168,17 @@ export default function NewsHud() {
       });
     }
   };
+  // UPDATED: handleShare now generates a URL with the book's ID
   const handleShare = async () => {
     if (!selectedBook) return;
+
+    // Create a URL with the book's ID as a search parameter
+    const shareUrl = `${window.location.origin}${window.location.pathname}?bookId=${selectedBook._id}`;
 
     const shareData = {
       title: selectedBook.name,
       text: `Check out this book: "${selectedBook.name}" by ${selectedBook.author}`,
-      url: "/shop", 
+      url: shareUrl,
     };
 
     if (navigator.share) {
@@ -172,7 +189,10 @@ export default function NewsHud() {
         console.error("Error sharing:", error);
       }
     } else {
-      alert("Sharing is not supported on this browser.");
+      // Fallback: Copy the link to the clipboard
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert("Link copied to clipboard!");
+      });
     }
   };
 
@@ -185,6 +205,8 @@ export default function NewsHud() {
   const handleClosePopup = () => {
     setShowDescriptionPopup(false);
     setSelectedBook(null);
+    // Remove the 'bookId' query parameter from the URL
+    navigate(window.location.pathname, { replace: true });
   };
 
   const combinedPosts = [
