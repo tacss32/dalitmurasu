@@ -34,7 +34,7 @@ passport.use(
           });
         } else if (!user.googleId) {
           user.googleId = profile.id;
-          user.provider = "google";
+          
           await user.save();
         }
 

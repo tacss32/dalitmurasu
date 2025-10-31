@@ -14,12 +14,6 @@ interface OrderStats {
   totalPaidOrders: number;
 }
 
-// Interface for the subscription summary data from the backend
-interface SubscriptionSummary {
-  planId: string;
-  title: string;
-  subscriberCount: number;
-}
 
 const Dashboard = () => {
   const [orderStats, setOrderStats] = useState<OrderStats | null>(null);
@@ -59,12 +53,32 @@ const Dashboard = () => {
         setOrderStats(orderResponse.data.data);
 
         // 4. Fetch subscription summary data with the Authorization header
-        const subscriptionResponse = await axios.get(`${API_BASE_URL}api/subscription/subscription-dashboard`, config);
-        const summary: { summary: SubscriptionSummary[] } = subscriptionResponse.data;
+        const subscriptionResponse = await axios.get(
+          `${API_BASE_URL}api/subscription/subscription-dashboard`,
+          config
+        );
 
-        // Calculate the total number of subscribers by summing the counts
-        const totalCount = summary.summary.reduce((sum, plan) => sum + plan.subscriberCount, 0);
-        setTotalSubscribedUsers(totalCount);
+        console.log("Subscription Dashboard Response:", subscriptionResponse.data);
+
+        const data = subscriptionResponse.data;
+
+        // ✅ Option 1: Use activeSubscriptions (total currently active)
+        if (typeof data.activeSubscriptions === "number") {
+          setTotalSubscribedUsers(data.activeSubscriptions);
+        }
+        // ✅ Option 2 (fallback): derive from subscriptionsByPlan if available
+        else if (Array.isArray(data.subscriptionsByPlan)) {
+          const totalCount = data.subscriptionsByPlan.reduce(
+            (sum: any, plan: { count: any; }) => sum + (plan.count || 0),
+            0
+          );
+          setTotalSubscribedUsers(totalCount);
+        }
+        // ✅ Default fallback
+        else {
+          setTotalSubscribedUsers(0);
+        }
+
 
       } catch (err) {
         // This will now catch the 401/403 errors and network failures

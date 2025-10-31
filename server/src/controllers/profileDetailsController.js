@@ -1,29 +1,38 @@
-const ClientUser = require("../models/ClientUser");
-const bcrypt = require("bcryptjs");
+
 
 // GET user profile
 exports.getClientProfile = async (req, res) => {
-  // The new authentication middleware already fetched the user and attached it to req.user.
-  // The select("-password") is already handled by the ClientUser.findById(decoded.userId).lean()
-  // in the middleware if the schema is defined to omit it by default, or if we ensure the middleware
-  // is selecting the necessary fields. Assuming the middleware provides a valid user object.
-
-  // We can directly use the user object from the request.
+  // req.user is the Mongoose document attached by the authentication middleware.
   const user = req.user;
-  if (!user) {
-    // This case should theoretically be caught by the middleware's user check,
-    // but remains as a safeguard.
-    return res.status(404).json({ success: false, message: "User not found" });
-  }
 
-  // Ensure password is not present in the response object, especially if the
-  // middleware attached the full user document. If the middleware used .lean(),
-  // we might need to be explicit or rely on the model definition.
-  // For safety and consistency, we can create a copy and delete the password field.
-  const userResponse = { ...user };
-  delete userResponse.password; // Clean the password field if it was attached
+  // 1. Convert the Mongoose document to a plain JavaScript object using .toObject().
+  const userObject = user.toObject();
 
-  res.status(200).json({ success: true, data: userResponse });
+  // 2. Explicitly remove sensitive fields before sending the response.
+  delete userObject.password;
+  delete userObject.googleId;
+  delete userObject.passwordResetCode;
+  delete userObject.passwordResetExpires;
+  delete userObject.passwordResetVerified;
+  // You might also want to remove provider/role if they are not needed on the client.
+  delete userObject.subscriptionPlan;
+
+  // 3. Optional: Selectively include only the required fields for the client profile
+  // For better control, you could construct a new object, but using delete is quicker.
+
+  const profileData = {
+    _id: userObject._id,
+    name: userObject.name,
+    email: userObject.email,
+    phone: userObject.phone,
+    gender: userObject.gender,
+    dob: userObject.dob,
+    
+    
+    // Add other fields needed by the client here
+  };
+
+  res.status(200).json({ success: true, data: profileData });
 };
 
 // -----------------------------------------------------------------------------
@@ -31,96 +40,79 @@ exports.getClientProfile = async (req, res) => {
 // UPDATE user profile
 exports.updateClientProfile = async (req, res) => {
   try {
-    // Use req.user._id which is the standard Mongoose ID for the user object
-    // fetched and attached by the new authentication middleware.
+    // 1. Get the user document, which is attached by the authentication middleware.
+    // NOTE: 'req.user' is a Mongoose document object.
     const user = req.user;
 
-    // Destructure all potential update fields, including the passwords
-    const { name, email, phone, gender, dob, password, currentPassword } =
-      req.body;
+    // 2. Destructure all potential update fields
+    // NOTE: Passwords have been intentionally removed from the original body destructuring,
+    // as updating them is typically done in a separate, more secure process.
+    const { name, phone, gender, dob } = req.body;
 
-    // Object to hold fields that will be updated in the database
-    const updateFields = {};
+    let hasChanges = false;
 
-    // Prepare fields for update payload if they are present in the request
-    if (name !== undefined) updateFields.name = name;
-    if (email !== undefined) updateFields.email = email;
-    if (phone !== undefined) updateFields.phone = phone;
-    if (gender !== undefined) updateFields.gender = gender;
-    if (dob !== undefined) updateFields.dob = dob ? new Date(dob) : null; // Handle optional DOB
-
-    // --- PASSWORD CHANGE LOGIC ---
-    if (password) {
-      // A new password is provided, current password MUST be provided and correct
-      if (!currentPassword) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Current password is required to set a new password",
-          });
-      }
-
-      // 1. Get the user's document, specifically including the stored hashed password for comparison
-      // We must fetch it again here because the user object on req.user might be a lean object
-      // *without* the password selected by the authentication middleware for security.
-      const userWithPassword = user.password
-
-      if (!userWithPassword) {
-        return res
-          .status(404)
-          .json({ success: false, message: "User not found" });
-      }
-
-      // 2. Compare the provided currentPassword with the stored hashed password
-      const isMatch = await bcrypt.compare(
-        currentPassword,
-        userWithPassword.password
-      );
-
-      if (!isMatch) {
-        // Passwords do not match: Stop the update immediately
-        return res
-          .status(400)
-          .json({ success: false, message: "Current password is incorrect" }); // <-- This is the key rejection
-      }
-
-      // 3. Current password is correct, now hash the NEW password for storage
-      const hashed = await bcrypt.hash(password, 10);
-      updateFields.password = hashed;
-    }
-    // --- END PASSWORD CHANGE LOGIC ---
-
-    // Check if there are any fields to update (excluding the case where only password fields were sent)
-    if (Object.keys(updateFields).length === 0) {
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: "No changes detected or fields provided.",
-        });
+    // 3. Directly assign new values to the user object fields if they are present
+    if (name !== undefined && user.name !== name) {
+      user.name = name;
+      hasChanges = true;
     }
 
-    // 4. Update the user document
-    const updatedUser = await ClientUser.findByIdAndUpdate(
-      userId,
-      { $set: updateFields },
-      { new: true, runValidators: true } // new: return the updated document, runValidators: apply schema validation
-    ).select("-password"); // Exclude password from the response
-
-    if (!updatedUser) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "User not found after update attempt",
-        });
+    if (phone !== undefined && user.phone !== phone) {
+      user.phone = phone;
+      hasChanges = true;
     }
 
-    res.status(200).json({ success: true, data: updatedUser });
+    if (gender !== undefined && user.gender !== gender) {
+      user.gender = gender;
+      hasChanges = true;
+    }
+
+    if (dob !== undefined) {
+      // Convert DOB string to a Date object only if it's different or the field didn't exist
+      const newDob = dob ? new Date(dob) : null;
+      // Basic check: user.dob might be a Date object, newDob is Date or null.
+      // This check is simplified but generally prevents unnecessary saves if value is the same.
+      if (
+        (user.dob && newDob && user.dob.getTime() !== newDob.getTime()) ||
+        (!user.dob && newDob) ||
+        (user.dob && !newDob)
+      ) {
+        user.dob = newDob;
+        hasChanges = true;
+      }
+    }
+
+    // 4. Check if there are any fields to update
+    if (!hasChanges) {
+      // NOTE: We return the original user document as no save operation was performed.
+      const userToReturn = user.toObject();
+      delete userToReturn.password; // Manually remove password from the object before sending
+
+      return res.status(200).json({
+        success: true,
+        message: "No changes detected or fields provided.",
+        data: userToReturn,
+      });
+    }
+
+    // 5. Save the updated user document
+    // This runs Mongoose validators and pre-save hooks.
+    const updatedUser = await user.save();
+
+    // The user object saved might still contain the password field internally,
+    // so we convert it to a plain JavaScript object and delete the password field
+    // before sending the response, similar to the original .select("-password").
+    const userToReturn = updatedUser.toObject();
+    delete userToReturn.password;
+
+    res.status(200).json({ success: true, data: userToReturn });
   } catch (err) {
     console.error("updateClientProfile error:", err);
     // Mongoose validation errors or other general server errors
+    if (err.name === 'ValidationError') {
+        // More descriptive error for validation failures
+        return res.status(400).json({ success: false, message: err.message });
+    }
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };

@@ -2,6 +2,7 @@ const PdfUpload = require("../models/PdfUpload");
 const UserViewHistory = require("../models/UserViewHistory");
 const jwt = require("jsonwebtoken");
 const ClientUser = require("../models/ClientUser");
+const SubscriptionPayment = require("../models/SubscriptionPayment");
 
 // Create PDF
 async function createPdfUpload(req, res) {
@@ -58,11 +59,11 @@ async function getPdfById(req, res) {
 }
 
 // Get PDF with access + free view logic
-async function getPdfByIdWithAccess(req, res) {
+const getPdfByIdWithAccess = async (req, res) => {
   try {
     let userId = req.user?._id;
 
-    // Fallback: decode token if req.user missing (KEEPING YOUR EXISTING LOGIC)
+    // --- 🧩 Fallback: Decode token manually if req.user missing ---
     if (!userId) {
       const authHeader = req.headers["authorization"];
       if (authHeader?.startsWith("Bearer ")) {
@@ -76,43 +77,42 @@ async function getPdfByIdWithAccess(req, res) {
       }
     }
 
+    // --- 📄 Fetch PDF ---
     const pdf = await PdfUpload.findById(req.params.id);
     if (!pdf) return res.status(404).json({ message: "PDF not found" });
 
     let isSubscribed = false;
-    const now = new Date();
 
+    // --- ✅ UPDATED SUBSCRIPTION CHECK LOGIC (Matches createSubscriptionOrder) ---
     if (userId) {
-      const user = await ClientUser.findById(userId).select("subscriptionPlan"); // Select only required field
+      const activeSubscription = await SubscriptionPayment.findOne({
+        userId,
+        payment_status: "success",
+        endDate: { $gt: new Date() }, // active subscription
+      });
 
-      // ✅ NEW/CORRECTED LOGIC: Determine subscription status from the array
-      if (user?.subscriptionPlan?.length) {
-        // Find if ANY plan's expiry date is in the future (active)
-        isSubscribed = user.subscriptionPlan.some(
-          (plan) =>
-            plan.subscriptionExpires && new Date(plan.subscriptionExpires) > now
-        );
+      if (activeSubscription) {
+        isSubscribed = true;
       }
-
-      // console.log("User isSubscribed status (CALCULATED):", isSubscribed); // Debugging line
     }
 
-    // Public PDF OR Subscribed User → Grant access and increment views
+    // --- 🟢 PUBLIC or SUBSCRIBED USER → FULL ACCESS ---
     if (pdf.visibility === "public" || isSubscribed) {
       pdf.views = (pdf.views || 0) + 1;
       await pdf.save();
       return res.json(pdf);
     }
 
-    // --- EXECUTION CONTINUES HERE ONLY IF: Not subscribed AND Not public ---
+    // --- 🔒 NON-SUBSCRIBED USERS ONLY (PRIVATE PDF) ---
 
-    // Non-subscribed user → Enforce login
+    // Must be logged in
     if (!userId) {
       return res.status(401).json({ message: "Login required to view PDF" });
     }
 
-    // Check UserViewHistory (Free view logic for logged-in, non-subscribed users)
+    // --- 📊 FREE VIEW LOGIC (Logged-in but not subscribed) ---
     let record = await UserViewHistory.findOne({ userId, postId: pdf._id });
+
     if (!record) {
       record = new UserViewHistory({
         userId,
@@ -124,9 +124,11 @@ async function getPdfByIdWithAccess(req, res) {
       record.views += 1;
     }
 
-    if (record.views > pdf.freeViewLimit) {
+    // --- 🚫 Free view limit exceeded ---
+    if (record.views > (pdf.freeViewLimit || 0)) {
       return res.status(403).json({
         message: "Free view limit reached. Subscribe to view more.",
+        requiresSubscription: true,
         pdfPreview: {
           _id: pdf._id,
           title: pdf.title,
@@ -138,9 +140,8 @@ async function getPdfByIdWithAccess(req, res) {
       });
     }
 
+    // --- ✅ Save view record and increment total views ---
     await record.save();
-
-    // Increment total PDF views
     pdf.views = (pdf.views || 0) + 1;
     await pdf.save();
 
@@ -149,7 +150,7 @@ async function getPdfByIdWithAccess(req, res) {
     console.error("Error fetching PDF with access:", err);
     res.status(500).json({ message: "Server error" });
   }
-}
+};
 // Update PDF
 // controllers/pdfUploadController.js
 

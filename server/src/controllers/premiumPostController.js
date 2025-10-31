@@ -2,6 +2,8 @@ const PremiumPost = require("../models/PremiumPost");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs/promises");
 const UserViewHistory = require("../models/UserViewHistory");
+const SubscriptionPayment = require("../models/SubscriptionPayment");
+
  
 // --- helper: strip HTML (basic) ---
 const stripHtml = (str = "") => str.replace(/<[^>]*>/g, "");
@@ -124,79 +126,81 @@ exports.getPremiumPostPreviews = async (req, res) => {
 exports.getPremiumPostById = async (req, res) => {
   try {
     const post = await PremiumPost.findById(req.params.id).lean();
+    if (!post) return res.status(404).json({ error: "Post not found" });
 
-    if (!post) return res.status(404).json({ error: "Post not found" }); // The user object, which includes the subscriptionPlan array
-
-    const user = req.user; // --- 1. SUBSCRIPTION STATUS CALCULATION (NEW LOGIC) ---
-
+    const user = req.user;
     let isSubscribed = false;
-    const now = new Date();
 
-    if (user && user.subscriptionPlan?.length) {
-      // Check if ANY plan's expiry date is in the future (active)
-      isSubscribed = user.subscriptionPlan.some(
-        (plan) =>
-          plan.subscriptionExpires && new Date(plan.subscriptionExpires) > now
-      );
-    } // --- END SUBSCRIPTION LOGIC --- // If post is marked for subscribers
+    // --- ✅ UPDATED SUBSCRIPTION CHECK LOGIC ---
+    if (user) {
+      const activeSubscription = await SubscriptionPayment.findOne({
+        userId: user._id,
+        payment_status: "success",
+        endDate: { $gt: new Date() }, // active subscription
+      });
+
+      if (activeSubscription) {
+        isSubscribed = true;
+      }
+    }
+
+    // --- 🔒 PREMIUM ARTICLE ACCESS CONTROL ---
     if (post.visibility === "subscribers") {
-      // 1. Subscribed users: full access
       if (isSubscribed) {
         await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
         return res.json(post);
       }
+
+      // 👇 Preview content for unsubscribed users
       const previewWordCount = Math.max(
         1,
         Math.min(200, parseInt(req.query.words, 10) || 150)
-      ); // Assume getFirstWords is available in this scope
+      );
       const { preview: contentPreview, truncated } = getFirstWords(
         post.content,
         previewWordCount
-      ); // --- NEW LOGIC START --- // 2. If NOT logged in: Bypass free view limit and go straight to paywall (403).
+      );
 
+      // --- 🧑‍💻 NOT LOGGED IN USERS: direct paywall ---
       if (!user) {
         return res.status(403).json({
-          error: "", // General paywall message
           requiresSubscription: true,
           articleData: {
             _id: post._id,
             title: post.title,
             subtitle: post.subtitle,
             category: post.category,
-            author: post.author, // ⬅️ FIXED: Changed p.author to post.author
-            images: post.images, // ⬅️ FIXED: Changed p.images to post.images
-            date: post.date, // ⬅️ FIXED: Changed p.date to post.date
-            isHome: post.isHome, // ⬅️ FIXED: Changed p.isHome to post.isHome
-            isRecent: post.isRecent, // ⬅️ FIXED: Changed p.isRecent to post.isRecent
-            visibility: post.visibility, // ⬅️ FIXED: Changed p.visibility to post.visibility
-            freeViewLimit: post.freeViewLimit, // ⬅️ FIXED: Changed p.freeViewLimit to post.freeViewLimit
-            views: post.views, // ⬅️ FIXED: Changed p.views to post.views
+            author: post.author,
+            images: post.images,
+            date: post.date,
+            isHome: post.isHome,
+            isRecent: post.isRecent,
+            visibility: post.visibility,
+            freeViewLimit: post.freeViewLimit,
+            views: post.views,
             contentPreview,
-            truncated: true, // Force truncated to true for preview state
+            truncated: true,
           },
         });
-      } // --- NEW LOGIC END ---
+      }
 
-      // 3. Logged in, not subscribed: apply free view logic
+      // --- 🧾 LOGGED IN BUT UNSUBSCRIBED: apply free view logic ---
       let record = await UserViewHistory.findOne({
         userId: user._id,
         postId: post._id,
       });
 
       if (!record) {
-        // First free view: grant full access and log it
         await UserViewHistory.create({
           userId: user._id,
           postId: post._id,
           views: 1,
         });
-
         await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
         return res.json(post);
       }
 
       if (record.views < post.freeViewLimit) {
-        // Within free view limit: grant full access and increment count
         record.views += 1;
         await record.save();
 
@@ -204,10 +208,8 @@ exports.getPremiumPostById = async (req, res) => {
         return res.json(post);
       }
 
-      // 4. Free view limit exceeded (Logged in but unsubscribed and limit hit)
+      // --- 🚫 Free view limit exceeded ---
       return res.status(403).json({
-        error:
-          "",
         requiresSubscription: true,
         articleData: {
           _id: post._id,
@@ -228,7 +230,7 @@ exports.getPremiumPostById = async (req, res) => {
       });
     }
 
-    // If post is public
+    // --- 🌐 PUBLIC POST ---
     await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
     return res.json(post);
   } catch (err) {
@@ -238,7 +240,7 @@ exports.getPremiumPostById = async (req, res) => {
       .json({ error: "Failed to fetch post", details: err.message });
   }
 };
- 
+
 // NEW: GET single post for ADMIN editing (no access checks, returns full content)
 exports.getPremiumPostForAdminEdit = async (req, res) => {
   try {

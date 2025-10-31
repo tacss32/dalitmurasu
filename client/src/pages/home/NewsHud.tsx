@@ -161,7 +161,7 @@ export default function NewsHud() {
     const shareData = {
       title: selectedBook.name,
       text: `Check out this book: "${selectedBook.name}" by ${selectedBook.author}`,
-      url: window.location.href, // you can also generate a /books/:id link later
+      url: "/shop", 
     };
 
     if (navigator.share) {

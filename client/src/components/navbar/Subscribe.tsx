@@ -34,7 +34,7 @@ export default function Subscribe() {
       }
 
       const res = await axios.get<SubscriptionStatusResponse >(
-        `${API}api/subscription/user-status`,
+        `${API}api/subscription/subscription-status`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.data;

@@ -1,37 +1,35 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-// Import useNavigate from react-router-dom (assuming you are using it)
-// import { useNavigate } from "react-router-dom";
 import {
   MdCheckCircle,
   MdStar,
   MdAccessTime,
   MdTimer,
-  // Added an icon for donation
-  // MdOutlineAttachMoney,
+
 } from "react-icons/md";
 
+// Interface for a single Subscription Plan
 interface SubscriptionPlan {
   _id: string;
   title: string;
   description?: string;
   price: number;
   durationInDays: number;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
-interface SubscriptionItem {
-  plan: SubscriptionPlan;
-  startDate: string;
-  endDate: string;
+// Interface for the client's single active subscription (the one that expires latest)
+interface ActiveSubscription {
+  planName: string;
+  expiresAt: string;
 }
 
-interface UserSubscriptionStatus {
+// Interface for the server's response to the subscription status check
+interface ActiveSubscriptionResponse {
+  success: boolean;
   isActive: boolean;
-  overallEndDate: string;
-  stackedCount: number;
-  subscriptions: SubscriptionItem[];
+  count: number; // CRITICAL: To track the number of active plans
+  message: string;
+  subscription?: ActiveSubscription;
 }
 
 declare global {
@@ -44,93 +42,111 @@ export default function UserSubscriptionPlans() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [userSubData, setUserSubData] = useState<UserSubscriptionStatus | null>(
-    null
-  );
-  const [remainingDays, setRemainingDays] = useState<number | null>(null);
 
-  // --- NEW: Initialize useNavigate hook ---
-  // const navigate = useNavigate();
+  const [activeSubscription, setActiveSubscription] =
+    useState<ActiveSubscription | null>(null);
+  const [activeSubscriptionCount, setActiveSubscriptionCount] = // NEW: State for the count
+    useState<number>(0);
+  const [isCheckingSubscription, setIsCheckingSubscription] =
+    useState<boolean>(true);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalAction, setModalAction] = useState<(() => void) | null>(null);
 
   const API_BASE_URL = import.meta.env.VITE_API;
 
-  const fetchPlansAndSubscription = useCallback(async () => {
-    // Set loading to true only if data isn't already present
-    setLoading((prev) => !prev && !plans.length);
+  const fetchPlans = useCallback(async () => {
     try {
-      const token = localStorage.getItem("clientToken");
-
-      // Fetch all available plans (only if not already fetched)
-      if (plans.length === 0) {
-        const plansRes = await axios.get(`${API_BASE_URL}api/subscription/`);
-        setPlans(plansRes.data);
-      }
-
-      if (token) {
-        const res = await axios.get(
-          `${API_BASE_URL}api/subscription/user-status`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        const data: UserSubscriptionStatus = res.data;
-        console.log("Subscription status:", data);
-        setUserSubData(data);
-
-        if (data.isActive && data.overallEndDate) {
-          const endDate = new Date(data.overallEndDate);
-          const now = new Date();
-          const diff = endDate.getTime() - now.getTime();
-          const daysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-          setRemainingDays(daysLeft);
-        } else {
-          setRemainingDays(null);
-        }
-      }
+      const res = await axios.get<SubscriptionPlan[]>(
+        `${API_BASE_URL}api/subscription/`
+      );
+      setPlans(res.data);
     } catch (err) {
-      console.error("Error fetching plans/subscriptions:", err);
-      setError("Failed to load data. Please try again.");
+      console.error(err);
+      setError("Failed to load plans. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, plans.length]); // Add plans.length as dependency
+  }, [API_BASE_URL]);
 
-  useEffect(() => {
-    fetchPlansAndSubscription();
-  }, [fetchPlansAndSubscription]); // Dependency array now includes the callback
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        console.log("Page is visible, re-fetching subscription status...");
-        fetchPlansAndSubscription();
-      }
-    };
-
-    // Add event listener for tab visibility changes
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    // Clean up the event listener on component unmount
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [fetchPlansAndSubscription]); // Dependency array includes the callback
-
-  const handleSubscribe = async (plan: SubscriptionPlan) => {
-    if ((userSubData?.stackedCount ?? 0) >= 2) {
-      alert("Subscription limit reached. You cannot add another plan.");
-      return;
-    }
-
+  const fetchActiveSubscription = useCallback(async () => {
     const token = localStorage.getItem("clientToken");
     if (!token) {
-      if (window.confirm("You need to login to subscribe.\nClick OK to go to Login page.")) {
-        window.location.href = "/login";
-      }
+      setIsCheckingSubscription(false);
+      setActiveSubscriptionCount(0);
       return;
     }
 
+    try {
+      const res = await axios.get<ActiveSubscriptionResponse>( // Using the new interface
+        `${API_BASE_URL}api/subscription/subscription-status`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data.success) {
+        setActiveSubscriptionCount(res.data.count); // Set the count
+        if (res.data.isActive && res.data.subscription) {
+          setActiveSubscription(res.data.subscription);
+        } else {
+          setActiveSubscription(null);
+        }
+      } else {
+        setActiveSubscription(null);
+        setActiveSubscriptionCount(0);
+      }
+    } catch (err) {
+      console.error("Error fetching active subscription:", err);
+      setActiveSubscription(null);
+      setActiveSubscriptionCount(0);
+    } finally {
+      setIsCheckingSubscription(false);
+    }
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
+    fetchPlans();
+    fetchActiveSubscription();
+  }, [fetchPlans, fetchActiveSubscription]);
+
+  const showModal = (message: string, action: (() => void) | null) => {
+    setModalMessage(message);
+    setModalAction(action ? () => action() : null);
+    setIsModalOpen(true);
+  };
+
+  const handleModalConfirm = () => {
+    if (modalAction) modalAction();
+    setIsModalOpen(false);
+    setModalAction(null);
+  };
+  const handleModalCancel = () => {
+    setIsModalOpen(false);
+    setModalAction(null);
+  };
+
+  const handleSubscribe = async (plan: SubscriptionPlan) => {
+    const token = localStorage.getItem("clientToken");
+    if (!token) {
+      showModal(
+        "You need to login to subscribe. Click OK to go to Login page.",
+        () => {
+          window.location.href = "/login";
+        }
+      );
+      return;
+    }
+
+    // Client-side check for immediate feedback (Server check is primary)
+    if (activeSubscriptionCount >= 2) {
+      showModal(
+        "You already have 2 active subscriptions. You cannot purchase another one at this time.",
+        null
+      );
+      return;
+    }
 
     try {
       const createOrderRes = await axios.post(
@@ -139,15 +155,20 @@ export default function UserSubscriptionPlans() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const { razorpayOrderId, amount, currency } = createOrderRes.data;
+      const { orderId, amount, currency, key, name, prefill } =
+        createOrderRes.data;
+      if (!orderId || !amount || !key || !currency) {
+        showModal("Payment details missing. Please try again.", null);
+        return;
+      }
 
       const razorpay = new window.Razorpay({
-        key: import.meta.env.VITE_RAZORPAY_KEY,
+        key,
         amount,
         currency,
-        name: "Dalit Murasu",
+        name,
         description: `Subscription: ${plan.title}`,
-        order_id: razorpayOrderId,
+        order_id: orderId,
         handler: async function (response: any) {
           try {
             const verifyRes = await axios.post(
@@ -156,44 +177,98 @@ export default function UserSubscriptionPlans() {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                planId: plan._id,
               },
               { headers: { Authorization: `Bearer ${token}` } }
             );
 
             if (verifyRes.data.success) {
-              alert("Subscription successful!");
-              // Call fetch function instead of full reload
-              fetchPlansAndSubscription();
+              showModal(
+                "Subscription successful! Your new plan has been stacked onto your current one.",
+                null
+              );
+              fetchActiveSubscription();
             } else {
-              alert(verifyRes.data.message || "Payment verification failed.");
+              showModal(
+                verifyRes.data.message || "Payment verification failed.",
+                null
+              );
             }
           } catch (error) {
             console.error("Verification Error:", error);
-            alert("Error verifying payment.");
+            showModal(
+              "Error verifying payment. Please check your network.",
+              null
+            );
           }
         },
-        prefill: { name: "Dalit Murasu User", email: "" },
-        theme: { color: "#feebbd" },
+        prefill: {
+          name: prefill?.name || "User",
+          email: prefill?.email || "",
+          contact: prefill?.contact || "",
+        },
+        theme: { color: "#cb1e19" },
       });
 
       razorpay.open();
     } catch (error: any) {
       console.error("Payment Error:", error);
-      if (error.response && error.response.data.limitReached) {
-        alert(error.response.data.message); // Show specific error from backend
+      const errorMessage =
+        error.response?.data?.message || "Failed to initiate payment.";
+
+      // Handle the 2-plan limit error coming from the server
+      if (error.response?.status === 400 && error.response?.data?.limitReached) {
+        showModal(error.response.data.message, null);
       } else {
-        alert("Failed to initiate payment.");
+        showModal(errorMessage, null);
       }
     }
   };
 
-  // --- NEW: Handler for the donation button ---
-  // const handleDonationClick = () => {
-  //   navigate("/donation");
-  // };
+  const Modal = ({
+    message,
+    onConfirm,
+    onCancel,
+    showCancel,
+  }: {
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+    showCancel: boolean;
+  }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border-t-4 border-[#cb1e19]">
+        <p className="text-lg text-gray-800 mb-6 text-center font-medium">
+          {message}
+        </p>
+        <div className="flex justify-center space-x-4">
+          <button
+            onClick={onConfirm}
+            className="px-6 py-2 rounded-lg text-white font-semibold transition bg-[#cb1e19] hover:opacity-90"
+          >
+            {showCancel ? "OK" : "Close"}
+          </button>
+          {showCancel && (
+            <button
+              onClick={onCancel}
+              className="px-6 py-2 rounded-lg text-gray-700 font-semibold border border-gray-300 bg-white hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
-  if (loading) {
+  const getRemainingDays = (expiresAt: string) => {
+    const expDate = new Date(expiresAt);
+    const diff = expDate.getTime() - new Date().getTime();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  };
+
+  const isPurchaseBlocked = activeSubscriptionCount >= 2; // NEW: Block flag
+
+  if (loading || isCheckingSubscription) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <p className="text-xl font-semibold">Loading subscription plans...</p>
@@ -210,133 +285,133 @@ export default function UserSubscriptionPlans() {
   }
 
   return (
+    
     <div className="min-h-screen p-6 bg-[#feebbd] flex flex-col items-center">
-      <h2 className="text-4xl font-extrabold mb-5 text-center text-[#cb1e19]">
-        Choose Your Subscription Plan
-      </h2>
-
-      {/* --- NEW: Donation Button Added Here --- */}
-      {/* <button
-        onClick={handleDonationClick}
-        className="flex items-center justify-center mb-10 px-6 py-3 rounded-lg text-white font-semibold transition bg-highlight-1 hover:bg-highlight-1/90 shadow-md"
-      >
-        <MdOutlineAttachMoney className="text-2xl mr-2" />
-         Make a Donation
-      </button> */}
-      {/* ------------------------------------- */}
-
-      {/* Active Subscription Details */}
-      {userSubData && userSubData.isActive && (
-        <div className="mb-8 w-full max-w-3xl bg-white/50 p-5 rounded-xl shadow">
-          <h3 className="text-2xl font-bold text-center mb-4 text-gray-800">
-            Your Active Subscriptions
-          </h3>
-
-          {userSubData.subscriptions.map((sub, index) => (
-            <div
-              key={index}
-              className="border border-gray-300 rounded-lg p-4 mb-3 "
-            >
-              <h4 className="text-lg font-semibold text-[#cb1e19]">
-                {sub.plan?.title || "Plan not found"}
-              </h4>
-              <p className="text-gray-600 text-sm">
-                Start: {new Date(sub.startDate).toLocaleDateString()} <br />
-                End: {new Date(sub.endDate).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
-
-          <div className="flex justify-center items-center space-x-2 mt-3 text-gray-800 font-semibold">
-            <MdTimer className="text-red-600 text-xl" />
-            {remainingDays !== null && (
+      
+    
+      {/* Active Subscription Section */}
+      {activeSubscription ? (
+        <div className="mb-8 w-full max-w-3xl bg-white/50 p-5 rounded-xl shadow flex flex-col sm:flex-row justify-around items-center space-y-4 sm:space-y-0">
+          <div>
+            <h3 className="text-2xl font-bold text-center text-[#cb1e19]">
+              Your Active Subscription{activeSubscriptionCount > 1 ? `s (${activeSubscriptionCount})` : ""}
+            </h3>
+            <div className="flex justify-center items-center space-x-2 text-gray-800 font-semibold mt-2">
+              <MdTimer className="text-red-600 text-xl" />
               <span>
                 Overall expiry in{" "}
-                <span className="font-bold text-red-700">{remainingDays}</span>{" "}
-                day{remainingDays !== 1 ? "s" : ""}.
+                <span className="font-bold text-red-700">
+                  {getRemainingDays(activeSubscription.expiresAt)}
+                </span>{" "}
+                day{getRemainingDays(activeSubscription.expiresAt) !== 1 ? "s" : ""}
+                .
               </span>
-            )}
+            </div>
           </div>
+          <div className="border border-gray-300 rounded-lg p-4 bg-white">
+            <h4 className="text-lg font-semibold text-[#cb1e19]">
+              {activeSubscription.planName} (Latest)
+            </h4>
+            <p className="text-gray-600 text-sm">
+              Expires on:{" "}
+              {new Date(activeSubscription.expiresAt).toLocaleDateString()}
+            </p>
+          </div>
+          {activeSubscriptionCount === 1 && (
+            <div className="flex items-center text-sm font-medium text-blue-600 p-2 bg-blue-50 rounded-lg">
+              
+              
+            </div>
+          )}
 
-          <div className="text-center mt-2 text-sm text-gray-600">
-            Stacked subscriptions: {userSubData?.stackedCount ?? 0} / 2
-          </div>
+         
+          {isPurchaseBlocked && (
+            <div className="flex items-center text-sm font-medium text-red-600 p-2 bg-red-100 rounded-lg">
+              
+            </div>
+          )}
         </div>
+      ) : (
+        <h2 className="text-4xl font-extrabold mb-5 text-center text-[#cb1e19]">
+          Choose Your Subscription Plan
+        </h2>
       )}
 
-      {/* Warning if limit reached */}
-      {(userSubData?.stackedCount ?? 0) >= 2 && (
-        <div className="mb-8 bg-yellow-100 border border-yellow-400 text-yellow-800 px-6 py-3 rounded-lg shadow-md text-center">
-          <p className="font-semibold">
-            You have reached the maximum limit of 2 stacked subscriptions.
-          </p>
-        </div>
-      )}
-
-      {/* All Plans */}
+      {/* Plans List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
-        {plans.map((plan) => {
-          const isActive = userSubData?.subscriptions.some(
-            (sub) => sub.plan?._id === plan._id
-          );
-
-          return (
-            <div
-              key={plan._id}
-              className={`relative bg-white/50 rounded-xl shadow-lg p-6 transition duration-300 ${isActive
-                  ? "border-2 border-red-600"
-                  : "border border-gray-200"
+        {plans.map((plan) => (
+          <div
+            key={plan._id}
+            className={`relative bg-white/50 rounded-xl shadow-lg p-6 border border-gray-200 transition duration-300 ${isPurchaseBlocked ? 'opacity-70' : 'hover:shadow-2xl'}`}
+          >
+            <h3 className="text-2xl font-bold text-center mb-3 text-gray-800">
+              {plan.title}
+            </h3>
+            <p className="text-center text-gray-600 mb-4">
+              {plan.description || "No description provided."}
+            </p>
+            <div className="text-center mb-6">
+              <span className="text-5xl font-extrabold text-red-600">
+                ₹{plan.price.toFixed(2)}
+              </span>
+              <span className="text-xl text-gray-500">
+                {" "}
+                / {plan.durationInDays} days
+              </span>
+            </div>
+            <ul className="space-y-3 text-gray-700 mb-6">
+              <li className="flex items-center">
+                <MdCheckCircle className="text-green-500 mr-2 text-xl" /> Access
+                to Premium Content
+              </li>
+              <li className="flex items-center">
+                <MdStar className="text-blue-500 mr-2 text-xl" /> Ad-Free
+                Experience
+              </li>
+              <li className="flex items-center">
+                <MdAccessTime className="text-purple-500 mr-2 text-xl" />{" "}
+                Unlimited Reading
+              </li>
+            </ul>
+            <button
+              onClick={() => handleSubscribe(plan)}
+              disabled={isPurchaseBlocked} // Disable if limit reached
+              className={`w-full py-3 rounded-lg text-white font-semibold transition ${isPurchaseBlocked
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#cb1e19] hover:opacity-90"
                 }`}
             >
-              {isActive && (
-                <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                  Active Plan
-                </div>
-              )}
-              <h3 className="text-2xl font-bold text-center mb-3 text-gray-800">
-                {plan.title}
-              </h3>
-              <p className="text-center text-gray-600 mb-4">
-                {plan.description || "No description provided."}
-              </p>
-              <div className="text-center mb-6">
-                <span className="text-5xl font-extrabold text-red-600">
-                  ₹{plan.price.toFixed(2)}
-                </span>
-                <span className="text-xl text-gray-500">
-                  {" "}
-                  / {plan.durationInDays} days
-                </span>
+              {isPurchaseBlocked ? "Limit Reached" : "Subscribe Now"}
+            </button>
+            {isPurchaseBlocked && (
+              <div className="mt-2 text-center text-sm text-red-600 font-medium">
+                You have 2 active plans.
               </div>
-              <ul className="space-y-3 text-gray-700 mb-6">
-                <li className="flex items-center">
-                  <MdCheckCircle className="text-green-500 mr-2 text-xl" />{" "}
-                  Access to Premium Content
-                </li>
-                <li className="flex items-center">
-                  <MdStar className="text-blue-500 mr-2 text-xl" /> Ad-Free
-                  Experience
-                </li>
-                <li className="flex items-center">
-                  <MdAccessTime className="text-purple-500 mr-2 text-xl" />{" "}
-                  Unlimited Reading
-                </li>
-              </ul>
-              <button
-                onClick={() => handleSubscribe(plan)}
-                disabled={(userSubData?.stackedCount ?? 0) >= 2}
-                className="w-full py-3 rounded-lg text-white font-semibold transition bg-[#cb1e19] hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {isActive
-                  ? "Extend Subscription"
-                  : userSubData?.isActive // Check if user has *any* active sub
-                    ? "Add New Plan"
-                    : "Subscribe Now"}
-              </button>
-            </div>
-          );
-        })}
+            )}
+          </div>
+          
+          
+        ))}
+        
+      </div>
+
+      {isModalOpen && (
+        <Modal
+          message={modalMessage}
+          onConfirm={handleModalConfirm}
+          onCancel={handleModalCancel}
+          showCancel={!!modalAction}
+        />
+      )}
+      {/* Support Message */}
+      <div className="mt-12 text-center">
+        <p className="text-lg font-semibold text-gray-800 bg-white/70 p-4 rounded-xl inline-block shadow-md">
+          Support the voice for equality –{" "}
+          <span className="text-[#cb1e19] font-bold">Contact 9444452877</span> to donate.
+        </p>
       </div>
     </div>
+    
+    
   );
 }

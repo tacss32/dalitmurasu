@@ -165,7 +165,7 @@ exports.clientRegister = async (req, res) => {
       gender,
       password: hashedPassword,
       dob: birthDate,
-      age,
+      
     });
 
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {

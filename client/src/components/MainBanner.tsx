@@ -194,7 +194,7 @@ export default function MainBanner() {
               src={banner.desktopImage}
               alt={`Banner ${index + 1}`}
               className="w-full h-auto  object-cover object-center"
-              {...(index === 0 ? { fetchpriority: "high" } : {})}
+              {...(index === 0 ? { fetchPriority: "high" } : {})}
             />
           </picture>
         ))}

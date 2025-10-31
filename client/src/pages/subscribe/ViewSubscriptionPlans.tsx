@@ -31,7 +31,7 @@ export default function ViewSubscriptionPlans() {
   const fetchPlans = async () => {
     try {
       const response = await axios.get<SubscriptionPlan[]>(
-        `${API_BASE_URL}api/subscriptions`
+        `${API_BASE_URL}api/subscription`
       );
       setPlans(response.data);
     } catch (err) {
@@ -50,7 +50,7 @@ export default function ViewSubscriptionPlans() {
     if (window.confirm("Are you sure you want to delete this plan?")) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`${API_BASE_URL}api/subscriptions/admin/${id}`, {
+        await axios.delete(`${API_BASE_URL}api/subscription/admin/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -90,7 +90,7 @@ export default function ViewSubscriptionPlans() {
     e.preventDefault();
     try {
       if (isEditing && currentId) {
-        await axios.put(`${API_BASE_URL}api/subscriptions/admin/${currentId}`, {
+        await axios.put(`${API_BASE_URL}api/subscription/admin/${currentId}`, {
           title,
           description,
           price,
@@ -105,7 +105,7 @@ export default function ViewSubscriptionPlans() {
       );
         alert("Plan updated successfully!");
       } else {
-        await axios.post(`${API_BASE_URL}api/subscriptions/admin`, {
+        await axios.post(`${API_BASE_URL}api/subscription/admin`, {
           title,
           description,
           price,
