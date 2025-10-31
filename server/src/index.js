@@ -8,18 +8,10 @@ const path = require("path");
 const connectDB = require("./config/db");
 require("./middleware/passportSetup");
 
-// Import routes
-const searchRoutes = require("./routes/search");
-const newsletterImageRoutes = require("./routes/newsletterImage");
-const subscriptionRoutes = require("./routes/subscriptionPlanRoutes");
-const forgotPasswordRoutes = require("./routes/forgotPasswordRoutes");
-const pdfUploadRoutes = require("./routes/pdfUploadRoutes");
-const bookmarkRoutes = require("./routes/bookmarks");
 
 // Load environment variables
 dotenv.config();
 
-// Passport Strategy
 
 // ----------------------------------------------------------------------------
 // Start Server AFTER DB Connect
@@ -32,7 +24,7 @@ connectDB()
     // CORS Configuration
     // ------------------------------------------------------------------------
     const allowedOrigins = [
-      "http://localhost:3030",
+    
       "https://dalitmurasu.com",
       "http://localhost:5173",
     ];
@@ -76,14 +68,7 @@ connectDB()
     app.use(passport.initialize());
     app.use(passport.session());
 
-    // ------------------------------------------------------------------------
-    // Static Assets (for PDFs and other uploads)
-    // ------------------------------------------------------------------------
-    // app.use("/uploads", (req, res, next) => {
-    //   res.header("Access-Control-Allow-Origin", "*"); // Or use whitelist logic
-    //   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    //   next();
-    // });
+
 
     const mime = require("mime-types");
 
@@ -103,7 +88,7 @@ connectDB()
     // -----------------------------------------------------------------------
     // API Routes
     // ------------------------------------------------------------------------
-    app.use("/api/bookmarks", bookmarkRoutes); 
+    app.use("/api/bookmarks",require("./routes/bookmarks")); 
     app.use("/api/auth", require("./routes/authRoutes"));
     app.use("/api/categories", require("./routes/categoryRoutes"));
     app.use("/api/post_titles", require("./routes/postTitlesRoutes"));
@@ -116,17 +101,16 @@ connectDB()
     app.use("/api/books", require("./routes/bookRoutes"));
     app.use("/api/cart", require("./routes/cartRoutes"));
     app.use("/api/premium-posts", require("./routes/premiumPostRoutes"));
-    app.use("/api/subscriptions", require("./routes/subscriptionPlanRoutes"));
     app.use("/api/notifications", require("./routes/notificationRoutes"));
     app.use("/api/orders", require("./routes/orderRoutes"));
     app.use("/api/profile", require("./routes/profileRoutes"));
-    app.use("/api/search", searchRoutes);
-    app.use("/api/newsletter-image", newsletterImageRoutes);
+    app.use("/api/search", require("./routes/search"));
+    app.use("/api/newsletter-image", require("./routes/newsletterImage"));
     app.use("/api/client-users", require("./routes/clientUserRoutes"));
-    app.use("/api/subscription", subscriptionRoutes);
-    app.use("/api/forgot-password", forgotPasswordRoutes);
+    app.use("/api/subscription", require("./routes/subscriptionPlanRoutes"));
+    app.use("/api/forgot-password", require("./routes/forgotPasswordRoutes"));
     app.use("/api/combined-posts", require("./routes/combinedPostRoutes"));
-    app.use("/api/pdf-uploads", pdfUploadRoutes);
+    app.use("/api/pdf-uploads", require("./routes/pdfUploadRoutes"));
     app.use("/api/donation", require("./routes/donationRoutes"))
   
     // ------------------------------------------------------------------------

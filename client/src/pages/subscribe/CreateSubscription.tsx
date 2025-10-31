@@ -61,7 +61,7 @@ export default function CreateSubscriptionPlan() {
     try {
   
       const response = await axios.post(
-        `${API_BASE_URL}api/subscriptions/admin`,
+        `${API_BASE_URL}api/subscription/admin`,
         {
           title: formData.title,
           description: formData.description,

@@ -2,158 +2,163 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { MdAccountCircle } from "react-icons/md";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO } from "date-fns";
 
-interface SubscribedUser {
+interface SubscriptionPayment {
   _id: string;
-  name: string;
-  email: string;
-  gender: string;
-  age: number;
-  phone: string;
-  subscriptionStartDate: string;
-  subscriptionExpiresAt: string;
-  title: string | null;
+  userId: {
+    name: string;
+    email: string;
+  };
+  subscriptionPlanId: {
+    title: string;
+    price: number;
+  };
+  amount: number;
+  payment_status: string;
+  createdAt: string;
 }
 
 const SubscribedUsersPage: React.FC = () => {
-  const [users, setUsers] = useState<SubscribedUser[]>([]);
+  const [payments, setPayments] = useState<SubscriptionPayment[]>([]);
+  const [filters, setFilters] = useState({
+    payment_status: "",
+    min_amount: "",
+    max_amount: "",
+  });
   const API_BASE_URL = import.meta.env.VITE_API;
 
-  useEffect(() => {
-    const fetchSubscribedUsers = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Authentication token not found. Please log in.");
-          return;
-        }
-
-        const response = await axios.get(`${API_BASE_URL}api/subscription/subscribed-users`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.data.success) {
-          setUsers(response.data.users);
-          toast.success("Subscribed users fetched successfully!");
-        } else {
-          toast.error(response.data.message || "Failed to fetch subscribed users.");
-        }
-      } catch (error) {
-        console.error("Error fetching subscribed users:", error);
-        if (axios.isAxiosError(error) && error.response) {
-          toast.error(error.response.data.message || "An error occurred.");
-        } else {
-          toast.error("Failed to fetch subscribed users.");
-        }
+  const fetchPayments = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Authentication token not found. Please log in.");
+        return;
       }
-    };
 
-    fetchSubscribedUsers();
-  }, [API_BASE_URL]);
+      const params: any = {};
+      if (filters.payment_status) params.payment_status = filters.payment_status;
+      if (filters.min_amount) params.min_amount = filters.min_amount;
+      if (filters.max_amount) params.max_amount = filters.max_amount;
+
+      const response = await axios.get(
+        `${API_BASE_URL}api/subscription/subscribed-users`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params,
+        }
+      );
+
+      if (response.data.success) {
+        setPayments(response.data.data);
+      } else {
+        toast.error(response.data.message || "Failed to fetch data.");
+      }
+    } catch (error) {
+      console.error("Error fetching filtered payments:", error);
+      toast.error("Error fetching filtered subscription payments.");
+    }
+  };
+
+  useEffect(() => {
+    fetchPayments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="container mx-auto p-6 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800 flex items-center">
         <MdAccountCircle className="text-4xl text-yellow-500 mr-2" />
-        Premium Users
+           Subscription Payments
       </h1>
-      {users.length === 0 ? (
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-wrap items-center gap-4">
+        <select
+          className="border rounded-md p-2"
+          value={filters.payment_status}
+          onChange={(e) =>
+            setFilters({ ...filters, payment_status: e.target.value })
+          }
+        >
+          <option value="">All Status</option>
+          <option value="success">Success</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+        </select>
+
+       
+        <button
+          onClick={fetchPayments}
+          className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600"
+        >
+          Apply Filters
+        </button>
+      </div>
+
+      {/* Table */}
+      {payments.length === 0 ? (
         <div className="bg-white p-6 rounded-lg shadow-md text-center">
-          <p className="text-gray-600">No users are currently subscribed.</p>
+          <p className="text-gray-600">No matching records found.</p>
         </div>
       ) : (
         <div className="overflow-x-auto bg-white rounded-lg shadow-md">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  User ID
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  User
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Name
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Phone
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Plan
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Start Date
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Price
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Expiry Date
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Paid Amount
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Age
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Gender
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user._id}
+              {payments.map((p) => (
+                <tr key={p._id}>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    {p.userId?.name || "N/A"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {user.name}
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {p.userId?.email || "N/A"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.email}
+                  <td className="px-6 py-4 text-sm font-medium text-gray-800">
+                    {p.subscriptionPlanId?.title || "N/A"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.phone}
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    ₹{p.subscriptionPlanId?.price || 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span className="font-medium">{user.title || "N/A"}</span>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    ₹{p.amount}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.subscriptionStartDate ? format(parseISO(user.subscriptionStartDate), 'PPP') : "N/A"}
+                  <td
+                    className={`px-6 py-4 text-sm font-semibold ${p.payment_status === "success"
+                        ? "text-green-600"
+                        : p.payment_status === "failed"
+                          ? "text-red-600"
+                          : "text-yellow-600"
+                      }`}
+                  >
+                    {p.payment_status}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-medium">
-                    {user.subscriptionExpiresAt ? format(parseISO(user.subscriptionExpiresAt), 'PPP') : "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.age}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.gender}
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {format(parseISO(p.createdAt), "PPP")}
                   </td>
                 </tr>
               ))}
