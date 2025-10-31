@@ -33,7 +33,7 @@ import PremiumArticleList from './pages/premium_articles/PremiumArticleList';
 import PremiumArticleForm from './pages/premium_articles/PremiumArticleForm';
 
 import Bookmark from "./components/bookmarks";
-import Donation from "./pages/donation/Donation"
+import FeedbackForm from "./pages/about/FeedBackForm";
 
 // New ProfilePage (direct route)
 import ProfilePage from "./pages/ProfilePage";
@@ -130,15 +130,13 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/checkout" element={<CreateOrderPage />} />
             <Route path="/order-confirmation" element={<div>Order Confirmed!</div>} />
             <Route path="/shop" element={<BooksList />} />
+            <Route path="/shop/:id" element={<BooksList />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/posts/:id" element={<PostDetail />} />
   
             <Route path="/orders" element={<MyOrders />} />
-
-            
-        
-            <Route path="/donation" element={<Donation />} />
+            <Route path ="/feedback" element={<FeedbackForm/>}/>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/bookmarks" element={<Bookmark/>} />
             {/* Catch-all Category Route (keep LAST) */}
