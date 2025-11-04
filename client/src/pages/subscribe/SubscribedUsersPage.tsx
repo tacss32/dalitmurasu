@@ -26,7 +26,7 @@ interface ISubscriptionPayment {
     userId: IUser;
     subscriptionPlanId: IPlan;
     amount: number;
-    payment_status: "pending" | "success" | "failed";
+    payment_status:  "success" | "failed";
     createdAt: string;
 }
 
@@ -34,7 +34,7 @@ const FilteredSubscriptionPayments: React.FC = () => {
     const API_BASE_URL = import.meta.env.VITE_API;
 
     const [filteredPayments, setFilteredPayments] = useState<ISubscriptionPayment[]>([]);
-    const [paymentStatus, setPaymentStatus] = useState<string>("");
+    // const [paymentStatus, setPaymentStatus] = useState<string>("");
     const [fromDate, setFromDate] = useState<string>("");
     const [toDate, setToDate] = useState<string>("");
 
@@ -46,8 +46,9 @@ const FilteredSubscriptionPayments: React.FC = () => {
                 return;
             }
 
-            const params: any = {};
-            if (paymentStatus) params.payment_status = paymentStatus;
+            const params: any = {
+                payment_status: "success" 
+            };
             if (fromDate) params.start_date = fromDate;
             if (toDate) params.end_date = toDate;
 
@@ -100,7 +101,7 @@ const FilteredSubscriptionPayments: React.FC = () => {
 
     useEffect(() => {
         fetchPayments();
-    }, [paymentStatus]);
+    }, []);
 
     return (
         <div className="container mx-auto p-6 bg-gray-100 min-h-screen">
@@ -110,7 +111,7 @@ const FilteredSubscriptionPayments: React.FC = () => {
 
             {/* FILTERS */}
             <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
-                <select
+                {/* <select
                     value={paymentStatus}
                     onChange={(e) => setPaymentStatus(e.target.value)}
                     className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 flex-1"
@@ -119,7 +120,7 @@ const FilteredSubscriptionPayments: React.FC = () => {
                     <option value="pending">Pending</option>
                     <option value="success">Success</option>
                     <option value="failed">Failed</option>
-                </select>
+                </select> */}
 
                 {/* Date Range Filters */}
                 <div className="flex flex-col md:flex-row gap-4 flex-1">
