@@ -12,12 +12,26 @@ exports.createSubscriptionOrder = async (req, res) => {
     const { planId } = req.body;
     const user = req.user;
 
-    // 1. Check for active subscriptions AND find the latest active one
+    // 1️⃣ Validate user and plan
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    const plan = await SubscriptionPlan.findById(planId);
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Subscription plan not found." });
+    }
+
+    // 2️⃣ Find latest active subscription for stacking logic
     const latestActiveSubscription = await SubscriptionPayment.findOne({
       userId: user._id,
       payment_status: "success",
-      endDate: { $gt: new Date() }, // Check if expiry date is in the future
-    }).sort({ endDate: -1 }); // Get the one that expires latest
+      endDate: { $gt: new Date() },
+    }).sort({ endDate: -1 });
 
     const activeSubscriptionsCount = latestActiveSubscription
       ? await SubscriptionPayment.countDocuments({
@@ -27,9 +41,8 @@ exports.createSubscriptionOrder = async (req, res) => {
         })
       : 0;
 
-    // 2. Enforce the limit of 2 (i.e., block when count is 2 or more)
+    // 3️⃣ Limit active subscriptions to 2
     if (activeSubscriptionsCount >= 2) {
-      // Changed limit to 2
       return res.status(400).json({
         success: false,
         limitReached: true,
@@ -37,59 +50,34 @@ exports.createSubscriptionOrder = async (req, res) => {
           "You already have 2 active subscriptions. You cannot purchase another one at this time.",
       });
     }
-    // --- !! END CORE LOGIC !! ---
 
-    // 3. Find the user and plan details
-    const plan = await SubscriptionPlan.findById(planId);
+    // 4️⃣ Calculate start date
+    const startDate = latestActiveSubscription
+      ? latestActiveSubscription.endDate
+      : new Date();
 
-    if (!plan) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Subscription plan not found." });
-    }
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
-    }
-
-    // 4. Calculate the start date for the new plan
-    let startDate;
-    if (latestActiveSubscription) {
-      // Stacking: New plan starts immediately after the currently latest active plan expires
-      startDate = latestActiveSubscription.endDate;
-    } else {
-      // No active plan: Starts now
-      startDate = new Date();
-    }
-
-    // 5. Create Razorpay order (Example)
+    // 5️⃣ Create Razorpay order
     const options = {
       amount: plan.price * 100, // Razorpay expects amount in paise
       currency: "INR",
-      receipt: `receipt_order_${new Date().getTime()}`,
+      receipt: `receipt_order_${Date.now()}`,
     };
+
     const order = await razorpay.orders.create(options);
 
-    // 6. Create a 'pending' payment record in your DB, storing the calculated startDate
+    // 6️⃣ Create pending payment record
     await SubscriptionPayment.create({
       userId: user._id,
       subscriptionPlanId: planId,
-      phone: user.phone ? user.phone : undefined, // Or get from req.body if needed
+      phone: user.phone || undefined,
       mail: user.email,
       amount: plan.price,
       razorpay_order_id: order.id,
       payment_status: "pending",
-      startDate: startDate, // Store the calculated start date
-      contact: user.phone,
+      startDate: startDate,
     });
-     if (user.phone) {
-       paymentData.phone = user.phone;
-     }
 
-      await SubscriptionPayment.create(paymentData);
-
-    // 7. Send order details to client to open Razorpay checkout
+    // 7️⃣ Send response to client
     res.status(200).json({
       success: true,
       message: "Order created successfully",
@@ -105,8 +93,16 @@ exports.createSubscriptionOrder = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error creating subscription order:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error(
+      "❌ Error creating subscription order:",
+      error.message,
+      error.stack
+    );
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message, // Optional for debugging — remove in production
+    });
   }
 };
 
