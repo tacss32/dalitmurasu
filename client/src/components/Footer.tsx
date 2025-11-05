@@ -105,17 +105,17 @@ export default function Footer() {
             {/* Feedback */}
             <Link
               to="/feedback"
-              className="text-black py-1 rounded-full flex  gap-2 font-bold hover:text-red-700 transition"
+              className="text-white py-2 px-3 mb-4 rounded-full bg-highlight-1 flex text-base  gap-2  font-bold hover:text-black transition"
             >
               Feedback
               <FeedbackIcon />
             </Link>
             {/* Copyright */}
-            <p>©{new Date().getFullYear()} தலித் முரசு. All rights reserved.</p>
+            <p>©{new Date().getFullYear()} தலித் முரசு All rights reserved.</p>
         </div>
 
           {/* Contact Info */}
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end text-base">
             <p onClick={handleCopyEmail} className="cursor-pointer hover:text-red-700 flex items-center gap-1">
               {email} <MailIcon />
             </p>
@@ -143,7 +143,7 @@ export default function Footer() {
           {/* Feedback */}
           <Link
             to="/feedback"
-            className="text-black py-1 rounded-full flex items-center gap-2 font-bold hover:text-red-700 transition"
+            className="text-black py-1 rounded-full flex bg-highlight-1 items-center gap-2 font-bold hover:text-red-700 transition"
           >
             Feedback
             <FeedbackIcon />
@@ -159,7 +159,7 @@ export default function Footer() {
           </div>
 
           {/* Copyright */}
-          <p>©{new Date().getFullYear()} தலித் முரசு. All rights reserved.</p>
+          <p>©{new Date().getFullYear()} தலித் முரசு All rights reserved.</p>
         </div>
       </div>
     </footer>
