@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
+// Import the icon for the up arrow. I'll use a simple SVG for this example.
+// If you are using a library like 'react-icons', you would import it here, e.g.,
+// import { FaArrowUp } from "react-icons/fa";
 
 interface GalleryImage {
     _id: string;
@@ -21,6 +24,8 @@ function GalleryPage() {
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>("");
+    // 1. State for the scroll-to-top button visibility
+    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
         const fetchImages = async () => {
@@ -45,7 +50,7 @@ function GalleryPage() {
         fetchImages();
     }, []);
 
-    // Function to group images by month and year
+    // Function to group images by month and year (kept as is)
     const groupImagesByMonth = (allImages: GalleryImage[]): GroupedImages => {
         const grouped: GroupedImages = {};
         const monthNames = [
@@ -90,6 +95,32 @@ function GalleryPage() {
 
     const groupedImages = groupImagesByMonth(images);
 
+    // 2. Function to handle scrolling to top
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    };
+
+    // 3. Effect to manage the visibility of the scroll-to-top button
+    useEffect(() => {
+        // Define a function to check scroll position
+        const toggleVisibility = () => {
+            if (window.scrollY > 300) { // Show button if scrolled down 300px
+                setIsVisible(true);
+            } else {
+                setIsVisible(false);
+            }
+        };
+
+        // Add the event listener to the window
+        window.addEventListener("scroll", toggleVisibility);
+
+        // Clean up the event listener when the component unmounts
+        return () => window.removeEventListener("scroll", toggleVisibility);
+    }, []); // Empty dependency array ensures this runs once after mount
+
     if (loading) {
         return (
             <div className="flex justify-center items-center min-h-screen text-highlight-1">
@@ -112,7 +143,7 @@ function GalleryPage() {
 
     return (
         <div
-            className="min-h-screen text-highlight-1"
+            className="min-h-screen text-highlight-1 relative" // Added 'relative' for the button positioning
             style={{ fontFamily: '"Times New Roman", serif' }}
         >
             <h1
@@ -130,25 +161,14 @@ function GalleryPage() {
                                 className="
     text-xl lg:text-2xl font-bold text-highlight-2 mb-6 px-2
     text-left lg:ml-27
-  "
+    "
                                 style={{ fontFamily: '"Times New Roman", serif' }}
                             >
                                 {monthYear}
                             </h2>
 
-
-
-
-                            {/*
-                KEY CHANGE: This is where we make the grid responsive
-                - grid-cols-2 for mobil
-                - sm:grid-cols-3 for tablet and larger
-                - lg:grid-cols-3 is redundant, but kept for clarity on desktop
-                - gap-1 is for mobile, md:gap-2 is for tablets and desktop
-              */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-1 md:gap-2 max-w-4xl mx-auto auto-rows-fr">
                                 {groupedImages[monthYear].map((img, index) => {
-                                    // Calculate the pattern for desktop view only
                                     const pattern = index % 6;
                                     const isLarge = pattern === 0 || pattern === 4;
 
@@ -156,11 +176,9 @@ function GalleryPage() {
                                         <div
                                             key={img._id}
                                             className={`relative overflow-hidden group bg-gray-200 rounded-lg shadow-md
-                        /* All images are square on mobile/tablet */
-                        aspect-square
-                        /* Apply the special layout only on large screens */
-                        ${isLarge ? "lg:col-span-2 lg:row-span-2" : "lg:col-span-1 lg:row-span-1"}
-                      `}
+    aspect-square
+    ${isLarge ? "lg:col-span-2 lg:row-span-2" : "lg:col-span-1 lg:row-span-1"}
+    `}
                                         >
                                             <img
                                                 src={img.imageUrl}
@@ -192,6 +210,38 @@ function GalleryPage() {
                     The gallery is currently empty.
                 </p>
             )}
+
+            {/* 4. Scroll to Top Button */}
+            <button
+                onClick={scrollToTop}
+                className={`
+                    fixed bottom-4 right-6 p-3 rounded-full shadow-lg z-50
+                    bg-highlight-1 text-white
+                    hover:bg-highlight-1/80 transition-opacity duration-300
+                    ${isVisible ? "opacity-100" : "opacity-0 pointer-events-none"}
+                `}
+                aria-label="Scroll to top"
+                title="Scroll to top"
+            >
+                {/* Up Arrow Icon (SVG for minimal dependency) */}
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 10l7-7m0 0l7 7m-7-7v18"
+                    />
+                </svg>
+                {/* If you use an icon library, replace the SVG with:
+                <FaArrowUp className="h-6 w-6" />
+                */}
+            </button>
         </div>
     );
 }
