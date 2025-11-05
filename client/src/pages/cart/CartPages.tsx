@@ -14,7 +14,6 @@ interface Book {
   category: string;
 }
 
-// Raw item from API can have null or ID string in bookId
 interface RawCartItem {
   _id: string;
   userId: string;
@@ -38,32 +37,32 @@ export default function CartPage() {
   const [cartError, setCartError] = useState<string | null>(null);
 
   const navigate = useNavigate();
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // State to hold the dynamic userId
-  const [userId, setUserId] = useState<string | null>(null); // Initialize as null
+  // ✅ Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
-  // Function to check if the user is authenticated (still relevant for checkout redirect)
   const isAuthenticated = () => {
-    return localStorage.getItem("clientToken") !== null && localStorage.getItem("userId") !== null;
+    return (
+      localStorage.getItem("clientToken") !== null &&
+      localStorage.getItem("userId") !== null
+    );
   };
 
-  // Effect to get userId from localStorage on component mount
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) {
       setUserId(storedUserId);
     } else {
-      // If no userId in localStorage, it means the user is not logged in or session expired.
-      // Redirect to login page or show a message.
       console.warn("No userId found in localStorage. Redirecting to login.");
-      navigate("/login"); // Assuming your login route is "/login"
+      navigate("/login");
     }
-  }, [navigate]); // Add navigate to dependency array
+  }, [navigate]);
 
   const fetchCart = async () => {
-    // Only proceed if userId is available
     if (!userId) {
-      setLoadingCart(false); // Ensure loading state is false if we can't fetch
+      setLoadingCart(false);
       return;
     }
 
@@ -74,19 +73,14 @@ export default function CartPage() {
       const response = await axios.get(`${API_BASE_URL}api/cart/${userId}`);
       const rawItems: RawCartItem[] = response.data;
 
-      // console.log("📦 Raw cart items:", rawItems);
-
       const validItems: CleanCartItem[] = rawItems.filter(
         (item): item is CleanCartItem =>
           item.bookId !== null && typeof item.bookId === "object"
       );
 
-      // console.log("✅ Valid cart items being set:", validItems);
-
       setCartItems(validItems);
     } catch (err) {
       console.error("❌ Error fetching cart:", err);
-      // More specific error handling for 401 if backend changes to require token
       if (axios.isAxiosError(err) && err.response?.status === 401) {
         setCartError("Session expired or unauthorized. Please log in again.");
         localStorage.removeItem("clientToken");
@@ -100,20 +94,21 @@ export default function CartPage() {
     }
   };
 
-  // Effect to fetch cart whenever userId changes (after it's set from localStorage)
   useEffect(() => {
-    if (userId) { // Only fetch if userId is not null
+    if (userId) {
       fetchCart();
     }
-  }, [userId]); // Dependency on userId
+  }, [userId]);
 
-  const updateCartItemQuantity = async (cartItemId: string, newQuantity: number) => {
+  const updateCartItemQuantity = async (
+    cartItemId: string,
+    newQuantity: number
+  ) => {
     if (newQuantity < 1) {
       await removeFromCart(cartItemId);
       return;
     }
 
-    // Ensure userId exists before attempting update
     if (!userId) {
       setCartError("User not logged in. Cannot update cart.");
       return;
@@ -124,7 +119,7 @@ export default function CartPage() {
       await axios.put(`${API_BASE_URL}api/cart/update/${cartItemId}`, {
         quantity: newQuantity,
       });
-      await fetchCart(); // Re-fetch to get updated cart
+      await fetchCart();
     } catch (err: any) {
       console.error("❌ Error updating item:", err);
       setCartError(err.response?.data?.error || "Failed to update item.");
@@ -134,7 +129,6 @@ export default function CartPage() {
   };
 
   const removeFromCart = async (cartItemId: string) => {
-    // Ensure userId exists before attempting removal
     if (!userId) {
       setCartError("User not logged in. Cannot remove item from cart.");
       return;
@@ -143,7 +137,7 @@ export default function CartPage() {
     setIsUpdatingCart(true);
     try {
       await axios.delete(`${API_BASE_URL}api/cart/remove/${cartItemId}`);
-      await fetchCart(); // Re-fetch to get updated cart
+      await fetchCart();
     } catch (err: any) {
       console.error("❌ Error removing item:", err);
       setCartError(err.response?.data?.error || "Failed to remove item.");
@@ -152,19 +146,73 @@ export default function CartPage() {
     }
   };
 
-  const handleProceedToCheckout = () => {
-    if (isAuthenticated()) {
-      navigate("/checkout", { state: { cartItems: cartItems } });
-    } else {
+  // ✅ Updated checkout handler with phone check
+  const handleProceedToCheckout = async () => {
+    if (!isAuthenticated()) {
       navigate("/login");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("clientToken");
+      const profileRes = await axios.get(`${API_BASE_URL}api/client-users/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const profile = profileRes.data?.data;
+
+      if (!profile?.phone || profile.phone.trim() === "") {
+        setModalMessage(
+          "Please update your profile with a valid phone number before proceeding to checkout."
+        );
+        setIsModalOpen(true);
+        return;
+      }
+
+      navigate("/checkout", { state: { cartItems: cartItems } });
+    } catch (error) {
+      console.error("❌ Error checking profile:", error);
+      setModalMessage("Error fetching your profile. Please try again later.");
+      setIsModalOpen(true);
     }
   };
+
+  // ✅ Modal Component with “Go to Profile” button
+  const Modal = ({ message }: { message: string }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border-t-4 border-highlight-1">
+        <p className="text-lg text-gray-800 mb-6 text-center font-medium">
+          {message}
+        </p>
+        <div className="flex justify-center space-x-4">
+          {message.toLowerCase().includes("profile") ? (
+            <button
+              onClick={() => {
+                setIsModalOpen(false);
+                navigate("/profile");
+              }}
+              className="px-6 py-2 rounded-lg text-white font-semibold transition bg-highlight-1 hover:opacity-90"
+            >
+              Go to Profile
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="px-6 py-2 rounded-lg text-white font-semibold transition bg-highlight-1 hover:opacity-90"
+            >
+              OK
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 font-sans">
       <h1 className="text-4xl font-extrabold mb-8 text-highlight-1 text-center">
         Your Shopping Cart
       </h1>
+
       <CartDisplay
         cartItems={cartItems}
         loadingCart={loadingCart}
@@ -174,7 +222,6 @@ export default function CartPage() {
         isUpdatingCart={isUpdatingCart}
       />
 
-    
       {cartItems.length > 0 && !loadingCart && !cartError && (
         <div className="flex justify-end mt-8">
           <button
@@ -186,6 +233,8 @@ export default function CartPage() {
           </button>
         </div>
       )}
+
+      {isModalOpen && <Modal message={modalMessage} />}
     </div>
   );
 }

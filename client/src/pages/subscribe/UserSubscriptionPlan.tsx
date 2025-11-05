@@ -5,8 +5,8 @@ import {
   MdStar,
   MdAccessTime,
   MdTimer,
-
 } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 // Interface for a single Subscription Plan
 interface SubscriptionPlan {
@@ -27,7 +27,7 @@ interface ActiveSubscription {
 interface ActiveSubscriptionResponse {
   success: boolean;
   isActive: boolean;
-  count: number; // CRITICAL: To track the number of active plans
+  count: number;
   message: string;
   subscription?: ActiveSubscription;
 }
@@ -39,13 +39,14 @@ declare global {
 }
 
 export default function UserSubscriptionPlans() {
+  const navigate = useNavigate();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const [activeSubscription, setActiveSubscription] =
     useState<ActiveSubscription | null>(null);
-  const [activeSubscriptionCount, setActiveSubscriptionCount] = // NEW: State for the count
+  const [activeSubscriptionCount, setActiveSubscriptionCount] =
     useState<number>(0);
   const [isCheckingSubscription, setIsCheckingSubscription] =
     useState<boolean>(true);
@@ -79,7 +80,7 @@ export default function UserSubscriptionPlans() {
     }
 
     try {
-      const res = await axios.get<ActiveSubscriptionResponse>( // Using the new interface
+      const res = await axios.get<ActiveSubscriptionResponse>(
         `${API_BASE_URL}api/subscription/subscription-status`,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -87,7 +88,7 @@ export default function UserSubscriptionPlans() {
       );
 
       if (res.data.success) {
-        setActiveSubscriptionCount(res.data.count); // Set the count
+        setActiveSubscriptionCount(res.data.count);
         if (res.data.isActive && res.data.subscription) {
           setActiveSubscription(res.data.subscription);
         } else {
@@ -127,6 +128,7 @@ export default function UserSubscriptionPlans() {
     setModalAction(null);
   };
 
+  // ✅ Updated handleSubscribe with phone number check
   const handleSubscribe = async (plan: SubscriptionPlan) => {
     const token = localStorage.getItem("clientToken");
     if (!token) {
@@ -139,16 +141,31 @@ export default function UserSubscriptionPlans() {
       return;
     }
 
-    // Client-side check for immediate feedback (Server check is primary)
-    if (activeSubscriptionCount >= 2) {
-      showModal(
-        "You already have 2 active subscriptions. You cannot purchase another one at this time.",
-        null
-      );
-      return;
-    }
-
     try {
+      // ✅ Step 1: Check user's profile for phone number
+      const profileRes = await axios.get(`${API_BASE_URL}api/client-users/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const profile = profileRes.data?.data;
+
+      if (!profile?.phone || profile.phone.trim() === "") {
+        showModal(
+          "Please update your profile with a valid phone number before subscribing.",
+          null
+        );
+        return;
+      }
+
+      // ✅ Step 2: Check subscription limit
+      if (activeSubscriptionCount >= 2) {
+        showModal(
+          "You already have 2 active subscriptions. You cannot purchase another one at this time.",
+          null
+        );
+        return;
+      }
+
+      // ✅ Step 3: Create order
       const createOrderRes = await axios.post(
         `${API_BASE_URL}api/subscription/create-order`,
         { planId: plan._id },
@@ -157,11 +174,13 @@ export default function UserSubscriptionPlans() {
 
       const { orderId, amount, currency, key, name, prefill } =
         createOrderRes.data;
+
       if (!orderId || !amount || !key || !currency) {
         showModal("Payment details missing. Please try again.", null);
         return;
       }
 
+      // ✅ Step 4: Open Razorpay
       const razorpay = new window.Razorpay({
         key,
         amount,
@@ -202,9 +221,9 @@ export default function UserSubscriptionPlans() {
           }
         },
         prefill: {
-          name: prefill?.name || "User",
-          email: prefill?.email || "",
-          contact: prefill?.contact || "",
+          name: prefill?.name || profile?.name || "User",
+          email: prefill?.email || profile?.email || "",
+          contact: profile?.phone || "",
         },
         theme: { color: "#cb1e19" },
       });
@@ -215,7 +234,6 @@ export default function UserSubscriptionPlans() {
       const errorMessage =
         error.response?.data?.message || "Failed to initiate payment.";
 
-      // Handle the 2-plan limit error coming from the server
       if (error.response?.status === 400 && error.response?.data?.limitReached) {
         showModal(error.response.data.message, null);
       } else {
@@ -224,6 +242,7 @@ export default function UserSubscriptionPlans() {
     }
   };
 
+  // ✅ Updated Modal component with “Go to Profile” button
   const Modal = ({
     message,
     onConfirm,
@@ -234,31 +253,49 @@ export default function UserSubscriptionPlans() {
     onConfirm: () => void;
     onCancel: () => void;
     showCancel: boolean;
-  }) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border-t-4 border-[#cb1e19]">
-        <p className="text-lg text-gray-800 mb-6 text-center font-medium">
-          {message}
-        </p>
-        <div className="flex justify-center space-x-4">
-          <button
-            onClick={onConfirm}
-            className="px-6 py-2 rounded-lg text-white font-semibold transition bg-[#cb1e19] hover:opacity-90"
-          >
-            {showCancel ? "OK" : "Close"}
-          </button>
-          {showCancel && (
-            <button
-              onClick={onCancel}
-              className="px-6 py-2 rounded-lg text-gray-700 font-semibold border border-gray-300 bg-white hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-          )}
+  }) => {
+    const isProfileUpdate = message
+      .toLowerCase()
+      .includes("update your profile");
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center  backdrop-blur-sm p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border-t-4 border-[#cb1e19]">
+          <p className="text-lg text-gray-800 mb-6 text-center font-medium">
+            {message}
+          </p>
+          <div className="flex justify-center space-x-4">
+            {isProfileUpdate ? (
+              <button
+                onClick={() => {
+                  setIsModalOpen(false);
+                  navigate("/profile");
+                }}
+                className="px-6 py-2 rounded-lg text-white font-semibold transition bg-[#cb1e19] hover:opacity-90"
+              >
+                Go to Profile
+              </button>
+            ) : (
+              <button
+                onClick={onConfirm}
+                className="px-6 py-2 rounded-lg text-white font-semibold transition bg-[#cb1e19] hover:opacity-90"
+              >
+                {showCancel ? "OK" : "Close"}
+              </button>
+            )}
+            {showCancel && !isProfileUpdate && (
+              <button
+                onClick={onCancel}
+                className="px-6 py-2 rounded-lg text-gray-700 font-semibold border border-gray-300 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const getRemainingDays = (expiresAt: string) => {
     const expDate = new Date(expiresAt);
@@ -266,7 +303,7 @@ export default function UserSubscriptionPlans() {
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   };
 
-  const isPurchaseBlocked = activeSubscriptionCount >= 2; // NEW: Block flag
+  const isPurchaseBlocked = activeSubscriptionCount >= 2;
 
   if (loading || isCheckingSubscription) {
     return (
@@ -285,16 +322,16 @@ export default function UserSubscriptionPlans() {
   }
 
   return (
-    
     <div className="min-h-screen p-6 bg-[#feebbd] flex flex-col items-center">
-      
-    
       {/* Active Subscription Section */}
       {activeSubscription ? (
         <div className="mb-8 w-full max-w-3xl bg-white/50 p-5 rounded-xl shadow flex flex-col sm:flex-row justify-around items-center space-y-4 sm:space-y-0">
           <div>
             <h3 className="text-2xl font-bold text-center text-[#cb1e19]">
-              Your Active Subscription{activeSubscriptionCount > 1 ? `s (${activeSubscriptionCount})` : ""}
+              Your Active Subscription
+              {activeSubscriptionCount > 1
+                ? `s (${activeSubscriptionCount})`
+                : ""}
             </h3>
             <div className="flex justify-center items-center space-x-2 text-gray-800 font-semibold mt-2">
               <MdTimer className="text-red-600 text-xl" />
@@ -303,7 +340,10 @@ export default function UserSubscriptionPlans() {
                 <span className="font-bold text-red-700">
                   {getRemainingDays(activeSubscription.expiresAt)}
                 </span>{" "}
-                day{getRemainingDays(activeSubscription.expiresAt) !== 1 ? "s" : ""}
+                day
+                {getRemainingDays(activeSubscription.expiresAt) !== 1
+                  ? "s"
+                  : ""}
                 .
               </span>
             </div>
@@ -317,19 +357,6 @@ export default function UserSubscriptionPlans() {
               {new Date(activeSubscription.expiresAt).toLocaleDateString()}
             </p>
           </div>
-          {activeSubscriptionCount === 1 && (
-            <div className="flex items-center text-sm font-medium text-blue-600 p-2 bg-blue-50 rounded-lg">
-              
-              
-            </div>
-          )}
-
-         
-          {isPurchaseBlocked && (
-            <div className="flex items-center text-sm font-medium text-red-600 p-2 bg-red-100 rounded-lg">
-              
-            </div>
-          )}
         </div>
       ) : (
         <h2 className="text-4xl font-extrabold mb-5 text-center text-[#cb1e19]">
@@ -342,7 +369,8 @@ export default function UserSubscriptionPlans() {
         {plans.map((plan) => (
           <div
             key={plan._id}
-            className={`relative bg-white/50 rounded-xl shadow-lg p-6 border border-gray-200 transition duration-300 ${isPurchaseBlocked ? 'opacity-70' : 'hover:shadow-2xl'}`}
+            className={`relative bg-white/50 rounded-xl shadow-lg p-6 border border-gray-200 transition duration-300 ${isPurchaseBlocked ? "opacity-70" : "hover:shadow-2xl"
+              }`}
           >
             <h3 className="text-2xl font-bold text-center mb-3 text-gray-800">
               {plan.title}
@@ -374,39 +402,35 @@ export default function UserSubscriptionPlans() {
               </li>
             </ul>
 
-            {/* NEW LOGIC FOR BUTTON TEXT */}
+            {/* Button */}
             <button
               onClick={() => handleSubscribe(plan)}
-              disabled={isPurchaseBlocked} // Disable if limit reached (activeSubscriptionCount >= 2)
+              disabled={isPurchaseBlocked}
               className={`w-full py-3 rounded-lg text-white font-semibold transition ${isPurchaseBlocked
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#cb1e19] hover:opacity-90"
                 }`}
             >
-              {
-                isPurchaseBlocked
-                  ? "Limit Reached"
-                  : activeSubscriptionCount > 0
-                    ? "Stack & Extend" // Use "Stack & Extend" if there is 1 active plan
-                    : "Subscribe Now" // Use "Subscribe Now" if no active plans
-              }
+              {isPurchaseBlocked
+                ? "Limit Reached"
+                : activeSubscriptionCount > 0
+                  ? "Stack & Extend"
+                  : "Subscribe Now"}
             </button>
 
-            {/* Info message for stacking or limit */}
             {activeSubscriptionCount === 1 && (
               <div className="mt-2 text-center text-sm font-medium text-highlight-1">
-                Already active: Buying this plan will  extend your expiry date!
+                Already active: Buying this plan will extend your expiry date!
               </div>
             )}
             {isPurchaseBlocked && (
               <div className="mt-2 text-center text-sm text-red-600 font-medium">
-                You have {activeSubscriptionCount} active plans. Cannot purchase more.
+                You have {activeSubscriptionCount} active plans. Cannot purchase
+                more.
               </div>
             )}
-          </div>          
-          
+          </div>
         ))}
-        
       </div>
 
       {isModalOpen && (
@@ -417,15 +441,17 @@ export default function UserSubscriptionPlans() {
           showCancel={!!modalAction}
         />
       )}
+
       {/* Support Message */}
       <div className="mt-12 text-center">
         <p className="text-lg font-semibold text-gray-800 bg-white/70 p-4 rounded-xl inline-block shadow-md">
           Support the voice for equality –{" "}
-          <span className="text-[#cb1e19] font-bold">Contact 9444452877</span> to donate.
+          <span className="text-[#cb1e19] font-bold">
+            Contact 9444452877
+          </span>{" "}
+          to donate.
         </p>
       </div>
     </div>
-    
-    
   );
 }
