@@ -373,23 +373,37 @@ export default function UserSubscriptionPlans() {
                 Unlimited Reading
               </li>
             </ul>
+
+            {/* NEW LOGIC FOR BUTTON TEXT */}
             <button
               onClick={() => handleSubscribe(plan)}
-              disabled={isPurchaseBlocked} // Disable if limit reached
+              disabled={isPurchaseBlocked} // Disable if limit reached (activeSubscriptionCount >= 2)
               className={`w-full py-3 rounded-lg text-white font-semibold transition ${isPurchaseBlocked
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#cb1e19] hover:opacity-90"
                 }`}
             >
-              {isPurchaseBlocked ? "Limit Reached" : "Subscribe Now"}
+              {
+                isPurchaseBlocked
+                  ? "Limit Reached"
+                  : activeSubscriptionCount > 0
+                    ? "Stack & Extend" // Use "Stack & Extend" if there is 1 active plan
+                    : "Subscribe Now" // Use "Subscribe Now" if no active plans
+              }
             </button>
-            {isPurchaseBlocked && (
-              <div className="mt-2 text-center text-sm text-red-600 font-medium">
-                You have 2 active plans.
+
+            {/* Info message for stacking or limit */}
+            {activeSubscriptionCount === 1 && (
+              <div className="mt-2 text-center text-sm font-medium text-highlight-1">
+                Already active: Buying this plan will  extend your expiry date!
               </div>
             )}
-          </div>
-          
+            {isPurchaseBlocked && (
+              <div className="mt-2 text-center text-sm text-red-600 font-medium">
+                You have {activeSubscriptionCount} active plans. Cannot purchase more.
+              </div>
+            )}
+          </div>          
           
         ))}
         

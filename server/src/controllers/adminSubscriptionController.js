@@ -2,7 +2,7 @@ const SubscriptionPlan = require("../models/SubscriptionPlan");
 const SubscriptionPayment = require("../models/SubscriptionPayment");
 
 const ClientUser = require("../models/ClientUser");
-
+const { sendSubscriptionEmail } = require("../middleware/sndMail"); 
 exports.getAllUsers = async (req, res) => {
   try {
     const { search = "", limit = 10, page = 1 } = req.query;
@@ -46,6 +46,7 @@ exports.manualActivateSubscription = async (req, res) => {
       planId,
       startDate: customStartDate,
       endDate: customEndDate,
+      amount,
     } = req.body;
 
     if (!userId || !planId) {
@@ -53,16 +54,14 @@ exports.manualActivateSubscription = async (req, res) => {
         success: false,
         message: "User ID and Plan ID are required for manual activation.",
       });
-    }
+    } // Find the latest active subscription to determine the new plan's start date
 
-    // Find the latest active subscription to determine the new plan's start date
     const latestActiveSubscription = await SubscriptionPayment.findOne({
       userId: userId,
       payment_status: "success",
       endDate: { $gt: new Date() }, // Check if expiry date is in the future
-    }).sort({ endDate: -1 });
+    }).sort({ endDate: -1 }); // 2. Enforce the limit of 2 active subscriptions
 
-    // 2. Enforce the limit of 2 active subscriptions
     const activeSubscriptionsCount = latestActiveSubscription
       ? await SubscriptionPayment.countDocuments({
           userId: userId,
@@ -95,9 +94,8 @@ exports.manualActivateSubscription = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Subscription plan not found." });
-    }
+    } // Calculate dates for stacking:
 
-    // Calculate dates for stacking:
     let startDate;
     let endDate;
 
@@ -109,10 +107,8 @@ exports.manualActivateSubscription = async (req, res) => {
     } else {
       // If no active plan, the new plan starts now
       startDate = new Date();
-    }
+    } // Ensure the calculated startDate is not in the past // The current time ensures that if the latestActiveSubscription.endDate is in the past (due to query gap), it starts now
 
-    // Ensure the calculated startDate is not in the past
-    // The current time ensures that if the latestActiveSubscription.endDate is in the past (due to query gap), it starts now
     if (
       startDate.getTime() < new Date().getTime() &&
       !latestActiveSubscription
@@ -138,19 +134,30 @@ exports.manualActivateSubscription = async (req, res) => {
       endDate.setDate(startDate.getDate() + plan.durationInDays);
     }
 
+    // Determine the amount paid for the email
+    const paidAmount =
+      amount !== undefined && !isNaN(Number(amount))
+        ? Number(amount)
+        : plan.price;
+
     const newPayment = await SubscriptionPayment.create({
       userId: user._id,
       subscriptionPlanId: plan._id,
       phone: user.phone || "N/A",
       mail: user.email,
-      amount: 0, // Set to 0 for manual/free activation
+      amount: paidAmount,
       payment_status: "success",
       startDate: startDate,
       endDate: endDate,
-    });
+    }); // Send activation email
 
-    // Optional: Send activation email
-    // await sendSubscriptionEmail(user.email, user.name, plan.title, 0, endDate);
+    await sendSubscriptionEmail(
+      user.email,
+      user.name,
+      plan.title,
+      paidAmount, // Use the actual paid amount
+      endDate
+    );
 
     res.status(201).json({
       success: true,

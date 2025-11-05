@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { MdPerson, MdCreditCard, MdEvent, MdAddCircleOutline } from "react-icons/md";
+import { MdPerson, MdCreditCard, MdEvent, MdAddCircleOutline, MdCheckCircle } from "react-icons/md"; // Added MdCheckCircle
 
+// ... (Interface definitions remain the same)
 interface IUser {
     _id: string;
     name: string;
@@ -17,6 +18,29 @@ interface IPlan {
     price: number;
 }
 
+
+// --- Modal Component ---
+// This simple component renders the popup when `isSuccessModalOpen` is true
+const SuccessModal: React.FC<{ message: string; onClose: () => void }> = ({ message, onClose }) => {
+    return (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-lg shadow-2xl max-w-sm w-full text-center">
+                <MdCheckCircle className="text-green-500 text-6xl mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-3 text-gray-800">Success!</h3>
+                <p className="mb-6 text-gray-600">{message}</p>
+                <button
+                    onClick={onClose}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition-colors"
+                >
+                    OK
+                </button>
+            </div>
+        </div>
+    );
+};
+// -----------------------
+
+
 const ManualAddSubscriptionPage: React.FC = () => {
     const API_BASE_URL = import.meta.env.VITE_API;
     const [users, setUsers] = useState<IUser[]>([]);
@@ -28,6 +52,11 @@ const ManualAddSubscriptionPage: React.FC = () => {
 
     const [search, setSearch] = useState<string>("");
     const [page, setPage] = useState<number>(1);
+
+    // 💡 NEW STATE for the success modal
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
+    const [successMessage, setSuccessMessage] = useState<string>("");
+
 
     // Fetch Users (with search + pagination)
     const fetchUsers = async () => {
@@ -83,7 +112,11 @@ const ManualAddSubscriptionPage: React.FC = () => {
             );
 
             if (res.data.success) {
-                toast.success(res.data.message);
+                // 💡 UPDATED SUCCESS LOGIC:
+                setSuccessMessage(res.data.message || "Successfully subscription activated.");
+                setIsSuccessModalOpen(true); // Open the modal
+
+                // Reset form fields
                 setSelectedUser("");
                 setSelectedPlan("");
                 setStartDate("");
@@ -97,31 +130,37 @@ const ManualAddSubscriptionPage: React.FC = () => {
         }
     };
 
+    // 💡 HANDLER to close the modal
+    const handleModalClose = () => {
+        setIsSuccessModalOpen(false);
+    };
+
+
     return (
         <div className="p-6 bg-gray-100 min-h-screen">
             <h1 className="text-3xl font-bold mb-6 text-gray-800 flex items-center gap-2">
                 <MdAddCircleOutline className="text-yellow-500" /> Manual Subscription Activation
             </h1>
 
-            {/* Search Input */}
-            <div className="mb-6">
-                <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value);
-                        setPage(1);
-                    }}
-                    placeholder="Search user by name or email..."
-                    className="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
-                />
-            </div>
-
             {/* Form */}
             <form
                 onSubmit={handleActivate}
                 className="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto space-y-4"
             >
+
+                {/* Search Input */}
+                <div className="mb-5  ">
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            setPage(1);
+                        }}
+                        placeholder="Search user by name or email..."
+                        className="w-[650px] max-w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 "
+                    />
+                </div>
                 {/* User Dropdown */}
                 <div>
                     <label className=" mb-2 font-semibold text-gray-700 flex items-center gap-2">
@@ -196,23 +235,13 @@ const ManualAddSubscriptionPage: React.FC = () => {
                 </button>
             </form>
 
-            {/* Pagination */}
-            <div className="flex justify-center mt-6 gap-4">
-                <button
-                    disabled={page <= 1}
-                    onClick={() => setPage(page - 1)}
-                    className="px-4 py-2 bg-gray-300 rounded-lg disabled:opacity-50"
-                >
-                    Previous
-                </button>
-                <span className="font-semibold text-gray-700">Page {page}</span>
-                <button
-                    onClick={() => setPage(page + 1)}
-                    className="px-4 py-2 bg-gray-300 rounded-lg"
-                >
-                    Next
-                </button>
-            </div>
+            {/* 💡 RENDER THE MODAL CONDITONALLY */}
+            {isSuccessModalOpen && (
+                <SuccessModal
+                    message={successMessage}
+                    onClose={handleModalClose}
+                />
+            )}
         </div>
     );
 };

@@ -115,11 +115,11 @@ export default function Footer() {
         </div>
 
           {/* Contact Info */}
-          <div className="flex flex-col items-end text-base">
-            <p onClick={handleCopyEmail} className="cursor-pointer hover:text-red-700 flex items-center gap-1">
+          <div className="flex flex-col items-end ">
+            <p onClick={handleCopyEmail} className="cursor-pointer text-base hover:text-red-700 flex items-center gap-1">
               {email} <MailIcon />
             </p>
-            <p className="flex items-center gap-1">{phoneNumber} <PhoneIcon /></p>
+            <p className="flex items-center gap-1 text-lg">{phoneNumber} <PhoneIcon /></p>
           </div>
         </div>
 
@@ -133,17 +133,17 @@ export default function Footer() {
           </a>
 
           {/* Email & Phone */}
-          <p onClick={handleCopyEmail} className="cursor-pointer hover:text-red-700 flex items-center justify-center gap-1">
+          <p onClick={handleCopyEmail} className="cursor-pointer text-base hover:text-red-700 flex items-center justify-center gap-1">
             {email} <MailIcon />
           </p>
-          <p className="flex items-center justify-center gap-1">
+          <p className="flex items-center justify-center gap-1 text-lg">
             {phoneNumber} <PhoneIcon />
           </p>
 
           {/* Feedback */}
           <Link
             to="/feedback"
-            className="text-black py-1 rounded-full flex bg-highlight-1 items-center gap-2 font-bold hover:text-red-700 transition"
+            className="text-white py-2 px-3 rounded-full flex bg-highlight-1 items-center gap-2 font-bold hover:text-red-700 transition"
           >
             Feedback
             <FeedbackIcon />
