@@ -13,7 +13,7 @@ const subscriptionPaymentSchema = new mongoose.Schema(
       required: true,
     },
 
-    phone: { type: String, required: true },
+    phone: { type: String},
     mail: { type: String, required: true },
 
     amount: { type: Number, required: true }, // in INR (Rupees)
@@ -25,7 +25,7 @@ const subscriptionPaymentSchema = new mongoose.Schema(
       enum: ["pending", "success", "failed"],
       default: "pending",
     },
-
+    
     startDate: { type: Date },
     endDate: { type: Date },
   },

@@ -75,13 +75,19 @@ exports.createSubscriptionOrder = async (req, res) => {
     await SubscriptionPayment.create({
       userId: user._id,
       subscriptionPlanId: planId,
-      phone: user.phone, // Or get from req.body if needed
+      phone: user.phone ? user.phone : undefined, // Or get from req.body if needed
       mail: user.email,
       amount: plan.price,
       razorpay_order_id: order.id,
       payment_status: "pending",
       startDate: startDate, // Store the calculated start date
+      contact: user.phone,
     });
+     if (user.phone) {
+       paymentData.phone = user.phone;
+     }
+
+      await SubscriptionPayment.create(paymentData);
 
     // 7. Send order details to client to open Razorpay checkout
     res.status(200).json({
