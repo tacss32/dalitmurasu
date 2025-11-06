@@ -101,7 +101,7 @@ export default function PeriyarSpeaks() {
                       {highlightMatch(article.title, search)}
                     </h2>
                     <p className="text-md text-gray-600">
-                      {new Date(article.date).toLocaleDateString()}
+                      {new Date(article.date).toLocaleDateString('en-GB')}
                     </p>
                   </div>
                 </Link>
@@ -138,7 +138,7 @@ export default function PeriyarSpeaks() {
                       {highlightMatch(article.title, search)}
                     </h2>
                     <p className="text-sm text-gray-500">
-                      {new Date(article.date).toLocaleDateString()}
+                      {new Date(article.date).toLocaleDateString('en-GB')}
                     </p>
                     <p className="text-sm text-gray-500">
                       {/* {article.category || "Editorial"} */}

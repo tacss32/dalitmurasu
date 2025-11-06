@@ -133,7 +133,7 @@ const PdfItemCard: React.FC<PdfItemCardProps> = ({ item }) => {
             </div>
             <div className="p-4">
                 <h3 className="text-md font-bold text-gray-800 line-clamp-2">{item.title}</h3>
-                <p className="text-sm text-gray-500 mt-1">{new Date(item.dateISO).toLocaleDateString()}</p>
+                <p className="text-sm text-gray-500 mt-1">{new Date(item.dateISO).toLocaleDateString('en-GB')}</p>
                 <span className="text-xs font-semibold text-red-600 mt-2 inline-block">PDF</span>
             </div>
         </a>
@@ -446,7 +446,7 @@ export default function Editorial() {
                                                 {item.title}
                                             </h2>
                                             <p className="text-sm text-gray-500">
-                                                {new Date(item.dateISO).toLocaleDateString()}
+                                                {new Date(item.dateISO).toLocaleDateString('en-GB')}
                                             </p>
                                             <p className="text-sm text-gray-500">
                                                 {categoryTranslations[item.article?.category.toLowerCase() || ''] || item.article?.category || 'Editorial'}

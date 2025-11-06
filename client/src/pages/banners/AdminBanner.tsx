@@ -576,7 +576,7 @@ export default function AdminBanner() {
                   <p className="text-sm text-gray-600">ID: {banner._id}</p>
                   {banner.createdAt && (
                     <p className="text-xs text-gray-500">
-                      Created: {new Date(banner.createdAt).toLocaleDateString()}
+                      Created: {new Date(banner.createdAt).toLocaleDateString('en-GB')}
                     </p>
                   )}
                 </div>

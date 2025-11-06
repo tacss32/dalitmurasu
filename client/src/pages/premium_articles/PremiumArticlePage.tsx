@@ -116,7 +116,7 @@ export default function PremiumArticlePage() {
                         <div className="text-white/80">
                           {categoryInTamil[article.category] || article.category}
                           <span className="mx-2">•</span>
-                          {new Date(article.date).toLocaleDateString()}
+                          {new Date(article.date).toLocaleDateString('en-GB')}
                         </div>
                       </div>
                     </Link>
@@ -143,7 +143,7 @@ export default function PremiumArticlePage() {
                           {article.subtitle}
                         </h3>
                         <p className="text-sm text-gray-200 font-medium">
-                          {new Date(article.date).toLocaleDateString()}
+                          {new Date(article.date).toLocaleDateString('en-GB')}
                           <span className="mx-2 text-gray-300">•</span>
                           {categoryInTamil[article.category] || article.category}
                           <span className="mx-2 text-gray-300">•</span>
@@ -180,7 +180,7 @@ export default function PremiumArticlePage() {
                         {article.title}
                       </h2>
                       <p className="text-sm text-gray-500">
-                        {new Date(article.date).toLocaleDateString()}   {categoryInTamil[article.category] || article.category}
+                        {new Date(article.date).toLocaleDateString('en-GB')}   {categoryInTamil[article.category] || article.category}
                       </p>
                       <p className="text-sm text-gray-500">
                         

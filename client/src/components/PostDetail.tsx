@@ -283,7 +283,7 @@ export default function PostDetail() {
             <span className="hidden sm:inline"></span>
           </button>
           <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full">
-            {new Date(post.date).toLocaleDateString()}
+            {new Date(post.date).toLocaleDateString('en-GB')}
           </span>
           <span className="text-2xl">•</span>
           {/* Updated category link - NOW USES createCategorySlug */}
@@ -468,7 +468,7 @@ export default function PostDetail() {
                       {post.title}
                     </h2>
                     <p className="text-sm text-gray-500">
-                      {new Date(post.date || post.createdAt).toLocaleDateString()}
+                                                    {new Date(post.date || post.createdAt).toLocaleDateString('en-GB')}
                     </p>
                     <p className="text-sm text-gray-500">
                       {getTamilCategoryName(post.category)}

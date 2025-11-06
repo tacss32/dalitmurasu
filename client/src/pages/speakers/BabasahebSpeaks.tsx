@@ -105,7 +105,7 @@ export default function BabasahebSpeaks() {
                     {highlightMatch(article.title, search)}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {new Date(article.date).toLocaleDateString()}
+                    {new Date(article.date).toLocaleDateString('en-GB')}
                   </p>
                 </div>
               </Link>
@@ -145,7 +145,7 @@ export default function BabasahebSpeaks() {
                     {highlightMatch(article.title, search)}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {new Date(article.date).toLocaleDateString()}
+                    {new Date(article.date).toLocaleDateString('en-GB')}
                   </p>
                 </div>
               </div>

@@ -354,7 +354,7 @@ export default function UserSubscriptionPlans() {
             </h4>
             <p className="text-gray-600 text-sm">
               Expires on:{" "}
-              {new Date(activeSubscription.expiresAt).toLocaleDateString()}
+              {new Date(activeSubscription.expiresAt).toLocaleDateString('en-GB')}
             </p>
           </div>
         </div>

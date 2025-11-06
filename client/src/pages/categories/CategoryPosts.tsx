@@ -76,7 +76,7 @@ export default function CategoryPosts() {
                 title={post.title}
                 image={post?.images?.[0]}
                 subtitle={post.subtitle}
-                date={new Date(post.date).toLocaleDateString()}
+                date={new Date(post.date).toLocaleDateString('en-GB')}
                 author={post.author}
                 id={post._id}
                 category={post.category}

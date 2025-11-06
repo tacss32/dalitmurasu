@@ -212,7 +212,7 @@ export default function ProfilePage() {
               </p>
               <p className="text-sm mt-1">
                 Expires on:{" "}
-                {new Date(activeSubscription.expiresAt).toLocaleDateString()}
+                  {new Date(activeSubscription.expiresAt).toLocaleDateString('en-GB')}
               </p>
               <div className="flex justify-center items-center gap-2 mt-2">
                 <MdTimer className="text-highlight-1" />
@@ -270,7 +270,7 @@ export default function ProfilePage() {
             isEditing
               ? formData.dob
               : userDetails.dob
-                ? new Date(userDetails.dob).toLocaleDateString()
+                ? new Date(userDetails.dob).toLocaleDateString('en-GB')
                 : "N/A"
           }
           onChange={handleInputChange}

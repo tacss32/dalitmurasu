@@ -63,6 +63,10 @@ router.get(
   adminSubscriptionController.getFilteredSubscriptionPayments
 );
 
+router.put(
+  "/cancel-subscription/:id", // Matches the endpoint called by the frontend's handleCancelSubscription
+  adminSubscriptionController.cancelSubscription // The new controller function
+);
 
 router.post(
   "/subscribe-user",
