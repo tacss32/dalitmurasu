@@ -46,7 +46,9 @@ async function sendOrderConfirmationEmail(order, userEmail) {
           <p>Thank you for your order with Dalit Murasu. Your order has been successfully placed and is being processed.</p>
           <h3 style="color: #0056b3;">Order Details</h3>
           <p><strong>Order ID:</strong> ${order.orderId}</p>
-          <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
+          <p><strong>Date:</strong> ${new Date(
+            order.createdAt
+          ).toLocaleDateString("en-GB")}</p>
          
           <h4 style="color: #0056b3;">Items Purchased:</h4>
           <ul style="list-style-type: none; padding: 0;">
@@ -58,7 +60,7 @@ async function sendOrderConfirmationEmail(order, userEmail) {
           <h4 style="color: #0056b3;">Shipping Address:</h4>
           <p>
             ${order.name}<br>
-            ${order.address.replace(/\n/g, '<br>')}<br>
+            ${order.address.replace(/\n/g, "<br>")}<br>
             Phone: ${order.phone}
           </p>
           <p>We'll notify you once your order has been shipped. If you have any questions, please contact our support team.</p>

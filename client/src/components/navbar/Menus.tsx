@@ -640,10 +640,10 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false,clo
           </button>
           {isNotificationsDropdownOpen && (
             <div
-              className="absolute right-0 mt-2 w-80 md:w-96 bg-white/30 border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden"
-              style={{ maxHeight: "400px" }}
+              className="absolute right-0 mt-2 w-80 md:w-96 bg-background-to border border-black rounded-lg shadow-xl z-50 overflow-hidden max-h-[400px]"
+
             >
-              <h3 className="text-lg font-semibold px-4 py-3 bg-white/40 text-highlight-1 border-b border-gray-200 sticky top-0 z-10">
+              <h3 className="text-lg font-semibold px-4 py-3 bg-white/30 text-gray-800 border-b border-gray-200 sticky top-0 z-10">
                 Your Notifications
               </h3>
               <div
@@ -666,16 +666,7 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false,clo
                       >
                         <div className="flex justify-between items-start mb-1">
                           <div className="font-bold text-base">{notif.title}</div>
-                          <div className="flex items-center gap-2">
-                            {notif.popup && (
-                              <span className="bg-purple-200 text-purple-800 text-xs px-2 py-0.5 rounded-full">Popup</span>
-                            )}
-                            {notif.read ? (
-                              <span className="bg-green-200 text-green-800 text-xs px-2 py-0.5 rounded-full">Read</span>
-                            ) : (
-                              <span className="bg-yellow-200 text-yellow-800 text-xs px-2 py-0.5 rounded-full">Unread</span>
-                            )}
-                          </div>
+                          
                         </div>
                         <p className="text-sm leading-snug">{notif.message}</p>
                         <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
@@ -703,7 +694,7 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false,clo
             role="dialog"
             aria-modal="true"
             aria-labelledby="popup-notification-title">
-            <div className="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full relative transform transition-all duration-300 scale-100 opacity-100 animate-fade-in-up">
+            <div className="bg-background-to rounded-lg shadow-2xl p-6 max-w-sm w-full relative transform transition-all duration-300 scale-100 opacity-100 animate-fade-in-up">
               <h3 id="popup-notification-title" className="text-xl font-bold text-gray-900 mb-3">{currentPopupNotification.title}</h3>
               <p className="text-gray-700 mb-4">{currentPopupNotification.message}</p>
               <div className="text-xs text-gray-500 mb-4">
@@ -711,9 +702,9 @@ export default function Menus({ isMobileHeader = false, isMobileMenu = false,clo
               </div>
               <button
                 onClick={handleClosePopup}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md transition-colors"
+                className="w-full bg-highlight-1 hover:bg-highlight-1/80 text-white font-semibold py-2 rounded-md transition-colors"
               >
-                Got it! (Mark as Read)
+                Got it! 
               </button>
             </div>
           </div>
@@ -1070,16 +1061,7 @@ if (isMobileMenu) {
                         >
                           <div className="flex justify-between items-start mb-1">
                             <div className="font-bold text-base">{notif.title}</div>
-                            <div className="flex items-center gap-2">
-                              {notif.popup && (
-                                <span className="bg-purple-200 text-purple-800 text-xs px-2 py-0.5 rounded-full">Popup</span>
-                              )}
-                              {notif.read ? (
-                                <span className="bg-green-200 text-green-800 text-xs px-2 py-0.5 rounded-full">Read</span>
-                              ) : (
-                                <span className="bg-yellow-200 text-yellow-800 text-xs px-2 py-0.5 rounded-full">Unread</span>
-                              )}
-                            </div>
+                            
                           </div>
                           <p className="text-sm leading-snug">{notif.message}</p>
                           <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
@@ -1124,7 +1106,7 @@ if (isMobileMenu) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="popup-notification-title">
-          <div className="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full relative transform transition-all duration-300 scale-100 opacity-100 animate-fade-in-up">
+          <div className="bg-background-to rounded-lg shadow-2xl p-6 max-w-sm w-full relative transform transition-all duration-300 scale-100 opacity-100 animate-fade-in-up">
             <h3 id="popup-notification-title" className="text-xl font-bold text-gray-900 mb-3">{currentPopupNotification.title}</h3>
             <p className="text-gray-700 mb-4">{currentPopupNotification.message}</p>
             <div className="text-xs text-gray-500 mb-4">
@@ -1132,9 +1114,9 @@ if (isMobileMenu) {
             </div>
             <button
               onClick={handleClosePopup}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md transition-colors"
+              className="w-full bg-highlight-1 hover:bg-highlight-1/80 text-white font-semibold py-2 rounded-md transition-colors"
             >
-              Got it! (Mark as Read)
+              Got it! 
             </button>
           </div>
         </div>
