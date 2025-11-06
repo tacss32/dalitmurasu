@@ -5,11 +5,9 @@ const ClientUser = require("../models/ClientUser");
 const { sendSubscriptionEmail } = require("../middleware/sndMail"); 
 exports.getAllUsers = async (req, res) => {
   try {
-    const { search = "", limit = 10, page = 1 } = req.query;
-
+    const { search = ""} = req.query;
     const query = {};
 
-    // Search by name or email (prefix match)
     if (search) {
       query.$or = [
         { name: { $regex: `^${search}`, $options: "i" } },
@@ -18,18 +16,42 @@ exports.getAllUsers = async (req, res) => {
     }
 
     const totalUsers = await ClientUser.countDocuments(query);
+
+    // Fetch users
     const users = await ClientUser.find(query)
       .select("name email phone _id")
-      .limit(Number(limit))
-      .skip((page - 1) * limit)
+       
       .sort({ name: 1 });
+
+    // Fetch each user's active subscription
+    const userDetails = await Promise.all(
+      users.map(async (user) => {
+        const activeSub = await SubscriptionPayment.findOne({
+          userId: user._id,
+          payment_status: "success",
+          endDate: { $gt: new Date() }, // Active subscription
+        })
+          .populate("subscriptionPlanId", "title durationInDays price")
+          .lean();
+
+        return {
+          ...user.toObject(),
+          subscription: activeSub
+            ? {
+                isActive: true,
+                planTitle: activeSub.subscriptionPlanId.title,
+                endDate: activeSub.endDate,
+              }
+            : { isActive: false },
+        };
+      })
+    );
 
     res.status(200).json({
       success: true,
       total: totalUsers,
-      page: Number(page),
-      limit: Number(limit),
-      users,
+     
+      users: userDetails,
     });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -39,6 +61,7 @@ exports.getAllUsers = async (req, res) => {
     });
   }
 };
+
 exports.manualActivateSubscription = async (req, res) => {
   try {
     const {
@@ -163,7 +186,7 @@ exports.manualActivateSubscription = async (req, res) => {
       success: true,
       message: `Subscription for user ${
         user.name
-      } activated manually. Expires on: ${endDate.toLocaleDateString()}`,
+      } activated manually. Expires on: ${endDate.toLocaleDateString("en-GB")}`,
       data: newPayment,
     });
   } catch (error) {

@@ -81,7 +81,8 @@ import AdminPremiumUsers from "./pages/premium_articles/AdminPremiumUsers"  ;
 import PremiumArticlePage from './pages/premium_articles/PremiumArticlePage';
 import PremiumArticleDetail from './pages/premium_articles/PremiumArticleDetail';
 import MyOrders from "./pages/myorders";
-import AdminDonation from "./pages/donation/AdminDonation";
+import Allusers from "./pages/Alllusers/UserTable";
+import UserDashboard from "./pages/Alllusers/Dashboard";
 
 
 createRoot(document.getElementById("root")!).render(
@@ -186,7 +187,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="premium-articles" element={<PremiumArticleList />} />
             <Route path="premium-articles/create" element={<PremiumArticleForm />} />
             <Route path="/admin/premium-articles/edit/:id" element={<PremiumArticleForm />} />
-            <Route path="/admin/donation" element={<AdminDonation />} />
+            <Route path="/admin/users" element={<Allusers/>} />
+            <Route path="/admin/users-dashboard" element={<UserDashboard />} />
           </Route>
         </Routes>
       </ThemeProvider>

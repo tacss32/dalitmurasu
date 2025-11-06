@@ -48,7 +48,9 @@ async function sendSubscriptionEmail(
   try {
     console.log(`Attempting to send subscription email to: ${toEmail}`);
     // Convert paisa back to rupees for display
-    const formattedExpiryDate = new Date(expiryDate).toLocaleDateString();
+    const formattedExpiryDate = new Date(expiryDate).toLocaleDateString(
+      "en-GB"
+    );
 
     await transporter.sendMail({
       from: `"Dalit Murasu" <${process.env.EMAIL_USER}>`,
@@ -138,10 +140,46 @@ async function sendFeedbackEmail({ name, phone, mail, subject, message }) {
 }
 
 
+
+async function sendExpiryReminderEmail(toEmail, userName, planTitle, endDate) {
+  try {
+    const formattedExpiryDate = new Date(endDate).toLocaleDateString("en-IN", {
+      year: "numeric", month: "long", day: "numeric"
+    });
+
+    await transporter.sendMail({
+      from: `"Dalit Murasu" <${process.env.EMAIL_USER}>`,
+      to: toEmail,
+      subject: `Your ${planTitle} plan expires in 3 days`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333;">
+          <h2 style="color:#d97706;">Heads up, ${userName}! ⏳</h2>
+          <p>Your <strong>${planTitle}</strong> subscription will expire on <strong>${formattedExpiryDate}</strong>.</p>
+          <p>Renew now to keep uninterrupted access to Dalit Murasu.</p>
+          <p>
+            <a href="${process.env.APP_URL || "#"}"
+               style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
+              Renew Subscription
+            </a>
+          </p>
+          <p>If you've already renewed, you can ignore this message.</p>
+          <p>— The Dalit Murasu Team</p>
+        </div>
+      `,
+    });
+    console.log(`3-day expiry reminder sent to ${toEmail}`);
+  } catch (error) {
+    console.error("Error sending expiry reminder email:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   transporter,
   sendWelcomeEmail,
   sendSubscriptionEmail,
   sendDonationEmail,
   sendFeedbackEmail,
+  // NEW export
+  sendExpiryReminderEmail,
 };

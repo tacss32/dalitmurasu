@@ -19,18 +19,17 @@ interface IPlan {
 }
 
 
-// --- Modal Component ---
 // This simple component renders the popup when `isSuccessModalOpen` is true
 const SuccessModal: React.FC<{ message: string; onClose: () => void }> = ({ message, onClose }) => {
     return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0  backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-8 rounded-lg shadow-2xl max-w-sm w-full text-center">
                 <MdCheckCircle className="text-green-500 text-6xl mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-3 text-gray-800">Success!</h3>
                 <p className="mb-6 text-gray-600">{message}</p>
                 <button
                     onClick={onClose}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition-colors"
+                    className="w-full bg-yellow-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition-colors"
                 >
                     OK
                 </button>
@@ -95,11 +94,12 @@ const ManualAddSubscriptionPage: React.FC = () => {
     }, [search, page]);
 
     // Submit manual subscription activation
+    // Submit manual subscription activation
     const handleActivate = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!selectedUser || !selectedPlan) {
-            toast.error("Please select both a user and a plan.");
+        if (!selectedUser || !selectedPlan || !startDate) {
+            toast.error("Please select a user, a plan, and a start date.");
             return;
         }
 
@@ -112,11 +112,10 @@ const ManualAddSubscriptionPage: React.FC = () => {
             );
 
             if (res.data.success) {
-                // 💡 UPDATED SUCCESS LOGIC:
-                setSuccessMessage(res.data.message || "Successfully subscription activated.");
-                setIsSuccessModalOpen(true); // Open the modal
+                setSuccessMessage(res.data.message || "Successfully activated subscription.");
+                setIsSuccessModalOpen(true);
 
-                // Reset form fields
+                // Reset form
                 setSelectedUser("");
                 setSelectedPlan("");
                 setStartDate("");
@@ -134,6 +133,21 @@ const ManualAddSubscriptionPage: React.FC = () => {
     const handleModalClose = () => {
         setIsSuccessModalOpen(false);
     };
+    // Auto-calculate end date when startDate or plan changes
+    useEffect(() => {
+        if (startDate && selectedPlan) {
+            const plan = plans.find((p) => p._id === selectedPlan);
+            if (plan) {
+                const start = new Date(startDate);
+                const end = new Date(start);
+                end.setDate(start.getDate() + plan.durationInDays);
+                setEndDate(end.toISOString().split("T")[0]); // format as yyyy-mm-dd
+            }
+        } else {
+            setEndDate("");
+        }
+    }, [startDate, selectedPlan, plans]);
+
 
 
     return (
@@ -199,29 +213,34 @@ const ManualAddSubscriptionPage: React.FC = () => {
                     </select>
                 </div>
 
-                {/* Optional Dates */}
+                {/* Dates Section */}
                 <div className="flex flex-col md:flex-row gap-4">
+                    {/* Start Date */}
                     <div className="flex-1">
-                        <label className=" mb-2 font-semibold text-gray-700 flex items-center gap-2">
+                        <label className="mb-2 font-semibold text-gray-700 flex items-center gap-2">
                             <MdEvent className="text-yellow-500" /> Start Date
+                            <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
+                            required
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                         />
                     </div>
 
+                    {/* End Date (auto-calculated) */}
                     <div className="flex-1">
-                        <label className=" mb-2 font-semibold text-gray-700 flex items-center gap-2">
+                        <label className="mb-2 font-semibold text-gray-700 flex items-center gap-2">
                             <MdEvent className="text-yellow-500" /> End Date
+                            <span className="text-gray-400 text-sm ml-1">(auto)</span>
                         </label>
                         <input
                             type="date"
                             value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                            readOnly
+                            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed focus:ring-0"
                         />
                     </div>
                 </div>

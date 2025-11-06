@@ -225,7 +225,7 @@ export default function UserSubscriptionPlans() {
           email: prefill?.email || profile?.email || "",
           contact: profile?.phone || "",
         },
-        theme: { color: "#cb1e19" },
+        theme: { color: "#c39553" },
       });
 
       razorpay.open();
@@ -242,7 +242,6 @@ export default function UserSubscriptionPlans() {
     }
   };
 
-  // ✅ Updated Modal component with “Go to Profile” button
   const Modal = ({
     message,
     onConfirm,
@@ -259,8 +258,30 @@ export default function UserSubscriptionPlans() {
       .includes("update your profile");
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center  backdrop-blur-sm p-4">
-        <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border-t-4 border-[#cb1e19]">
+      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border-t-4 border-[#cb1e19] relative">
+          {/* ✅ Close Button (New Addition) */}
+          <button
+            onClick={onCancel} // Use onCancel to close the modal
+            className="absolute top-3 right-3 p-2 text-gray-500 hover:text-gray-900 transition rounded-full hover:bg-gray-100"
+            aria-label="Close modal"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+          {/* End of Close Button */}
           <p className="text-lg text-gray-800 mb-6 text-center font-medium">
             {message}
           </p>

@@ -226,6 +226,18 @@ export default function AdminSidebar() {
         },
       ],
     },
+    {
+      title: "Users",
+      icon: <MdAllInbox className="text-xl" />,
+      mainLink: "/admin/users-dashboard",
+      subLinks: [
+        {
+          label: "View All Users",
+          href: "/admin/Users",
+          icon: <MdAllInbox />,
+        },
+      ],
+    },
    
   ];
 
