@@ -87,7 +87,7 @@ export default function Card({
           <div className="text-white/80">
             {tamilCategory}
             <span className="mx-2">•</span>
-            {new Date(date).toLocaleDateString()}
+            {new Date(date).toLocaleDateString('en-GB')}
           </div>
         </div>
       </Link>
@@ -116,7 +116,7 @@ export default function Card({
             </h3>
           )}
           <p className="text-sm text-gray-200 font-medium">
-            {new Date(date).toLocaleDateString()}
+            {new Date(date).toLocaleDateString('en-GB')}
             <span className="mx-2 text-gray-300">•</span>
             {tamilCategory}
             <span className="mx-2 text-gray-300">•</span>

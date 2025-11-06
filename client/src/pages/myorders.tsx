@@ -245,7 +245,7 @@ const MyOrders: React.FC = () => {
                             {/* Info */}
                             <p className="text-xl text-gray-700">
                                 <strong>Order Date:</strong>{" "}
-                                {new Date(order.createdAt).toLocaleDateString()}
+                                {new Date(order.createdAt).toLocaleDateString('en-GB')}
                             </p>
 
                             {/* Items */}

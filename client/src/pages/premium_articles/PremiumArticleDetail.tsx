@@ -330,7 +330,7 @@ export default function PremiumArticleDetail() {
               <span className="hidden sm:inline"></span>
             </button>
             <span className="bg-highlight-1/70 text-white px-3 py-1 rounded-full hover:bg-highlight-1 transition-colors duration-200 text-sm md:text">
-              {new Date(article.date).toLocaleDateString()}
+                          {new Date(article.date).toLocaleDateString('en-GB')}
             </span>
             <span className="text-2xl text-yellow-600">•</span>
             <Link

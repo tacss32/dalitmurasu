@@ -199,55 +199,146 @@ exports.deleteSubscription = async (req, res) => {
   }
 };
 
-/**
- * --- ADMIN: Get All Subscriptions ---
- */
-exports.getFilteredSubscriptionPayments = async (req, res) => {
+exports.cancelSubscription = async (req, res) => {
   try {
-    const { payment_status, min_amount, max_amount, start_date, end_date } =
-      req.query;
-    const filter = {};
+    const { id } = req.params; // Get the payment ID from the URL parameter
 
-    // Filter by Payment Status
-    if (payment_status) {
-      filter.payment_status = payment_status;
+    // 1. Find the payment record and update its status
+    const canceledPayment = await SubscriptionPayment.findByIdAndUpdate(
+      id,
+      { payment_status: "canceled" }, // Set the new status
+      { new: true, runValidators: true } // Return the updated document
+    );
+
+    if (!canceledPayment) {
+      return res.status(404).json({
+        success: false,
+        message: "Subscription payment record not found.",
+      });
     }
 
-    // Filter by Amount Range
-    if (min_amount || max_amount) {
-      filter.amount = {};
-      if (min_amount) filter.amount.$gte = Number(min_amount);
-      if (max_amount) filter.amount.$lte = Number(max_amount);
-    }
-
-    // 🗓️ Filter by Date Range (based on createdAt)
-    if (start_date || end_date) {
-      filter.createdAt = {};
-      if (start_date) filter.createdAt.$gte = new Date(start_date);
-      if (end_date) {
-        // Add 1 day to endDate so it includes the entire day
-        const nextDay = new Date(end_date);
-        nextDay.setDate(nextDay.getDate() + 1);
-        filter.createdAt.$lte = nextDay;
-      }
-    }
-
-    const subscriptionPayments = await SubscriptionPayment.find(filter)
-      .populate("userId", "name email")
-      .populate("subscriptionPlanId", "title price")
-      .sort({ createdAt: -1 });
+    // 2. Optionally, you might want to update the user's overall subscription status here
+    // (e.g., if you track a 'latestPlanStatus' on the ClientUser model).
 
     res.status(200).json({
       success: true,
-      count: subscriptionPayments.length,
-      data: subscriptionPayments,
+      message: `Subscription record ID ${id} status updated to CANCELED. Record preserved.`,
+      data: canceledPayment,
     });
   } catch (error) {
-    console.error("Error fetching filtered subscription payments:", error);
+    console.error("Error canceling subscription:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
+/**
+ * --- ADMIN: Get All Subscriptions ---
+ */
+/**
+ * --- ADMIN: Get Filtered Subscriptions (Updated with Search & Status) ---
+ * Allows filtering by payment status, amount range, date range, 
+ * and searching by the related ClientUser's name or email.
+ */
+exports.getFilteredSubscriptionPayments = async (req, res) => {
+    try {
+        const { payment_status, min_amount, max_amount, start_date, end_date, search } = req.query;
+        
+        // Initial match object for direct SubscriptionPayment fields (like amount, createdAt)
+        const matchFilter = {};
+        const clientUserCollectionName = "clientusers"; // ⚠️ IMPORTANT: Verify your actual ClientUser collection name in MongoDB
+
+        // 1. Filter by Payment Status (Direct field)
+        if (payment_status) {
+            matchFilter.payment_status = payment_status;
+        }
+
+        // 2. Filter by Amount Range (Direct field)
+        if (min_amount || max_amount) {
+            matchFilter.amount = {};
+            if (min_amount) matchFilter.amount.$gte = Number(min_amount);
+            if (max_amount) matchFilter.amount.$lte = Number(max_amount);
+        }
+
+        // 3. Filter by Date Range (based on createdAt) (Direct field)
+        if (start_date || end_date) {
+            matchFilter.createdAt = {};
+            if (start_date) matchFilter.createdAt.$gte = new Date(start_date);
+            if (end_date) {
+                // Add 1 day to endDate so it includes the entire day
+                const nextDay = new Date(end_date);
+                nextDay.setDate(nextDay.getDate() + 1);
+                matchFilter.createdAt.$lte = nextDay;
+            }
+        }
+        
+        // 4. Build the Aggregation Pipeline
+        const pipeline = [
+            // STEP 1: Add user details using $lookup (join)
+            {
+                $lookup: {
+                    from: clientUserCollectionName, 
+                    localField: "userId",
+                    foreignField: "_id",
+                    as: "userId", // Overwrites the ObjectId field with the populated user array
+                }
+            },
+            // Since userId is an array now, unwind it to filter/project easily
+            {
+                $unwind: {
+                    path: "$userId",
+                    preserveNullAndEmptyArrays: true // Keep payments even if user data is missing
+                }
+            },
+            // STEP 2: Add plan details (similar to populate, but necessary for aggregation)
+            {
+                $lookup: {
+                    from: "subscriptionplans", // ⚠️ IMPORTANT: Verify your SubscriptionPlan collection name
+                    localField: "subscriptionPlanId",
+                    foreignField: "_id",
+                    as: "subscriptionPlanId",
+                }
+            },
+            {
+                $unwind: {
+                    path: "$subscriptionPlanId",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            // STEP 3: Apply direct filters (status, date, amount)
+            {
+                $match: matchFilter 
+            }
+        ];
+        
+        // 5. Add Search filter (if provided)
+        if (search) {
+            // Add a new $match stage for searching on user fields
+            pipeline.push({
+                $match: {
+                    $or: [
+                        { "userId.name": { $regex: search, $options: "i" } },
+                        { "userId.email": { $regex: search, $options: "i" } },
+                    ]
+                }
+            });
+        }
+        
+        // 6. Sort by creation date
+        pipeline.push({ $sort: { createdAt: -1 } });
+        
+        // 7. Execute the pipeline
+        const subscriptionPayments = await SubscriptionPayment.aggregate(pipeline);
+
+        res.status(200).json({
+            success: true,
+            count: subscriptionPayments.length,
+            data: subscriptionPayments,
+        });
+    } catch (error) {
+        console.error("Error fetching filtered subscription payments:", error);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
 /**
  * --- ADMIN: Get Total Subscription Revenue ---
  */

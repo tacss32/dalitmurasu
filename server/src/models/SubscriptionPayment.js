@@ -13,7 +13,7 @@ const subscriptionPaymentSchema = new mongoose.Schema(
       required: true,
     },
 
-    phone: { type: String},
+    phone: { type: String },
     mail: { type: String, required: true },
 
     amount: { type: Number, required: true }, // in INR (Rupees)
@@ -22,12 +22,13 @@ const subscriptionPaymentSchema = new mongoose.Schema(
     razorpay_signature: { type: String },
     payment_status: {
       type: String,
-      enum: ["pending", "success", "failed"],
+      enum: ["pending", "success", "failed", "canceled"],
       default: "pending",
     },
-    
+
     startDate: { type: Date },
     endDate: { type: Date },
+    threeDayReminderSent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
