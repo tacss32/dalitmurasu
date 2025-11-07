@@ -7,6 +7,7 @@ const path = require("path");
 
 const connectDB = require("./config/db");
 require("./middleware/passportSetup");
+const { startReminderService } = require("./controllers/reminderService");
 
 
 // Load environment variables
@@ -84,6 +85,9 @@ connectDB()
 
     // ✅ Fix path: serve from src/uploads/
     app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+    startReminderService();
+   
 
     // -----------------------------------------------------------------------
     // API Routes

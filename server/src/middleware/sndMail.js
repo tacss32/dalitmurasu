@@ -13,6 +13,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const APP_URL = "https://dalitmurasu.com";
+
 async function sendWelcomeEmail(toEmail, userName) {
   try {
     console.log(`Attempting to send welcome email to: ${toEmail}`);
@@ -78,28 +80,7 @@ async function sendSubscriptionEmail(
   }
 }
 
-async function sendDonationEmail(toEmail, userName, amount) {
-  try {
-    const formattedAmount = amount.toFixed(2);
-    await transporter.sendMail({
-      from: `"Dalit Murasu" <${process.env.EMAIL_USER}>`,
-      to: toEmail,
-      subject: "Thank You for Your Donation - Dalit Murasu ❤️",
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <h2 style="color: #0056b3;">Dear ${userName},</h2>
-          <p>We sincerely thank you for your generous donation to <strong>Dalit Murasu</strong>.</p>
-          <p>Your contribution of <strong>₹${formattedAmount}</strong> helps us continue our mission of amplifying voices and promoting equality.</p>
-          <p>We deeply appreciate your support 🙏</p>
-          <p>Best regards,<br/>The Dalit Murasu Team</p>
-        </div>
-      `,
-    });
-    console.log(`Donation email sent to ${toEmail}`);
-  } catch (error) {
-    console.error("Error sending donation email:", error);
-  }
-}
+
 async function sendFeedbackEmail({ name, phone, mail, subject, message }) {
   try {
     // Determine the ADMIN email address from environment variables
@@ -157,7 +138,7 @@ async function sendExpiryReminderEmail(toEmail, userName, planTitle, endDate) {
           <p>Your <strong>${planTitle}</strong> subscription will expire on <strong>${formattedExpiryDate}</strong>.</p>
           <p>Renew now to keep uninterrupted access to Dalit Murasu.</p>
           <p>
-            <a href="${process.env.APP_URL || "#"}"
+            <a href="${APP_URL }"
                style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
               Renew Subscription
             </a>
@@ -173,13 +154,42 @@ async function sendExpiryReminderEmail(toEmail, userName, planTitle, endDate) {
     throw error;
   }
 }
+async function sendPostExpiryEmail(toEmail, userName, planTitle) {
+  try {
+    await transporter.sendMail({
+      from: `"Dalit Murasu" <${process.env.EMAIL_USER}>`,
+      to: toEmail,
+      subject: `Your ${planTitle} subscription has expired`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333;">
+          <h2 style="color:#d97706;">Your subscription has expired, ${userName}</h2>
+          <p>Your <strong>${planTitle}</strong> subscription with Dalit Murasu has expired.</p>
+          <p>To regain access to all our content, please renew your subscription at your earliest convenience.</p>
+          <p>
+            <a href="${APP_URL}"  
+                style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
+              Renew Subscription
+            </a>
+          </p>
+          <p>Thank you for being a part of our community.</p>
+          <p>— The Dalit Murasu Team</p>
+        </div>
+      `,
+    });
+    console.log(`Post-expiry email sent to ${toEmail}`);
+  } catch (error) {
+    console.error("Error sending post-expiry email:", error);
+    // Don't throw error, just log it, so one failed email doesn't stop the whole job
+  }
+}
 
 module.exports = {
   transporter,
   sendWelcomeEmail,
   sendSubscriptionEmail,
-  sendDonationEmail,
+
   sendFeedbackEmail,
   // NEW export
   sendExpiryReminderEmail,
+  sendPostExpiryEmail,
 };
