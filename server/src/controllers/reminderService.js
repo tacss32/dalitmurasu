@@ -11,7 +11,7 @@ require("../models/SubscriptionPlan");
 
 const DAILY_INTERVAL = 24 * 60 * 60 * 1000;
 const HOUR_TO_RUN = 12;
-const MINUTE_TO_RUN = 15; // your previous change for 12:10 PM
+const MINUTE_TO_RUN = 24; // your previous change for 12:10 PM
 
 /**
  * Existing: reminders for expiring in 3 days
