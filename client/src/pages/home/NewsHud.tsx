@@ -81,21 +81,40 @@ export default function NewsHud() {
   const fetchHomeData = async () => {
     setLoadingPosts(true);
     try {
-      const [pinnedRes, universalRes] = await Promise.all([
+      const [pinnedRes, universalRes, premiumRes] = await Promise.all([
         axios.get<PostType[]>(`${API_BASE_URL}api/combined-posts/pinned`),
         axios.get<PostType[]>(`${API_BASE_URL}api/universal-posts/home`),
         axios.get<PostType[]>(`${API_BASE_URL}api/premium-posts/home`),
       ]);
 
+      // Limit pinned posts to 3
       const limitedPinnedPosts = pinnedRes.data.slice(0, 3);
       setPinnedPosts(limitedPinnedPosts);
 
+      // Collect all IDs of pinned posts to avoid duplicates
       const pinnedIds = new Set(limitedPinnedPosts.map((post) => post._id));
-      const filteredUniversalPosts = universalRes.data.filter(
+
+      // Add source info for clarity
+      const universalPostsWithSource = universalRes.data.map((post) => ({
+        ...post,
+        source: "UniversalPost",
+      }));
+
+      const premiumPostsWithSource = premiumRes.data.map((post) => ({
+        ...post,
+        source: "PremiumPost",
+      }));
+
+      // Filter out duplicates and combine universal + premium posts
+      const filteredUniversal = universalPostsWithSource.filter(
+        (post) => !pinnedIds.has(post._id)
+      );
+      const filteredPremium = premiumPostsWithSource.filter(
         (post) => !pinnedIds.has(post._id)
       );
 
-      setUniversalPosts(filteredUniversalPosts);
+      // Combine both sources
+      setUniversalPosts([...filteredPremium, ...filteredUniversal]);
     } catch (err) {
       console.error("Failed to fetch posts:", err);
     } finally {
@@ -104,9 +123,7 @@ export default function NewsHud() {
 
     setLoadingBooks(true);
     try {
-      const booksRes = await axios.get<BookType[]>(
-        `${API_BASE_URL}api/books/home`
-      );
+      const booksRes = await axios.get<BookType[]>(`${API_BASE_URL}api/books/home`);
       setHomeBooks(booksRes.data);
     } catch (err) {
       console.error("Failed to fetch featured books:", err);
@@ -114,6 +131,7 @@ export default function NewsHud() {
       setLoadingBooks(false);
     }
   };
+
   // NEW: This useEffect handles opening the popup if a bookId is in the URL
   useEffect(() => {
     const bookIdFromUrl = searchParams.get("bookId");

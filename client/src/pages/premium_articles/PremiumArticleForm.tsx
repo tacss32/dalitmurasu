@@ -632,7 +632,7 @@ export default function PremiumArticleForm() {
         </div>
 
         <div className="flex items-center space-x-4">
-          {/* <label htmlFor="isHome" className="flex items-center cursor-pointer">
+          <label htmlFor="isHome" className="flex items-center cursor-pointer">
             <input
               type="checkbox"
               id="isHome"
@@ -640,7 +640,7 @@ export default function PremiumArticleForm() {
               className="form-checkbox h-5 w-5 text-yellow-500 rounded border-gray-600 focus:ring-yellow-500"
             />
             <span className="ml-2 text-lg">Display on Home Page</span>
-          </label> */}
+          </label> 
 
           {/* <label
             htmlFor="isRecent"
@@ -653,7 +653,7 @@ export default function PremiumArticleForm() {
               className="form-checkbox h-5 w-5 text-yellow-500 rounded border-gray-600 focus:ring-yellow-500"
             />
             <span className="ml-2 text-lg">Display as Recent Post</span>
-          </label> */}
+          </label>  */}
         </div>
 
         <div>

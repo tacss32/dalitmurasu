@@ -127,6 +127,12 @@ export default function AdminSidebar() {
       mainLink: "/admin/addphotos/upload",
       subLinks: [],
     },
+    {
+      title: "Cartoons",
+      icon: <MdPhotoCamera className="text-xl" />,
+      mainLink: "/admin/cartoons/upload",
+      subLinks: [],
+    },
 
     {
       title: "Newsletter Image",

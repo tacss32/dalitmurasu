@@ -34,7 +34,8 @@ import PremiumArticleForm from './pages/premium_articles/PremiumArticleForm';
 
 import Bookmark from "./components/bookmarks";
 import FeedbackForm from "./pages/about/FeedBackForm";
-
+import CartoonsPage from "./pages/cartoons/CartoonsPage";
+import CartoonsDetail from "./pages/cartoons/CartoonsDetail";
 // New ProfilePage (direct route)
 import ProfilePage from "./pages/ProfilePage";
 
@@ -83,6 +84,7 @@ import PremiumArticleDetail from './pages/premium_articles/PremiumArticleDetail'
 import MyOrders from "./pages/myorders";
 import Allusers from "./pages/Alllusers/UserTable";
 import UserDashboard from "./pages/Alllusers/Dashboard";
+import CartoonsForm from "./pages/cartoons/AddPhotoForm";
 
 
 createRoot(document.getElementById("root")!).render(
@@ -108,6 +110,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/recentposts" element={<RecentPosts />} />
             <Route path="/bluethoughts" element={<GalleryPage />} />
             <Route path="/bluethoughts/:id" element={<GalleryDetail />} />
+            <Route path="/cartoons" element={<CartoonsPage />} />
+            <Route path="/cartoons/:id" element={<CartoonsDetail />} />
             <Route path="/archive" element={<Archive />} />
             <Route path="/archive/:year/:month" element={<Posts />} />
             <Route path="/editorial" element={<Editorial />} />
@@ -189,6 +193,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/admin/premium-articles/edit/:id" element={<PremiumArticleForm />} />
             <Route path="/admin/users" element={<Allusers/>} />
             <Route path="/admin/users-dashboard" element={<UserDashboard />} />
+            <Route path="/admin/cartoons/upload" element={<CartoonsForm/>} />
           </Route>
         </Routes>
       </ThemeProvider>

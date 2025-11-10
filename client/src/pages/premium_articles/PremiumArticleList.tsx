@@ -138,11 +138,11 @@ export default function PremiumArticleList() {
         header: "Home",
         cell: (info) => ((info.getValue() as boolean) ? "Yes" : "No"),
       },
-      {
-        accessorKey: "isRecent",
-        header: "Recent",
-        cell: (info) => ((info.getValue() as boolean) ? "Yes" : "No"),
-      },
+      // {
+      //   accessorKey: "isRecent",
+      //   header: "Recent",
+      //   cell: (info) => ((info.getValue() as boolean) ? "Yes" : "No"),
+      // },
       {
         accessorKey: "views",
         header: "Views",
