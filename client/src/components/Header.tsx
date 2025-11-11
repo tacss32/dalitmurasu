@@ -26,12 +26,15 @@ export default function Header({
   const [bannerData, setBannerData] = useState<BannerData | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  // ✨ NEW: State to track if the banner image is being loaded
+  const [loadingBanner, setLoadingBanner] = useState(true);
 
   const normalize = (str: string) =>
     str.toLowerCase().replace(/[\s\-\/]+/g, "");
 
   const { categorySlug } = useParams<{ categorySlug?: string }>();
 
+  // Effect to fetch categories (unchanged)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -50,10 +53,19 @@ export default function Header({
     fetchCategories();
   }, []);
 
+  // Effect to fetch banner data (Updated with loadingBanner state)
   useEffect(() => {
     const fetchBanner = async () => {
       const bannerCategory = urlPath ? urlPath : categorySlug;
-      if (!bannerCategory) return;
+
+      // Start loading before any logic/fetch
+      setLoadingBanner(true);
+
+      if (!bannerCategory) {
+        // If there's no path/slug, stop loading immediately
+        setLoadingBanner(false);
+        return;
+      }
 
       try {
         const res = await fetch(
@@ -67,11 +79,13 @@ export default function Header({
           });
         } else {
           setBannerData(null);
-          // console.log("No banner found for this category or missing image URL:", data);
         }
       } catch (err) {
         console.error("Error fetching banner:", err);
         setBannerData(null);
+      } finally {
+        // Ensure loading state is turned off after the fetch completes (success or failure)
+        setLoadingBanner(false);
       }
     };
 
@@ -101,16 +115,30 @@ export default function Header({
   const mobileSrc = bannerData?.mobileImage;
   const fallbackSrc = "/headerImg.jpg";
 
+  // Conditionally render the image content
+  if (loadingBanner) {
+    
+    return (
+      <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+        {/* Placeholder (adjust height/styling for better UX) */}
+        <div className="w-screen h-[200px] md:h-[300px] bg-gray-200 animate-pulse"></div>
+        <h1 className="text-3xl md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12 opacity-0">
+          <span>{headerText}</span>
+        </h1>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
       <picture>
-        {/* If mobileSrc is undefined, this source tag is skipped */}
+        {/* If mobileSrc is defined, use it for mobile */}
         {mobileSrc && <source media="(max-width: 767px)" srcSet={mobileSrc} />}
 
-        {/* If desktopSrc is undefined, this source tag is skipped */}
+        {/* If desktopSrc is defined, use it for desktop */}
         {desktopSrc && <source media="(min-width: 768px)" srcSet={desktopSrc} />}
 
-        {/* The generic fallback image that the browser will use if neither source tag is active */}
+       
         <img
           src={fallbackSrc}
           alt="Header Banner"
@@ -118,10 +146,9 @@ export default function Header({
         />
       </picture>
 
-  <h1 className="text-3xl md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
-    <span>{headerText}</span>
-  </h1>
-</div>
-
+      <h1 className="text-3xl md:text-4xl font-bold drop-shadow-md absolute inset-0 flex flex-col justify-end items-center text-white bottom-12">
+        <span>{headerText}</span>
+      </h1>
+    </div>
   );
 }
