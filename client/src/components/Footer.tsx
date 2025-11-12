@@ -52,7 +52,7 @@ const addressLines = [
 export default function Footer() {
   const mapUrl = "https://maps.google.com/?q=13.066976,80.213829";
   const email = "dalitmurasu@gmail.com";
-  const phoneNumber = "94444 52877";
+  const phoneNumber = "+91 76670 33666";
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(email)
