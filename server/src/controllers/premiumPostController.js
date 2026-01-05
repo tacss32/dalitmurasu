@@ -3,6 +3,8 @@ const cloudinary = require("cloudinary").v2;
 const fs = require("fs/promises");
 const UserViewHistory = require("../models/UserViewHistory");
 const SubscriptionPayment = require("../models/SubscriptionPayment");
+const PinnedPost = require("../models/PinnedPost");
+
 
  
 // --- helper: strip HTML (basic) ---
@@ -309,21 +311,37 @@ exports.updatePremiumPost = async (req, res) => {
   }
 };
  
-// DELETE (Remove Premium Post)
+// DELETE (Remove Premium Post + Unpin if pinned)
 exports.deletePremiumPost = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // 1️⃣ Remove from pinned posts (if exists)
+    await PinnedPost.deleteMany({
+      postId: id,
+      source: "PremiumPost",
+    });
+
+    // 2️⃣ Delete the actual premium post
     const deletedPost = await PremiumPost.findByIdAndDelete(id);
- 
+
     if (!deletedPost) {
       return res.status(404).json({ error: "Post not found" });
     }
- 
-    res.json({ message: "Post deleted successfully", postId: id });
+
+    res.json({
+      message: "Post deleted successfully and unpinned if it was pinned",
+      postId: id,
+    });
   } catch (err) {
-    res.status(500).json({ error: "Failed to delete post", details: err.message });
+    console.error("Error deleting premium post:", err);
+    res.status(500).json({
+      error: "Failed to delete post",
+      details: err.message,
+    });
   }
 };
+
  
 // -----------------------------------------------------------------------------
 // CONDITIONAL LIST: full content for subscribed users, preview for others

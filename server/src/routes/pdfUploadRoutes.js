@@ -3,6 +3,7 @@ const router = express.Router();
 const clientAuth = require("../middleware/authClient");
 const { combinedPdfUpload } = require("../middleware/upload");
 const pdfUploadController = require("../controllers/pdfUploadController");
+const adminAuth = require("../middleware/adminAuth")
 
 // Create new PDF
 router.post("/", combinedPdfUpload, pdfUploadController.createPdfUpload);
@@ -23,12 +24,12 @@ router.get(
 );
 
 // Public PDF
-router.get("/:id", pdfUploadController.getPdfById);
+router.get("/:id",adminAuth, pdfUploadController.getPdfById);
 
 // Update PDF
-router.put("/:id", combinedPdfUpload, pdfUploadController.updatePdf);
+router.put("/:id",adminAuth, combinedPdfUpload, pdfUploadController.updatePdf);
 
 // Delete PDF
-router.delete("/:id", pdfUploadController.deletePdf);
+router.delete("/:id",adminAuth, pdfUploadController.deletePdf);
 
 module.exports = router;
