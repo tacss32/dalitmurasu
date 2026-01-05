@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import Navbar from "../components/navbar/Navbar";
 import SocialMediaScroller from "../components/SocialMediaScroller";
 import { useState, useEffect } from "react";
+import axios from "axios";
 
 // Define the breakpoint for hiding the scroller (e.g., 1024px for tablet/mobile)
 const HIDE_BREAKPOINT = 1024;
@@ -12,7 +13,7 @@ const HIDE_BREAKPOINT = 1024;
 export default function Layout() {
   const [navbarHeight, setNavbarHeight] = useState(0);
   // Initial state check uses the new, broader breakpoint
-  const [shouldHideScroller, setShouldHideScroller] = useState(window.innerWidth < HIDE_BREAKPOINT); 
+  const [shouldHideScroller, setShouldHideScroller] = useState(window.innerWidth < HIDE_BREAKPOINT);
 
   useEffect(() => {
     // This effect handles the context menu
@@ -27,6 +28,20 @@ export default function Layout() {
       setShouldHideScroller(window.innerWidth < HIDE_BREAKPOINT);
     };
     window.addEventListener("resize", handleResize);
+
+    // Track visit once per session
+    const trackVisit = async () => {
+      const visited = sessionStorage.getItem("visit_recorded");
+      if (!visited) {
+        sessionStorage.setItem("visit_recorded", "true");
+        try {
+          await axios.post(`${import.meta.env.VITE_API}api/analytics/visit`);
+        } catch (error) {
+          console.error("Error tracking visit:", error);
+        }
+      }
+    };
+    trackVisit();
 
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
@@ -44,7 +59,7 @@ export default function Layout() {
         <Outlet />
       </main>
       {/* Change the condition to render the component ONLY if shouldHideScroller is false */}
-      {!shouldHideScroller && <SocialMediaScroller />} 
+      {!shouldHideScroller && <SocialMediaScroller />}
       <Footer />
     </div>
   );

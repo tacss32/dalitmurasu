@@ -117,6 +117,7 @@ connectDB()
     app.use("/api/pdf-uploads", require("./routes/pdfUploadRoutes"));
     app.use("/api/feedback", require("./routes/feddbackRoutes"))
      app.use("/api/cartoons", require("./routes/cartoonRoutes"));
+    app.use("/api/analytics", require("./routes/analyticsRoutes"));
   
     // ------------------------------------------------------------------------
     // Health Check
