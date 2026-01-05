@@ -183,9 +183,9 @@ const PdfUploadForm: React.FC<{
     if (name === 'categoryDropdown') {
       setFormData((prev) => ({ ...prev, [name]: value as PdfFormData['categoryDropdown'] }));
     } else if (name === 'freeViewLimit') {
-        setFormData((prev) => ({ ...prev, [name]: parseInt(value) }));
+      setFormData((prev) => ({ ...prev, [name]: parseInt(value) }));
     } else if (name === 'visibility') {
-        setFormData((prev) => ({ ...prev, [name]: value as PdfFormData['visibility'] }));
+      setFormData((prev) => ({ ...prev, [name]: value as PdfFormData['visibility'] }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -229,7 +229,7 @@ const PdfUploadForm: React.FC<{
       }
     }
   };
-    // ⬅️ NEW FUNCTION TO HANDLE PDF REMOVAL
+  // ⬅️ NEW FUNCTION TO HANDLE PDF REMOVAL
   const handleRemovePdf = () => {
     // Revoke the blob URL to free up memory
     if (pdfPreviewUrl && pdfPreviewUrl.startsWith('blob:')) {
@@ -408,9 +408,8 @@ const PdfUploadForm: React.FC<{
       </h2>
       {message && (
         <div
-          className={`p-4 mb-4 rounded-md text-center ${
-            message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          }`}
+          className={`p-4 mb-4 rounded-md text-center ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}
         >
           {message.text}
         </div>
@@ -435,7 +434,7 @@ const PdfUploadForm: React.FC<{
             placeholder="Enter PDF title"
           />
         </div>
-        
+
         {/* Subtitle Input */}
         <div className="mb-4">
           <label htmlFor="subtitle" className="block text-sm font-medium text-gray-700 mb-0">
@@ -451,7 +450,7 @@ const PdfUploadForm: React.FC<{
             placeholder="Enter PDF subtitle"
           />
         </div>
-        
+
         {/* Date Input */}
         <div className="mb-4">
           <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
@@ -467,7 +466,7 @@ const PdfUploadForm: React.FC<{
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out"
           />
         </div>
-        
+
         {/* Category Dropdown */}
         <div className="mb-4">
           <label htmlFor="categoryDropdown" className="block text-sm font-medium text-gray-700 mb-1">
@@ -491,7 +490,7 @@ const PdfUploadForm: React.FC<{
             ))}
           </select>
         </div>
-        
+
         {/* Visibility Dropdown */}
         <div className="mb-4">
           <label htmlFor="visibility" className="block text-sm font-medium text-gray-700 mb-1">
@@ -508,7 +507,7 @@ const PdfUploadForm: React.FC<{
             <option value="subscribers">Subscribers Only</option>
           </select>
         </div>
-        
+
         {/* Free View Limit */}
         <div className="mb-4">
           <label htmlFor="freeViewLimit" className="block text-sm font-medium text-gray-700 mb-1">
@@ -524,7 +523,7 @@ const PdfUploadForm: React.FC<{
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out"
           />
         </div>
-        
+
         {/* Image Upload */}
         <div className="mb-4">
           <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
@@ -575,7 +574,7 @@ const PdfUploadForm: React.FC<{
             </div>
           )}
         </div>
-        
+
         {/* PDF Upload */}
         <div className="mb-4">
           <label htmlFor="pdf" className="block text-sm font-medium text-gray-700 mb-1">
@@ -587,7 +586,7 @@ const PdfUploadForm: React.FC<{
             name="pdf"
             accept="application/pdf"
             onChange={handleFileChange}
-            required={!isEditMode && !existingPdfUrl && !pdfFile} 
+            required={!isEditMode && !existingPdfUrl && !pdfFile}
             className="mt-1 block w-full text-sm text-gray-500
               file:mr-4 file:py-1 file:px-1
               file:rounded-full file:border-0
@@ -616,7 +615,7 @@ const PdfUploadForm: React.FC<{
             <p className="mt-1 text-xs text-gray-500">Leave blank to keep current PDF, select a new file to replace.</p>
           )}
         </div>
-        
+
         {/* Buttons */}
         <div className="flex justify-end gap-3 mt-6">
           <button
@@ -635,7 +634,7 @@ const PdfUploadForm: React.FC<{
           </button>
         </div>
       </form>
-      
+
       {showCropModal && currentImageSrc && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-auto shadow-2xl">
@@ -694,6 +693,7 @@ const PdfManager: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showFormModal, setShowFormModal] = useState(false);
   const [editPdfId, setEditPdfId] = useState<string | undefined>(undefined);
+  const [activePdfUrl, setActivePdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -714,7 +714,7 @@ const PdfManager: React.FC = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      
+
       if (response.data) {
         const sortedPdfs = response.data.sort((a: PdfEntry, b: PdfEntry) =>
           new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -750,7 +750,7 @@ const PdfManager: React.FC = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      
+
       if (response.data.message) {
         setMessageList({ type: 'success', text: 'PDF deleted successfully!' });
         fetchPdfs();
@@ -815,9 +815,8 @@ const PdfManager: React.FC = () => {
         </div>
         {messageList && (
           <div
-            className={`p-4 mb-4 rounded-md text-center ${
-              messageList.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`}
+            className={`p-4 mb-4 rounded-md text-center ${messageList.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}
           >
             {messageList.text}
           </div>
@@ -875,15 +874,13 @@ const PdfManager: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
-                        <a
-                          href={`https://docs.google.com/viewer?url=${encodeURIComponent(API_BASE_URL + pdf.pdfUrl)}&embedded=true`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => setActivePdfUrl(API_BASE_URL + pdf.pdfUrl)}
                           className="text-blue-600 hover:text-blue-900 flex items-center"
                           title="View PDF"
                         >
                           <MdPictureAsPdf className="mr-1" /> View
-                        </a>
+                        </button>
                         <button
                           onClick={() => handleEditClick(pdf._id)}
                           className="text-yellow-600 hover:text-yellow-900 flex items-center"
@@ -917,6 +914,30 @@ const PdfManager: React.FC = () => {
               onSubmissionStart={handleSubmissionStart}
               onSubmissionEnd={handleSubmissionEnd}
             />
+          </div>
+        </div>
+      )}
+
+      {activePdfUrl && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-white">
+          <div className="bg-slate-900 w-full max-w-5xl h-[90vh] rounded-2xl border border-slate-700 shadow-2xl flex flex-col relative overflow-hidden">
+            <div className="flex items-center justify-between p-2 border-b border-slate-800 bg-slate-900">
+              <h3 className="font-semibold text-lg text-white">Preview</h3>
+              <button
+                onClick={() => setActivePdfUrl(null)}
+                className="px-2 hover:bg-slate-800 rounded-full transition-colors flex items-center justify-center h-10 w-10"
+                aria-label="Close"
+              >
+                <MdClose size={24} className="text-white" />
+              </button>
+            </div>
+            <div className="flex-1 bg-slate-800 relative">
+              <iframe
+                src={`${activePdfUrl}#toolbar=0`}
+                className="w-full h-full border-0"
+                title="Document Preview"
+              />
+            </div>
           </div>
         </div>
       )}
