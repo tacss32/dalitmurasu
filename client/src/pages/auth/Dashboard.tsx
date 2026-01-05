@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const API_BASE_URL = import.meta.env.VITE_API;
 
@@ -18,6 +19,7 @@ const Dashboard = () => {
   const [orderStats, setOrderStats] = useState<OrderStats | null>(null);
   const [totalSubscribedUsers, setTotalSubscribedUsers] = useState<number | null>(null);
   const [totalUsers, setTotalUsers] = useState<number | null>(null);
+  const [visitorData, setVisitorData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +76,13 @@ const Dashboard = () => {
         } else {
           setTotalUsers(0);
         }
+
+        // 4️⃣ Fetch visitor analytics
+        const analyticsResponse = await axios.get(`${API_BASE_URL}api/analytics/data`, config);
+        if (analyticsResponse.data.success) {
+          setVisitorData(analyticsResponse.data.data);
+        }
+
       } catch (err) {
         console.error("Dashboard Fetch Error:", err);
         setError("Failed to fetch dashboard stats.");
@@ -97,7 +106,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="h-full bg-gradient-to-br from-gray-900 to-gray-800 text-white flex flex-col items-center justify-center p-4">
+    <div className=" min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white flex flex-col items-center justify-center p-4">
       <div className="text-center">
         <h1 className="text-5xl md:text-7xl font-extrabold mb-4 animate-fade-in-down">
           Admin Dashboard 📊
@@ -183,10 +192,51 @@ const Dashboard = () => {
               </div>
             </>
           )}
+        
+
+          {/* 📊 Visitor Analytics Graph */}
+          {!loading && (
+            <div className="sm:col-span-2 lg:col-span-3 w-full max-w-5xl bg-gray-700 p-6 rounded-lg shadow-lg">
+              <h2 className="text-2xl font-bold text-gray-200 mb-6">Visitors(Last 30 Days)</h2>
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={visitorData}>
+                    <defs>
+                      <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(str) => {
+                        const date = new Date(str);
+                        return date.getDate() + '/' + (date.getMonth() + 1);
+                      }}
+                      stroke="#ccc"
+                    />
+                    <YAxis stroke="#ccc" />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1f2937', border: 'none', color: '#fff' }}
+                    />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <Area
+                      type="monotone"
+                      dataKey="count"
+                      stroke="#8884d8"
+                      fillOpacity={1}
+                      fill="url(#colorVisits)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  );
-};
+
+      )
+      }
+    </div>)
+}
 
 export default Dashboard;
