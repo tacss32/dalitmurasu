@@ -1,8 +1,24 @@
 const PdfUpload = require("../models/PdfUpload");
 const UserViewHistory = require("../models/UserViewHistory");
+const IpViewHistory = require("../models/IpViewHistory");
 const jwt = require("jsonwebtoken");
 const ClientUser = require("../models/ClientUser");
 const SubscriptionPayment = require("../models/SubscriptionPayment");
+
+/**
+ * Extract client IP address, handling proxies and load balancers
+ */
+function getClientIp(req) {
+  // Check X-Forwarded-For header (set by proxies/load balancers)
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    // X-Forwarded-For can contain multiple IPs, take the first one
+    return forwarded.split(',')[0].trim();
+  }
+  
+  // Fallback to direct connection IP
+  return req.ip || req.connection.remoteAddress;
+}
 
 // Create PDF
 async function createPdfUpload(req, res) {
@@ -103,48 +119,93 @@ const getPdfByIdWithAccess = async (req, res) => {
       return res.json(pdf);
     }
 
-    // --- 🔒 NON-SUBSCRIBED USERS ONLY (PRIVATE PDF) ---
+    // --- 🔓 ACCESS LOGIC (Requires Login or Free Limit) ---
+    
+    // A. REGISTERED USERS (Track by User ID)
+    if (userId) {
+      // --- 📊 FREE VIEW LOGIC (Logged-in but not subscribed) ---
+      let record = await UserViewHistory.findOne({ userId, postId: pdf._id });
 
-    // Must be logged in
-    if (!userId) {
-      return res.status(401).json({ message: "Login required to view PDF" });
-    }
+      if (!record) {
+        record = new UserViewHistory({
+          userId,
+          postId: pdf._id,
+          postType: "PdfUpload",
+          views: 0,
+        });
+      }
 
-    // --- 📊 FREE VIEW LOGIC (Logged-in but not subscribed) ---
-    let record = await UserViewHistory.findOne({ userId, postId: pdf._id });
+      // Check limit BEFORE incrementing for strict enforcement (optional, but cleaner)
+      // Current logic: View -> Increment -> Check. 
+      // Let's stick to: Increment -> Check, but handle the "already exceeded" case.
+      
+      const currentViews = record.views;
+      const limit = pdf.freeViewLimit || 0;
+      
+      if (currentViews >= limit) {
+         return res.status(403).json({
+          message: "Free view limit reached. Subscribe to view more.",
+          requiresSubscription: true,
+          pdfPreview: {
+            _id: pdf._id,
+            title: pdf.title,
+            subtitle: pdf.subtitle,
+            category: pdf.category,
+            date: pdf.date,
+            imageUrl: pdf.imageUrl,
+          },
+        });       
+      }
 
-    if (!record) {
-      record = new UserViewHistory({
-        userId,
-        postId: pdf._id,
-        postType: "PdfUpload",
-        views: 1,
-      });
-    } else {
       record.views += 1;
-    }
+      await record.save();
 
-    // --- 🚫 Free view limit exceeded ---
-    if (record.views > (pdf.freeViewLimit || 0)) {
-      return res.status(403).json({
-        message: "Free view limit reached. Subscribe to view more.",
-        requiresSubscription: true,
-        pdfPreview: {
-          _id: pdf._id,
-          title: pdf.title,
-          subtitle: pdf.subtitle,
-          category: pdf.category,
-          date: pdf.date,
-          imageUrl: pdf.imageUrl,
-        },
+    // B. UNREGISTERED USERS (Track by IP)
+    } else {
+      const clientIp = getClientIp(req);
+      
+      let viewRecord = await IpViewHistory.findOne({
+        ipAddress: clientIp,
+        postId: pdf._id,
       });
+
+      if (!viewRecord) {
+        viewRecord = new IpViewHistory({
+          ipAddress: clientIp,
+          postId: pdf._id,
+          postType: "PdfUpload",
+          views: 0,
+        });
+      }
+
+      const currentViews = viewRecord.views;
+      const limit = pdf.freeViewLimit || 0;
+
+      if (currentViews >= limit) {
+        return res.status(403).json({
+          message: "Free view limit reached. Subscribe to view more.",
+          requiresSubscription: true,
+          pdfPreview: {
+            _id: pdf._id,
+            title: pdf.title,
+            subtitle: pdf.subtitle,
+            category: pdf.category,
+            date: pdf.date,
+            imageUrl: pdf.imageUrl,
+          },
+        });
+      }
+
+      viewRecord.views += 1;
+      viewRecord.lastViewedAt = new Date();
+      await viewRecord.save();
     }
 
-    // --- ✅ Save view record and increment total views ---
-    await record.save();
+    // --- ✅ Success: Increment global view count ---
     pdf.views = (pdf.views || 0) + 1;
     await pdf.save();
 
+    // Add viewsRemaining info to response for frontend awareness
     res.json(pdf);
   } catch (err) {
     console.error("Error fetching PDF with access:", err);
