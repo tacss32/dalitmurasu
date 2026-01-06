@@ -12,7 +12,16 @@ router.post("/", combinedPdfUpload, pdfUploadController.createPdfUpload);
 router.get("/", pdfUploadController.getAllPdfs);
 
 // Access-controlled PDF (free view + views increment)
-router.get("/access/:id", pdfUploadController.getPdfByIdWithAccess);
+router.get(
+  "/access/:id",
+  (req, res, next) => {
+    clientAuth(req, res, (err) => {
+      if (err) req.user = null;
+      next();
+    });
+  },
+  pdfUploadController.getPdfByIdWithAccess
+);
 
 // Public PDF
 router.get("/:id",adminAuth, pdfUploadController.getPdfById);

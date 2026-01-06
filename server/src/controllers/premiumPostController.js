@@ -163,39 +163,25 @@ exports.getPremiumPostById = async (req, res) => {
         previewWordCount
       );
 
-      // --- 🧑‍💻 NOT LOGGED IN USERS: direct paywall ---
-      if (!user) {
-        return res.status(403).json({
-          requiresSubscription: true,
-          articleData: {
-            _id: post._id,
-            title: post.title,
-            subtitle: post.subtitle,
-            category: post.category,
-            author: post.author,
-            images: post.images,
-            date: post.date,
-            isHome: post.isHome,
-            isRecent: post.isRecent,
-            visibility: post.visibility,
-            freeViewLimit: post.freeViewLimit,
-            views: post.views,
-            contentPreview,
-            truncated: true,
-          },
-        });
+      // --- 🧾 CHECK FREE VIEW LIMIT (User or IP) ---
+      let query = {};
+      if (user) {
+        query = { userId: user._id, postId: post._id };
+      } else {
+        // Get IP address (handle proxies if needed)
+        const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || req.ip;
+        // If x-forwarded-for contains multiple IPs, take the first one
+        const clientIp = typeof ip === "string" ? ip.split(",")[0].trim() : ip;
+        
+        query = { ipAddress: clientIp, postId: post._id };
       }
 
-      // --- 🧾 LOGGED IN BUT UNSUBSCRIBED: apply free view logic ---
-      let record = await UserViewHistory.findOne({
-        userId: user._id,
-        postId: post._id,
-      });
+      let record = await UserViewHistory.findOne(query);
 
       if (!record) {
+        // First view for this user/IP
         await UserViewHistory.create({
-          userId: user._id,
-          postId: post._id,
+          ...query,
           views: 1,
         });
         await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
@@ -203,6 +189,7 @@ exports.getPremiumPostById = async (req, res) => {
       }
 
       if (record.views < post.freeViewLimit) {
+        // Still has free views remaining
         record.views += 1;
         await record.save();
 
