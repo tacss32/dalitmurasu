@@ -328,9 +328,8 @@ export default function PremiumArticleForm() {
       formData.append("images", file);
     });
 
-    existingImages.forEach((url) => {
-      formData.append("existingImages", url);
-    });
+    // Send existing images as a JSON string
+    formData.append("existingImages", JSON.stringify(existingImages));
 
     try {
       const token = localStorage.getItem("token");
@@ -640,7 +639,7 @@ export default function PremiumArticleForm() {
               className="form-checkbox h-5 w-5 text-yellow-500 rounded border-gray-600 focus:ring-yellow-500"
             />
             <span className="ml-2 text-lg">Display on Home Page</span>
-          </label> 
+          </label>
 
           {/* <label
             htmlFor="isRecent"
