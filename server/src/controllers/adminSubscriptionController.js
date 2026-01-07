@@ -396,11 +396,11 @@ exports.getTotalSubscriptionRevenue = async (req, res) => {
  */
 exports.getSubscriptionStats = async (req, res) => {
   try {
-    // 1. Total revenue and count
+    const now = new Date();
+
+    /* ---------------- TOTAL STATS ---------------- */
     const totalStats = await SubscriptionPayment.aggregate([
-      {
-        $match: { payment_status: "success" },
-      },
+      { $match: { payment_status: "success" } },
       {
         $group: {
           _id: null,
@@ -410,28 +410,24 @@ exports.getSubscriptionStats = async (req, res) => {
       },
     ]);
 
-    // 2. Count of *currently* active subscriptions
+    /* ---------------- ACTIVE COUNT ---------------- */
     const activeSubscriptions = await SubscriptionPayment.countDocuments({
       payment_status: "success",
-      endDate: { $gt: new Date() },
+      endDate: { $gt: now },
     });
 
-    // 3. Breakdown by plan
-    const planStats = await SubscriptionPayment.aggregate([
-      {
-        $match: { payment_status: "success" },
-      },
+    /* ---------------- TOTAL BY PLAN ---------------- */
+    const totalByPlan = await SubscriptionPayment.aggregate([
+      { $match: { payment_status: "success" } },
       {
         $lookup: {
-          from: "subscriptionplans", // Note: use the collection name (usually plural, lowercase)
+          from: "subscriptionplans",
           localField: "subscriptionPlanId",
           foreignField: "_id",
           as: "plan",
         },
       },
-      {
-        $unwind: "$plan",
-      },
+      { $unwind: "$plan" },
       {
         $group: {
           _id: "$plan.title",
@@ -439,29 +435,72 @@ exports.getSubscriptionStats = async (req, res) => {
           revenue: { $sum: "$amount" },
         },
       },
+    ]);
+
+    /* ---------------- ACTIVE BY PLAN ---------------- */
+    const activeByPlan = await SubscriptionPayment.aggregate([
       {
-        $project: {
-          _id: 0,
-          planName: "$_id",
-          count: 1,
-          revenue: 1,
+        $match: {
+          payment_status: "success",
+          endDate: { $gt: now },
         },
       },
       {
-        $sort: { revenue: -1 },
+        $lookup: {
+          from: "subscriptionplans",
+          localField: "subscriptionPlanId",
+          foreignField: "_id",
+          as: "plan",
+        },
+      },
+      { $unwind: "$plan" },
+      {
+        $group: {
+          _id: "$plan.title",
+          activeSubscribers: { $sum: 1 },
+          activeRevenue: { $sum: "$amount" },
+        },
       },
     ]);
 
+    /* ---------------- MERGE TOTAL + ACTIVE ---------------- */
+    const planMap = {};
+
+    totalByPlan.forEach((p) => {
+      planMap[p._id] = {
+        planName: p._id,
+        count: p.count,
+        revenue: p.revenue,
+        activeSubscribers: 0,
+        activeRevenue: 0,
+      };
+    });
+
+    activeByPlan.forEach((p) => {
+      if (!planMap[p._id]) {
+        planMap[p._id] = {
+          planName: p._id,
+          count: 0,
+          revenue: 0,
+        };
+      }
+
+      planMap[p._id].activeSubscribers = p.activeSubscribers;
+      planMap[p._id].activeRevenue = p.activeRevenue;
+    });
+
     res.status(200).json({
       success: true,
-      totalRevenue: totalStats.length > 0 ? totalStats[0].totalRevenue : 0,
-      totalSubscriptions:
-        totalStats.length > 0 ? totalStats[0].totalSubscriptions : 0,
-      activeSubscriptions: activeSubscriptions,
-      subscriptionsByPlan: planStats,
+      totalRevenue: totalStats[0]?.totalRevenue || 0,
+      totalSubscriptions: totalStats[0]?.totalSubscriptions || 0,
+      activeSubscriptions,
+      subscriptionsByPlan: Object.values(planMap),
     });
   } catch (error) {
     console.error("Error fetching subscription stats:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
