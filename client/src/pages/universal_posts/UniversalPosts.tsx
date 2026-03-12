@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import ReactCrop, {
   centerCrop,
   makeAspectCrop,
@@ -7,6 +7,16 @@ import ReactCrop, {
 } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { X } from "lucide-react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  type ColumnDef,
+  type SortingState,
+} from "@tanstack/react-table";
 
 // KEY CHANGE: Import ToastContainer and toast from react-toastify
 import { ToastContainer, toast } from 'react-toastify';
@@ -28,6 +38,7 @@ interface Post {
   isHome?: boolean;
   isRecent?: boolean;
   isPinned?: boolean;
+  views?: number; 
   date?: string;
 }
 
@@ -59,6 +70,9 @@ export default function UniversalPosts() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [editIsSubmitting, setEditIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const [editImageFiles, setEditImageFiles] = useState<(File | string)[]>([]);
   const [editCurrentImageSrc, setEditCurrentImageSrc] = useState<string | null>(
@@ -325,6 +339,117 @@ export default function UniversalPosts() {
       )
   );
 
+  const columns = useMemo<ColumnDef<Post>[]>(() => [
+    {
+      accessorKey: "title",
+      header: "Title",
+      cell: (info) => {
+        const post = info.row.original;
+
+        const image =
+          post.images && post.images.length > 0
+            ? post.images[0].startsWith("http")
+              ? post.images[0]
+              : `${SERVER_URL}uploads/${post.images[0]}`
+            : "https://via.placeholder.com/80";
+
+        return (
+          <div className="flex items-center gap-2">
+            <img
+              src={image}
+              className="w-10 h-10 object-cover rounded"
+            />
+            <span>{info.getValue() as string}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "author",
+      header: "Author",
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: (info) => {
+        const cat = categories.find(c => c.name.en === info.getValue());
+        return cat?.name.ta || info.getValue();
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Date",
+      cell: (info) => formatDate(info.getValue() as string),
+    },
+    {
+      accessorKey: "isHome",
+      header: "Home",
+      cell: (info) => info.getValue() ? "Yes" : "No",
+    },
+    {
+      accessorKey: "isRecent",
+      header: "Recent",
+      cell: (info) => info.getValue() ? "Yes" : "No",
+    },
+
+    {
+      accessorKey: "views",
+      header: "Views",
+      cell: (info) => info.getValue() ?? 0,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: (info) => {
+        const post = info.row.original;
+
+        return (
+          <div className="flex gap-2">
+            <button
+              className="bg-blue-600 text-white px-2 py-1 rounded text-sm"
+              onClick={() => {
+                const postWithDate = {
+                  ...post,
+                  date: post.date
+                    ? new Date(post.date).toISOString().substring(0, 10)
+                    : new Date(post.createdAt).toISOString().substring(0, 10),
+                };
+
+                setEditPost(postWithDate);
+                setEditImageFiles(post.images || []);
+                setShowModal(true);
+              }}
+            >
+              Edit
+            </button>
+
+            <button
+              className="bg-red-600 text-white px-2 py-1 rounded text-sm"
+              onClick={() => handleDelete(post._id)}
+            >
+              Delete
+            </button>
+          </div>
+        );
+      },
+    },
+  ], [categories]);
+
+  const table = useReactTable({
+    data: displayedPosts,
+    columns,
+    state: {
+      sorting,
+      globalFilter,
+    },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* KEY CHANGE: Replace Toaster with ToastContainer */}
@@ -420,71 +545,141 @@ export default function UniversalPosts() {
       {loading ? (
         <p className="text-center text-gray-500">Loading posts...</p>
       ) : displayedPosts.length === 0 ? (
-        <p className="text-center text-gray-500">No posts found.</p>
+        <p className="text-center text-gray-900">No posts found.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedPosts.map((post: any) => {
-            const displayImageUrl = post.headerImage
-              ? post.headerImage.startsWith("http")
-                ? post.headerImage
-                : `${SERVER_URL}uploads/${post.headerImage}`
-              : post.images && post.images.length > 0
-              ? post.images[0].startsWith("http")
-                ? post.images[0]
-                : `${SERVER_URL}uploads/${post.images[0]}`
-              : "https://via.placeholder.com/400x250?text=No+Image";
+            <div className="container mx-auto p-6 bg-gray-800 text-white rounded-lg shadow-lg">
 
-            return (
-              <div
-                key={post._id}
-                className="bg-white rounded-xl shadow-md p-4 flex flex-col"
-              >
-                <img
-                  src={displayImageUrl}
-                  alt={post.title}
-                  className="rounded-lg h-48 object-cover mb-3 w-full"
-                />
-                <h2 className="text-lg font-semibold">{post.title}</h2>
-                <p className="text-sm text-gray-500">
-                  By {post.author || "Unknown"} in{" "}
-                  {categories.find((c) => c._id === post.category)?.name.ta ||
-                    "Unknown"}
-                </p>
-                <p className="text-xs text-gray-400 mb-1">
-                  Posted on {formatDate(post.createdAt)}
-                </p>
-                <div
-                  className="line-clamp-3 text-sm mt-1"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
-                ></div>
-                <div className="flex gap-2 mt-4">
-                  <button
-                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                    onClick={() => {
-                      const postWithDate = {
-                        ...post,
-                        date: post.date
-                          ? new Date(post.date).toISOString().substring(0, 10)
-                          : new Date(post.createdAt).toISOString().substring(0, 10),
-                      };
-                      setEditPost(postWithDate);
-                      setEditImageFiles(post.images || []);
-                      setShowModal(true);
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="bg-red-600 text-white px-3 py-1 rounded text-sm"
-                    onClick={() => handleDelete(post._id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+
+
+              {/* Table */}
+              <div className="overflow-x-auto rounded-lg shadow">
+                <table className="min-w-full bg-gray-900 border border-gray-700">
+
+                  <thead>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <tr key={headerGroup.id} className="bg-gray-700">
+                        {headerGroup.headers.map((header) => (
+                          <th
+                            key={header.id}
+                            onClick={header.column.getToggleSortingHandler()}
+                            className="py-3 px-4 text-left text-sm font-semibold text-gray-300 uppercase cursor-pointer"
+                          >
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+
+                            {{
+                              asc: " 🔼",
+                              desc: " 🔽",
+                            }[header.column.getIsSorted() as string] ?? null}
+
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
+                  </thead>
+
+                  <tbody>
+                    {table.getRowModel().rows.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-gray-700 hover:bg-gray-700"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td
+                            key={cell.id}
+                            className="py-3 px-4 text-sm text-gray-300"
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+
+                </table>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-6">
+
+                <div className="flex items-center gap-2">
+
+                  <button
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                    className="px-3 py-1 bg-gray-600 text-white rounded disabled:opacity-50"
+                  >
+                    {"<<"}
+                  </button>
+
+                  <button
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                    className="px-3 py-1 bg-gray-600 text-white rounded disabled:opacity-50"
+                  >
+                    {"<"}
+                  </button>
+
+                  <button
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                    className="px-3 py-1 bg-gray-600 text-white rounded disabled:opacity-50"
+                  >
+                    {">"}
+                  </button>
+
+                  <button
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                    className="px-3 py-1 bg-gray-600 text-white rounded disabled:opacity-50"
+                  >
+                    {">>"}
+                  </button>
+
+                </div>
+
+                <span className="flex items-center gap-1 text-gray-300">
+                  Page
+                  <strong>
+                    {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                  </strong>
+                </span>
+
+                <span className="flex items-center gap-1 text-gray-300">
+                  | Go to page:
+                  <input
+                    type="number"
+                    defaultValue={table.getState().pagination.pageIndex + 1}
+                    onChange={(e) => {
+                      const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                      table.setPageIndex(page);
+                    }}
+                    className="w-16 p-1 rounded bg-gray-700 border border-gray-600 text-white"
+                  />
+                </span>
+
+                <select
+                  value={table.getState().pagination.pageSize}
+                  onChange={(e) => {
+                    table.setPageSize(Number(e.target.value));
+                  }}
+                  className="p-1 rounded bg-gray-700 border border-gray-600 text-white"
+                >
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <option key={pageSize} value={pageSize}>
+                      Show {pageSize}
+                    </option>
+                  ))}
+                </select>
+
+              </div>
+
+            </div>
       )}
 
       {showModal && editPost && (

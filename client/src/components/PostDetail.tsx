@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Share2, ArrowLeft, Bookmark, BookmarkCheck } from "lucide-react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Card from "./Card";
@@ -17,6 +17,7 @@ type Post = {
   createdAt: string;
   author: string;
   category: string;
+  views?: number;
 };
 
 type Category = {
@@ -54,7 +55,7 @@ export default function PostDetail() {
   const [shareMessageTimeoutId, setShareMessageTimeoutId] = useState<number | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkId, setBookmarkId] = useState<string | null>(null);
-
+        const viewTracked = useRef(false);
   const userId = localStorage.getItem("userId");
   const clientToken = localStorage.getItem("clientToken");
 
@@ -78,6 +79,8 @@ export default function PostDetail() {
       console.error("Failed to fetch bookmark status:", err);
     }
   };
+
+
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -140,6 +143,23 @@ export default function PostDetail() {
                 }
         }, [post]); 
 
+     useEffect(() => {
+  if (!id || viewTracked.current) return;
+
+  viewTracked.current = true;
+
+  const incrementViews = async () => {
+    try {
+      await fetch(`${SERVER_URL}api/universal-posts/${id}/view`, {
+        method: "PATCH",
+      });
+    } catch (err) {
+      console.error("Failed to update views");
+    }
+  };
+
+  incrementViews();
+}, [id]);
   useEffect(() => {
     fetchBookmarkStatus();
   }, [userId, id]);

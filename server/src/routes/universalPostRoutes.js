@@ -70,4 +70,7 @@ router.put("/:id/unpin", universalPostController.unpinPost);
 // Delete post
 router.delete("/:id", universalPostController.deletePost);
 
+//view count increment
+router.patch("/:id/view", universalPostController.incrementViews);  
+
 module.exports = router;
