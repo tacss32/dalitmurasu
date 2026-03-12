@@ -375,6 +375,26 @@ const getPostAndNextFour = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch posts" });
   }
 };
+const incrementViews = async (req, res) => {
+  try {
+    const post = await UniversalPost.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } }, // increase by 1
+      { new: true },
+    );
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    res.json({ views: post.views });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update views",
+      details: err.message,
+    });
+  }
+};
 
 // ✅ Proper export for all route handlers
 module.exports = {
@@ -390,4 +410,5 @@ module.exports = {
   getPinnedPosts,
   unpinPost,
   getPostAndNextFour,
+  incrementViews,
 };

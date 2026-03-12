@@ -11,12 +11,16 @@ const UniversalPostSchema = new mongoose.Schema(
     isHome: Boolean,
     isRecent: Boolean,
     isPinned: { type: Boolean, default: false },
+    views: {
+      type: Number,
+      default: 0,
+    },
     date: {
       type: Date,
-     default: Date.now,
+      default: Date.now,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("UniversalPost", UniversalPostSchema);
