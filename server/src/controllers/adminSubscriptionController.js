@@ -5,7 +5,7 @@ const ClientUser = require("../models/ClientUser");
 const { sendSubscriptionEmail } = require("../middleware/sndMail"); 
 exports.getAllUsers = async (req, res) => {
   try {
-    const { search = ""} = req.query;
+    const { search = "", startDate, endDate } = req.query;
     const query = {};
 
     if (search) {
@@ -15,13 +15,27 @@ exports.getAllUsers = async (req, res) => {
       ];
     }
 
+    if (startDate || endDate) {
+      query.createdAt = {};
+
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate);
+      }
+
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+    }
+
     const totalUsers = await ClientUser.countDocuments(query);
 
     // Fetch users
     const users = await ClientUser.find(query)
-      .select("name email phone _id")
-       
-      .sort({ name: 1 });
+      .select("name email phone _id createdAt _id")
+
+      .sort({ createdAt: -1 });
 
     // Fetch each user's active subscription
     const userDetails = await Promise.all(
