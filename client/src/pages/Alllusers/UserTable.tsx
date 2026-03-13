@@ -7,6 +7,7 @@ interface IUser {
     name: string;
     email: string;
     phone: string;
+    createdAt: string;
     subscription: {
         isActive: boolean;
         planTitle?: string;
@@ -20,6 +21,8 @@ const UsersPage: React.FC = () => {
     const [users, setUsers] = useState<IUser[]>([]);
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(false);
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const fetchUsers = async () => {
         try {
@@ -28,7 +31,10 @@ const UsersPage: React.FC = () => {
             const token = localStorage.getItem("token");
             const response = await axios.get(`${SERVER_URL}api/subscription/users`, {
                 headers: { Authorization: `Bearer ${token}` },
-                params: { search },
+                params: {
+                    search,
+                    startDate,
+                    endDate },
                 withCredentials: true,
             });
 
@@ -45,6 +51,13 @@ const UsersPage: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            fetchUsers();
+        }, 400);
+
+        return () => clearTimeout(timeout);
+    }, [search, startDate, endDate]);
     useEffect(() => {
         // Debounce search to avoid spamming requests
         const timeout = setTimeout(() => {
@@ -137,6 +150,19 @@ const UsersPage: React.FC = () => {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2"
+                    />
+
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2"
                     />
                 </div>
             </div>
