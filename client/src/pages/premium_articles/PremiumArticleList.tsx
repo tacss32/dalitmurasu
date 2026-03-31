@@ -1,6 +1,6 @@
-import  { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   useReactTable,
   getCoreRowModel,
@@ -80,7 +80,7 @@ export default function PremiumArticleList() {
   useEffect(() => {
     fetchPosts();
   }, []);
-
+  //delete
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this premium post?")) {
       try {
@@ -137,11 +137,10 @@ export default function PremiumArticleList() {
         header: "Visibility",
         cell: (info) => (
           <span
-            className={`px-2 py-1 rounded-full text-xs font-semibold ${
-              info.getValue() === "public"
+            className={`px-2 py-1 rounded-full text-xs font-semibold ${info.getValue() === "public"
                 ? "bg-green-500 text-white"
                 : "bg-purple-500 text-white"
-            }`}
+              }`}
           >
             {info.getValue() as string === "public" ? "Public" : "Subscribers"}
           </span>
@@ -256,18 +255,18 @@ export default function PremiumArticleList() {
       {showSearchForm && (
         <form onSubmit={(e) => { e.preventDefault(); fetchPosts(); }} className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-gray-700 rounded-lg shadow-md transition-all duration-300 ease-in-out">
           <input
-              type="date"
-              value={searchFromDate}
-              onChange={(e) => setSearchFromDate(e.target.value)}
-              className="flex-1 p-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+            type="date"
+            value={searchFromDate}
+            onChange={(e) => setSearchFromDate(e.target.value)}
+            className="flex-1 p-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
           />
           <input
-              type="date"
-              value={searchToDate}
-              onChange={(e) => setSearchToDate(e.target.value)}
-              className="flex-1 p-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+            type="date"
+            value={searchToDate}
+            onChange={(e) => setSearchToDate(e.target.value)}
+            className="flex-1 p-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
           />
-          
+
           <div className="flex flex-col gap-2 justify-center">
             <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
               <input type="checkbox" checked={filterByPostDate} onChange={(e) => setFilterByPostDate(e.target.checked)} />
@@ -280,7 +279,7 @@ export default function PremiumArticleList() {
           </div>
 
           <button type="submit" className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 flex items-center justify-center gap-2">
-              Apply Date Filters
+            Apply Date Filters
           </button>
         </form>
       )}
