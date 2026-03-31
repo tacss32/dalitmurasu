@@ -39,6 +39,7 @@ interface Post {
   isRecent?: boolean;
   isPinned?: boolean;
   views?: number; 
+  filteredViews?: number;
   date?: string;
 }
 
@@ -89,6 +90,8 @@ export default function UniversalPosts() {
   const [searchCategory, setSearchCategory] = useState("");
   const [searchFromDate, setSearchFromDate] = useState("");
   const [searchToDate, setSearchToDate] = useState("");
+  const [filterByPostDate, setFilterByPostDate] = useState(true);
+  const [filterByViewDate, setFilterByViewDate] = useState(false);
   const [showSearchForm, setShowSearchForm] = useState(false); // New state for search form visibility
 
   const toggleSearchForm = () => {
@@ -103,6 +106,8 @@ export default function UniversalPosts() {
       if (searchCategory) queryParams.append('category', searchCategory);
       if (searchFromDate) queryParams.append('from', searchFromDate);
       if (searchToDate) queryParams.append('to', searchToDate);
+      if (filterByPostDate) queryParams.append('filterByPostDate', 'true');
+      if (filterByViewDate) queryParams.append('filterByViewDate', 'true');
 
       const url = `${SERVER_URL}api/search?${queryParams.toString()}`;
       const res = await fetch(url);
@@ -395,7 +400,13 @@ export default function UniversalPosts() {
     {
       accessorKey: "views",
       header: "Views",
-      cell: (info) => info.getValue() ?? 0,
+      cell: (info) => {
+        const post = info.row.original;
+        if (post.filteredViews !== undefined) {
+          return `${post.filteredViews} (Filtered)`;
+        }
+        return info.getValue() ?? 0;
+      },
     },
     {
       id: "actions",
@@ -464,6 +475,8 @@ export default function UniversalPosts() {
             setSearchCategory('');
             setSearchFromDate('');
             setSearchToDate('');
+            setFilterByPostDate(true);
+            setFilterByViewDate(false);
             fetchPosts();
         }}
             className={`px-4 py-2 rounded ${filterType === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}>
@@ -533,6 +546,18 @@ export default function UniversalPosts() {
               onChange={(e) => setSearchToDate(e.target.value)}
               className="flex-1 p-2 border rounded-lg"
           />
+          
+          <div className="flex flex-col gap-2 justify-center">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input type="checkbox" checked={filterByPostDate} onChange={(e) => setFilterByPostDate(e.target.checked)} />
+              Filter by Post Date
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input type="checkbox" checked={filterByViewDate} onChange={(e) => setFilterByViewDate(e.target.checked)} />
+              Filter by View Date
+            </label>
+          </div>
+
           <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />

@@ -377,11 +377,26 @@ const getPostAndNextFour = async (req, res) => {
 };
 const incrementViews = async (req, res) => {
   try {
-    const post = await UniversalPost.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { views: 1 } }, // increase by 1
-      { new: true },
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+    // Try to increment existing dailyView for today
+    let post = await UniversalPost.findOneAndUpdate(
+      { _id: req.params.id, "dailyViews.date": today },
+      { $inc: { views: 1, "dailyViews.$.count": 1 } },
+      { new: true }
     );
+
+    // If date entry doesn't exist, push a new one
+    if (!post) {
+      post = await UniversalPost.findOneAndUpdate(
+        { _id: req.params.id },
+        { 
+          $inc: { views: 1 },
+          $push: { dailyViews: { date: today, count: 1 } }
+        },
+        { new: true }
+      );
+    }
 
     if (!post) {
       return res.status(404).json({ error: "Post not found" });

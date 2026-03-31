@@ -77,8 +77,58 @@ exports.createPremiumPost = async (req, res) => {
 // GET all (full posts)
 exports.getAllPremiumPosts = async (req, res) => {
   try {
-    const posts = await PremiumPost.find().sort({ createdAt: -1 });
-    res.json(posts);
+    const { from, to, filterByPostDate, filterByViewDate } = req.query;
+
+    const query = {};
+
+    // Date range for Post Creation
+    if (from || to) {
+      const shouldFilterPostDate = filterByPostDate === "true" || (!filterByPostDate && !filterByViewDate);
+      if (shouldFilterPostDate) {
+        query.createdAt = {};
+        if (from) query.createdAt.$gte = new Date(from);
+        if (to) {
+          // Calculate end of day for 'to' date
+          const toDate = new Date(to);
+          toDate.setHours(23, 59, 59, 999);
+          query.createdAt.$lte = toDate;
+        }
+      }
+    }
+
+    const posts = await PremiumPost.find(query).sort({ createdAt: -1 });
+
+    let finalResults = posts;
+
+    // Date range for View Counts
+    if ((from || to) && filterByViewDate === "true") {
+      const fromDate = from ? new Date(from).getTime() : 0;
+      let toDate = new Date().getTime();
+      if (to) {
+        const tDate = new Date(to);
+        tDate.setHours(23, 59, 59, 999);
+        toDate = tDate.getTime();
+      }
+
+      finalResults = posts.map(post => {
+        const postObj = post.toObject ? post.toObject() : post;
+        
+        let filteredViews = 0;
+        if (postObj.dailyViews && Array.isArray(postObj.dailyViews)) {
+          filteredViews = postObj.dailyViews.reduce((sum, dv) => {
+            const dvDate = new Date(dv.date).getTime();
+            if (dvDate >= fromDate && dvDate <= toDate) {
+              return sum + dv.count;
+            }
+            return sum;
+          }, 0);
+        }
+
+        return { ...postObj, filteredViews };
+      });
+    }
+
+    res.json(finalResults);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -123,6 +173,31 @@ exports.getPremiumPostPreviews = async (req, res) => {
   }
 };
  
+// --- helper: increment views ---
+const incrementPremiumPostViews = async (postId) => {
+  try {
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    let post = await PremiumPost.findOneAndUpdate(
+      { _id: postId, "dailyViews.date": today },
+      { $inc: { views: 1, "dailyViews.$.count": 1 } },
+      { new: true }
+    );
+
+    if (!post) {
+      await PremiumPost.findOneAndUpdate(
+        { _id: postId },
+        { 
+          $inc: { views: 1 },
+          $push: { dailyViews: { date: today, count: 1 } }
+        },
+        { new: true }
+      );
+    }
+  } catch(err) {
+    console.error("Error incrementing views:", err);
+  }
+};
+
 // GET single with access check
 // GET single with access check
 exports.getPremiumPostById = async (req, res) => {
@@ -149,7 +224,7 @@ exports.getPremiumPostById = async (req, res) => {
     // --- 🔒 PREMIUM ARTICLE ACCESS CONTROL ---
     if (post.visibility === "subscribers") {
       if (isSubscribed) {
-        await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
+        await incrementPremiumPostViews(post._id);
         return res.json(post);
       }
 
@@ -184,7 +259,7 @@ exports.getPremiumPostById = async (req, res) => {
           ...query,
           views: 1,
         });
-        await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
+        await incrementPremiumPostViews(post._id);
         return res.json(post);
       }
 
@@ -193,7 +268,7 @@ exports.getPremiumPostById = async (req, res) => {
         record.views += 1;
         await record.save();
 
-        await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
+        await incrementPremiumPostViews(post._id);
         return res.json(post);
       }
 
@@ -220,7 +295,7 @@ exports.getPremiumPostById = async (req, res) => {
     }
 
     // --- 🌐 PUBLIC POST ---
-    await PremiumPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } });
+    await incrementPremiumPostViews(post._id);
     return res.json(post);
   } catch (err) {
     console.error("Error fetching premium post by ID:", err);

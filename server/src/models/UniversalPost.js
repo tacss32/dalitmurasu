@@ -15,6 +15,12 @@ const UniversalPostSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    dailyViews: [
+      {
+        date: { type: String, required: true }, // Format: YYYY-MM-DD
+        count: { type: Number, default: 0 },
+      },
+    ],
     date: {
       type: Date,
       default: Date.now,
