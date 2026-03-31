@@ -30,6 +30,7 @@ interface IPremiumPost {
   isRecent: boolean;
   visibility: "public" | "subscribers";
   views: number;
+  filteredViews?: number;
   freeViewLimit: number;
   date: string; // Stored as string, convert to Date object for display
   createdAt: string;
@@ -43,13 +44,26 @@ export default function PremiumArticleList() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>(""); // For search filter
 
+  const [searchFromDate, setSearchFromDate] = useState("");
+  const [searchToDate, setSearchToDate] = useState("");
+  const [filterByPostDate, setFilterByPostDate] = useState(true);
+  const [filterByViewDate, setFilterByViewDate] = useState(false);
+  const [showSearchForm, setShowSearchForm] = useState(false);
+
   const fetchPosts = async () => {
     try {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem("token");
+
+      const queryParams = new URLSearchParams();
+      if (searchFromDate) queryParams.append('from', searchFromDate);
+      if (searchToDate) queryParams.append('to', searchToDate);
+      if (filterByPostDate) queryParams.append('filterByPostDate', 'true');
+      if (filterByViewDate) queryParams.append('filterByViewDate', 'true');
+
       const response = await axios.get<IPremiumPost[]>(
-        `${API_BASE_URL}api/premium-posts`,
+        `${API_BASE_URL}api/premium-posts?${queryParams.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -146,6 +160,13 @@ export default function PremiumArticleList() {
       {
         accessorKey: "views",
         header: "Views",
+        cell: (info) => {
+          const post = info.row.original;
+          if (post.filteredViews !== undefined) {
+            return `${post.filteredViews} (Filtered)`;
+          }
+          return info.getValue() ?? 0;
+        },
       },
       {
         id: "actions", // Unique ID for the actions column
@@ -206,13 +227,63 @@ export default function PremiumArticleList() {
     <div className="container mx-auto p-6 bg-gray-800 text-white rounded-lg shadow-lg">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-yellow-400">Premium Articles</h2>
-        <Link
-          to="/admin/premium-articles/create"
-          className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 flex items-center gap-2 transition-colors"
-        >
-          <MdAdd /> New Article
-        </Link>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowSearchForm(!showSearchForm)}
+            className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white border border-gray-600"
+            title="Toggle API Search Filters"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+          </button>
+          <Link
+            to="/admin/premium-articles/create"
+            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 flex items-center gap-2 transition-colors"
+          >
+            <MdAdd /> New Article
+          </Link>
+        </div>
       </div>
+
+      {showSearchForm && (
+        <form onSubmit={(e) => { e.preventDefault(); fetchPosts(); }} className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-gray-700 rounded-lg shadow-md transition-all duration-300 ease-in-out">
+          <input
+              type="date"
+              value={searchFromDate}
+              onChange={(e) => setSearchFromDate(e.target.value)}
+              className="flex-1 p-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+          />
+          <input
+              type="date"
+              value={searchToDate}
+              onChange={(e) => setSearchToDate(e.target.value)}
+              className="flex-1 p-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+          />
+          
+          <div className="flex flex-col gap-2 justify-center">
+            <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+              <input type="checkbox" checked={filterByPostDate} onChange={(e) => setFilterByPostDate(e.target.checked)} />
+              Filter by Post Date
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+              <input type="checkbox" checked={filterByViewDate} onChange={(e) => setFilterByViewDate(e.target.checked)} />
+              Filter by View Date
+            </label>
+          </div>
+
+          <button type="submit" className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 flex items-center justify-center gap-2">
+              Apply Date Filters
+          </button>
+        </form>
+      )}
 
       <div className="mb-4">
         <input

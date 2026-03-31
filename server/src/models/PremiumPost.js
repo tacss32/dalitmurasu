@@ -12,6 +12,12 @@ const PremiumPostSchema = new mongoose.Schema(
     isRecent: Boolean,
     visibility: { type: String, enum: ["public", "subscribers"], default: "subscribers" },
     views: { type: Number, default: 0 },
+    dailyViews: [
+      {
+        date: { type: String, required: true }, // Format: YYYY-MM-DD
+        count: { type: Number, default: 0 },
+      },
+    ],
     freeViewLimit: { type: Number, default: 0 },
     date: { type: Date }, 
   },
